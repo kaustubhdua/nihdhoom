@@ -3608,6 +3608,19 @@ SET provider_observation_key = CASE
 END
 WHERE o.provider_observation_key IS NULL;
 
+-- Existing undated provider rows may have duplicate base keys. Keep one canonical
+-- key for idempotent future upserts and preserve every additional historical row
+-- under a stable legacy suffix rather than dropping evidence.
+WITH ranked_keys AS (
+  SELECT id, provider_observation_key,
+         row_number() OVER (PARTITION BY provider_observation_key ORDER BY id) AS key_rank
+  FROM public.firms_observations
+)
+UPDATE public.firms_observations o
+SET provider_observation_key = ranked_keys.provider_observation_key || '|legacy:' || o.id::text
+FROM ranked_keys
+WHERE ranked_keys.id = o.id AND ranked_keys.key_rank > 1;
+
 ALTER TABLE public.firms_observations
   ALTER COLUMN provider_observation_key SET NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS firms_observations_provider_key_uidx
