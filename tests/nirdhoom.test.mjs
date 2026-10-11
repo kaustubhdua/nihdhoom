@@ -599,7 +599,7 @@ test('field-first UI kit and open-source interaction surfaces remain wired', () 
 
 test('consent withdrawal is server-authorized and records revocation', () => {
   const migration = read('supabase/migrations/202610070001_nirdhoom_consent_withdrawal.sql');
-  const auditMigration = read('supabase/migrations/202610120005_consent_audit_immutability.sql');
+  const auditMigration = read('supabase/migrations/20261011210907_nirdhoom_consent_audit_immutability_20261012.sql');
   assert.match(auditMigration, /REVOKE (?:INSERT, )?UPDATE ON TABLE public\.consents FROM authenticated/);
   assert.match(auditMigration, /GRANT UPDATE \(revoked_at\) ON TABLE public\.consents TO authenticated/);
   assert.match(auditMigration, /WITH CHECK \([\s\S]*revoked_at IS NOT NULL/);
