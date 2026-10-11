@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import {
   Activity, ArrowRight, CalendarDays, CheckCircle2, Factory, Leaf, Map,
   MapPinned, ShieldCheck, Truck, Wheat, Users, CircleDollarSign, Camera,
@@ -34,6 +35,7 @@ const monsoonImage = '/images/farmer_manpreet.jpg';
 export function CommandCenter({
   fields, machines, fireEvents, storageYards, buyers, onSelectField, onOpenResidue, onOpenImpact, onNavigate, demoMode = false
 }: Props) {
+  const { t } = useAppLanguage();
   const activeJobs = fields.filter(f => ['SCHEDULED', 'BALING_IN_PROGRESS'].includes(f.status)).length;
   const verified = fields.filter(f => f.status === 'VERIFIED_NON_BURN' || f.is_verified_non_burn).length;
   const machineActive = machines.filter(m => m.status !== 'MAINTENANCE').length;
@@ -78,17 +80,17 @@ export function CommandCenter({
         <img src={heroImage} alt="Punjab agricultural field context" className="home-hero-image" decoding="async" fetchPriority="high" />
         <div className="home-hero-overlay" />
         <div className="home-hero-content">
-          <div className="home-eyebrow"><Leaf className="h-4 w-4" /> FIELD OPERATIONS • NIRDHOOM</div>
-          <h1>Clear the field.<br /><span>Keep the chain visible.</span></h1>
+          <div className="home-eyebrow"><Leaf className="h-4 w-4" /> {t('FIELD OPERATIONS • NIRDHOOM')}</div>
+          <h1>{t('Clear the field.')}<br /><span>{t('Keep the chain visible.')}</span></h1>
           <p>NIRDHOOM connects a farmer request to machine capacity, field evidence and the next residue pathway without turning uncertain information into a promise.</p>
           <div className="home-actions">
-            <button onClick={() => onNavigate('FARMER_ONBOARDING')} className="home-primary">Book parali pickup <ArrowRight className="h-4 w-4" /></button>
-            <button onClick={() => onNavigate('OPS_CONSOLE')} className="home-secondary"><Map className="h-4 w-4" /> Track today's operation</button>
+            <button onClick={() => onNavigate('FARMER_ONBOARDING')} className="home-primary">{t('Book parali pickup')} <ArrowRight className="h-4 w-4" /></button>
+            <button onClick={() => onNavigate('OPS_CONSOLE')} className="home-secondary"><Map className="h-4 w-4" /> {t('Track today’s operation')}</button>
           </div>
           <div className="home-trust-row">
-            <span><CheckCircle2 /> Evidence before impact</span>
-            <span><Map /> Field-level provenance</span>
-            <span><Truck /> Machine-linked operations</span>
+            <span><CheckCircle2 /> {t('Evidence before impact')}</span>
+            <span><Map /> {t('Field-level provenance')}</span>
+            <span><Truck /> {t('Machine-linked operations')}</span>
           </div>
           <span className="home-photo-credit">Photo: project photography · source attribution documented in docs/IMAGE-LICENSES.md</span>
         </div>
@@ -126,7 +128,7 @@ export function CommandCenter({
       <section className="home-intro">
         <div>
           <div className="home-section-kicker">One connected journey</div>
-          <h2>From field request to residue movement.</h2>
+          <h2>{t('From field request to residue movement.')}</h2>
         </div>
         <p>Keep the operational chain readable: who requested clearance, which machine is assigned, what evidence was captured, what residue was verified, and where it can go next.</p>
       </section>
@@ -156,7 +158,7 @@ export function CommandCenter({
         <div className="home-field-stories-heading">
           <div>
             <div className="home-section-kicker">Field context</div>
-            <h2>Ground the product in the places it serves.</h2>
+            <h2>{t('Ground the product in the places it serves.')}</h2>
           </div>
           <p>Curated public-domain and Creative Commons photography keeps the product grounded in real agricultural landscapes. Each image is credited and linked to its source.</p>
         </div>
@@ -187,7 +189,7 @@ export function CommandCenter({
       <section className="home-product-layer">
         <div className="home-layer-copy">
           <div className="home-section-kicker">Operational layer</div>
-          <h2>See the field, machine and evidence together.</h2>
+          <h2>{t('See the field, machine and evidence together.')}</h2>
           <p>The map is one layer of the workflow. It brings field geometry, machine state, residue and supporting observations into the same operational context.</p>
           <div className="home-mini-grid">
             <div><MapPinned /><strong>{fields.length}</strong><span>registered fields</span></div>
@@ -207,7 +209,7 @@ export function CommandCenter({
 
       <section className="home-role-section">
         <div className="home-section-kicker">Built around real jobs</div>
-        <div className="home-role-heading"><h2>One network, different workspaces.</h2><p>Farmers get a short path. Operators, buyers and verification teams get the detail required for their part of the chain.</p></div>
+        <div className="home-role-heading"><h2>{t('One network, different workspaces.')}</h2><p>Farmers get a short path. Operators, buyers and verification teams get the detail required for their part of the chain.</p></div>
         <div className="home-role-grid">
           {audiences.map(({ title, text, icon: Icon, accent, tab }) => (
             <button key={title} type="button" onClick={() => onNavigate(tab)} className={`home-role-card ${accent} text-left`}>
@@ -224,7 +226,7 @@ export function CommandCenter({
         <div className="home-story-image"><img src={offtakeImage} alt="Residue offtake facility" loading="lazy" decoding="async" /></div>
         <div className="home-story-copy">
           <div className="home-section-kicker">Residue becomes supply</div>
-          <h2>Don't stop at clearance.</h2>
+          <h2>{t('Don’t stop at clearance.')}</h2>
           <p>When residue is actually verified, NIRDHOOM carries it into pooling, buyer demand and transport planning instead of treating the field job as the end of the workflow.</p>
           <div className="home-value-list">
             <div><Leaf /><span><b>Pool</b> by quality, location and readiness.</span></div>
@@ -239,7 +241,7 @@ export function CommandCenter({
         <div className="home-evidence-image"><img src={satelliteImage} alt="Satellite observation and field monitoring" loading="lazy" decoding="async" /></div>
         <div className="home-evidence-copy">
           <div className="home-section-kicker">Trust layer</div>
-          <h2>Evidence first. Impact second.</h2>
+          <h2>{t('Evidence first. Impact second.')}</h2>
           <p>Planned residue is not treated as verified impact. NIRDHOOM keeps operator evidence, field status and supporting remote-sensing observations distinct before downstream claims are made.</p>
           <div className="home-evidence-points">
             <button type="button" onClick={() => openReview('review-photos')}><Camera /> Photo evidence</button>
