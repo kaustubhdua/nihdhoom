@@ -1,4 +1,5 @@
 import { describeLiveError } from './lib/liveStatus';
+import { useAppLanguage } from './i18n/LanguageContext';
 import { lazy, Suspense, useEffect, useCallback, startTransition } from 'react';
 import { Header, ActiveTab } from './components/Header';
 const OpsMap = lazy(() => import('./components/OpsConsole/OpsMap').then((m) => ({ default: m.OpsMap })));
@@ -198,6 +199,7 @@ function WorkspaceHeader({ activeTab, demoMode, onNavigate }: WorkspaceHeaderPro
 }
 
 export function App() {
+  const { t } = useAppLanguage();
   const {
     activeTab,
     setActiveTab,
@@ -233,7 +235,7 @@ export function App() {
 
   return (
     <div data-active-tab={activeTab} className="nirdhoom-field-app min-h-screen flex flex-col font-sans relative overflow-x-clip">
-      <a href="#main-content" className="skip-link">Skip to main content</a>
+      <a href="#main-content" className="skip-link">{t('Skip to main content')}</a>
       {/* Top Header */}
       <Header
         activeTab={activeTab}
@@ -243,16 +245,16 @@ export function App() {
 
       {!demoMode && !liveConfigured && (
         <div className="live-state-banner live-state-banner-error" role="alert">
-          <strong>This deployment is not connected to a database.</strong>
+          <strong>{t('This deployment is not connected to a database.')}</strong>
           <span>Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Vercel for the environment that built this page, then redeploy.</span>
         </div>
       )}
-      {!demoMode && liveConfigured && loadingLiveData && <div className="live-state-banner live-state-banner-loading" role="status">Loading live operational records…</div>}
+      {!demoMode && liveConfigured && loadingLiveData && <div className="live-state-banner live-state-banner-loading" role="status">{t('Loading live operational records…')}</div>}
       {!demoMode && liveConfigured && !loadingLiveData && liveSignedOut && (
         <div className="live-state-banner live-state-banner-info" role="status">
-          <strong>Sign in to see live fields.</strong>
+          <strong>{t('Sign in to see live fields.')}</strong>
           <span>Field and machine records are private. Use your mobile number to create or open your NIRDHOOM account.</span>
-          <button type="button" onClick={() => navigate('FARMER_KYC')}>Sign in or create account</button>
+          <button type="button" onClick={() => navigate('FARMER_KYC')}>{t('Sign in or create account')}</button>
         </div>
       )}
       {!demoMode && liveDataError && (() => {
@@ -350,10 +352,10 @@ export function App() {
                 <div>
                   <h2 id="ops-console-title" className="section-bar-title">
                     <Map className="h-4 w-4" aria-hidden="true" />
-                    Central Ops & VRP Dispatch Console
+                    {t('Central Ops & VRP Dispatch Console')}
                   </h2>
                   <p className="section-bar-sub">
-                    GIS operations prototype for a Sangrur cluster using demo machinery and FIRMS-style event data
+                    {t('GIS operations prototype for a Sangrur cluster using demo machinery and FIRMS-style event data')}
                   </p>
                 </div>
                 <div className="section-bar-meta">
@@ -416,17 +418,17 @@ export function App() {
           ) : (
             <section className="empty-workspace">
               <span className="empty-workspace-icon"><Zap className="h-5 w-5" aria-hidden="true" /></span>
-              <h2>Field Operator PWA</h2>
+              <h2>{t('Field Operator PWA')}</h2>
               <p>
-                No live machine is assigned yet. Connect an operator machine record before starting field operations.
+                {t('No live machine is assigned yet. Connect an operator machine record before starting field operations.')}
               </p>
               <div className="empty-workspace-stats">
                 <div>
-                  <span>Live fields</span>
+                  <span>{t('Live fields')}</span>
                   <strong>{fields.length}</strong>
                 </div>
                 <div>
-                  <span>Assigned machines</span>
+                  <span>{t('Assigned machines')}</span>
                   <strong>{machines.length}</strong>
                 </div>
               </div>
@@ -471,10 +473,10 @@ export function App() {
           </div>
 
           <div className="site-footer-links">
-            Field operations • Evidence • Residue • Buyer pathways
+            {t('Field operations • Evidence • Residue • Buyer pathways')}
           </div>
 
-          <span className="site-footer-badge">Evidence-first prototype</span>
+          <span className="site-footer-badge">{t('Evidence-first prototype')}</span>
         </div>
       </footer>
     </div>
