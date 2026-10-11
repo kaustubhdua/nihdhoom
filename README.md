@@ -93,6 +93,7 @@ The dedicated NIRDHOOM Supabase project and deployed database state are document
 - [What the product is intended to do](#what-the-product-is-intended-to-do)
 - [Product release roadmap](docs/PRODUCT-RELEASE-ROADMAP.md)
 - [Current implementation](#current-implementation)
+- [Operations map](#operations-map)
 - [Workflow and architecture](#workflow-and-architecture)
 - [Research findings and product implications](#research-findings-and-product-implications)
 - [Technology stack](#technology-stack)
@@ -141,6 +142,39 @@ The product uses restrained agriculture photography, a warm field palette, compa
 - **Native browser primitives** for responsive images, focus states and reduced-motion support.
 
 The visual goal is deliberately practical: a calm agricultural operations product, not an AI landing-page template.
+
+## Operations map
+
+The Tracking workspace uses Leaflet and explicitly labelled data layers to help field teams inspect operational context. It is a planning and coordination view—not an authoritative cadastral map or proof of service completion.
+
+### Map controls
+
+| Control | What it does | Important caveat |
+|---|---|---|
+| **Find a field** | Search visible fields by Khasra reference, village, farmer, or record ID; select a result to focus the map | Search is limited to the fields available to the current session |
+| **GIS map layers** | Toggle field boundaries, machines, NASA FIRMS observations, residue lots, buyers, yards, weather planning, and routes | A layer is shown only when matching data and valid coordinates exist |
+| **Basemap** | Switch between street tiles, satellite imagery, and NASA GIBS imagery | External tile services require network access and remain subject to provider availability/terms |
+| **Field status legend** | Filter fields by lifecycle stage and see counts for each stage | Counts describe loaded records, not all farms in a district |
+| **Hotspot shortcuts** | Move the map to selected Punjab reference areas | These are navigation shortcuts, not proof of an active fire or NIRDHOOM coverage |
+| **Zoom / show all fields** | Zoom in/out or fit the currently visible field set | The map falls back to a regional Punjab view when no valid field coordinates are available |
+
+### Data and trust rules
+
+- **Live GPS** comes from persisted device-location records with timestamps. Missing or stale readings must be shown as unavailable; the UI must not animate machines along invented routes in live mode.
+- **Demo GPS** is labelled as simulated. Never use demo positions to make operational claims.
+- **NASA FIRMS detections** are remote-sensing observations. They are not proof that a particular farmer burned a field, and no detection is not proof that no burning occurred.
+- **Field boundaries** are operational geometry until a trusted cadastral/Khasra source and provenance are attached.
+- **Buyer and yard pins** appear only when explicit valid coordinates exist. A reference listing or demand target is not a contract.
+- **Weather and routes** are planning aids; operators must confirm field conditions and actual assignments before dispatch.
+- Popup text is escaped before rendering through Leaflet's HTML popup API. Keep this protection in place whenever adding database-sourced labels.
+
+### Map troubleshooting
+
+1. If tiles are blank after opening a lazy-loaded workspace or resizing a drawer, resize the viewport and reload the map; the component observes container-size changes and calls Leaflet's `invalidateSize`.
+2. If the basemap is blank but controls work, check connectivity, browser network errors, and the tile provider's availability.
+3. If the field finder is empty, confirm the session can read field records and that the current filters are not hiding them.
+4. If live machine markers are absent, check authenticated access to location records and the last device timestamp. Do not switch to demo positions to conceal a live-data failure.
+5. On a small screen, collapse the field/layer panels and use the status legend's scroll area so map controls do not cover the entire map.
 
 ## What the product is intended to do
 
