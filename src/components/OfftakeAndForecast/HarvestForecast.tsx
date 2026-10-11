@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import { 
   Calendar, 
   Sparkles, 
@@ -69,6 +70,7 @@ const BLOCK_DATA: BlockForecast[] = [
 ];
 
 export const HarvestForecast: React.FC = () => {
+  const { t } = useAppLanguage();
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(14); // Mid-October
   const [selectedBlock, setSelectedBlock] = useState<string>('Sangrur Central');
 
@@ -93,14 +95,14 @@ export const HarvestForecast: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-[family-name:var(--font-display)] text-[24px] font-bold leading-tight text-[var(--ink)]">
-                Harvest pressure planning — illustrative
+                {t('Harvest pressure planning — illustrative')}
               </h3>
               <span className="badge badge-emerald text-xs">
-                Planning model • provider data required
+                {t('Planning model • provider data required')}
               </span>
             </div>
             <p className="ui-card-sub max-w-2xl !text-[14px]">
-              This workspace demonstrates how harvest timing could inform machine pre-positioning. The figures below are illustrative planning records unless a configured harvest-data provider supplies them.
+              {t('This workspace demonstrates how harvest timing could inform machine pre-positioning. The figures below are illustrative planning records unless a configured harvest-data provider supplies them.')}
             </p>
           </div>
         </div>
@@ -110,12 +112,12 @@ export const HarvestForecast: React.FC = () => {
       <div className="ui-card flex flex-col gap-4">
         <div className="flex items-center justify-between border-b border-emerald-900/10 pb-3">
           <div>
-            <span className="text-xs text-emerald-950/55 block">Harvest Horizon Slider:</span>
+            <span className="text-xs text-emerald-950/55 block">{t('Harvest Horizon Slider:')}</span>
             <div className="text-xl font-black text-emerald-950 font-semibold">{formattedDate}</div>
           </div>
 
           <div className="bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-900/10 text-xs">
-            <span className="text-emerald-950/55">Paddy Maturity Curve: </span>
+            <span className="text-emerald-950/55">{t('Paddy Maturity Curve:')} </span>
             <span className="font-bold text-emerald-800">
               {selectedDayIndex < 12 ? 'PR-126 Early Wave' : selectedDayIndex < 24 ? 'Peak Pusa-44 Influx' : 'Late Harvest Tail'}
             </span>
@@ -145,14 +147,14 @@ export const HarvestForecast: React.FC = () => {
             <Truck className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
             <div>
               <div className="font-bold text-emerald-950 text-sm">
-                Automated Fleet Pre-Positioning Advisory ({formattedDate})
+                {t('Automated Fleet Pre-Positioning Advisory')} ({formattedDate})
               </div>
               <p className="text-emerald-950/65 mt-0.5 leading-relaxed">
-                In this illustrative scenario, <strong>{currentBlock.name}</strong> is assigned a planning volume of{' '}
+                {t('In this illustrative scenario,')} <strong>{currentBlock.name}</strong> is assigned a planning volume of{' '}
                 <strong className="text-emerald-800">
                   {Math.round(currentBlock.totalAcres * (selectedDayIndex < 15 ? 0.04 : 0.08))} acres/day
                 </strong>{' '}
-                over the next 72 hours. The model suggests reviewing capacity for up to{' '}
+                {t('over the next 72 hours')}. The model suggests reviewing capacity for up to{' '}
                 <strong className="text-emerald-800">{currentBlock.recommendedBalerCount} balers</strong>, but this is a static scenario—not a live NDVI signal, measured harvest forecast, or verified machine recommendation.
               </p>
             </div>
