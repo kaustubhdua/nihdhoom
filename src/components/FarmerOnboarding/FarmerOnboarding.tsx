@@ -177,41 +177,45 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
       return;
     }
     setFieldBusy(true);
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        setFieldError('Your session expired. Please verify your phone again.');
+        return;
+      }
+      const { data, error } = await supabase
+        .from('fields')
+        .insert({
+          owner_id: userData.user.id,
+          khasra_no: khasra.trim(),
+          village: village.trim(),
+          block: block || null,
+          district,
+          crop: 'Paddy',
+          variety,
+          acreage: Math.round(acres * 100) / 100,
+          expected_harvest_date: harvestDate || null,
+          center_lat: latitude,
+          center_lng: longitude,
+          status: 'REGISTERED',
+        })
+        .select('id,khasra_no,village,acreage,status')
+        .single();
+      if (error || !data) {
+        setFieldError(error?.message || 'The field could not be saved. Please try again.');
+        return;
+      }
+      const saved = data as OwnedField;
+      setSavedField(saved);
+      setMyFields((list) => [saved, ...list]);
+      setKhasra(''); setAcreage(''); setHarvestDate(''); setLat(''); setLng('');
+      onFieldsChanged?.();
+      setCurrentStep('DONE');
+    } catch {
+      setFieldError('Field registration could not reach the server. Check your connection and try again.');
+    } finally {
       setFieldBusy(false);
-      setFieldError('Your session expired. Please verify your phone again.');
-      return;
     }
-    const { data, error } = await supabase
-      .from('fields')
-      .insert({
-        owner_id: userData.user.id,
-        khasra_no: khasra.trim(),
-        village: village.trim(),
-        block: block || null,
-        district,
-        crop: 'Paddy',
-        variety,
-        acreage: Math.round(acres * 100) / 100,
-        expected_harvest_date: harvestDate || null,
-        center_lat: latitude,
-        center_lng: longitude,
-        status: 'REGISTERED',
-      })
-      .select('id,khasra_no,village,acreage,status')
-      .single();
-    setFieldBusy(false);
-    if (error || !data) {
-      setFieldError(error?.message || 'The field could not be saved. Please try again.');
-      return;
-    }
-    const saved = data as OwnedField;
-    setSavedField(saved);
-    setMyFields((list) => [saved, ...list]);
-    setKhasra(''); setAcreage(''); setHarvestDate(''); setLat(''); setLng('');
-    onFieldsChanged?.();
-    setCurrentStep('DONE');
   };
 
   const withdrawConsent = async () => {
