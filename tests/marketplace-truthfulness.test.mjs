@@ -50,3 +50,20 @@ test('booking RPC field status matches the database constraint and prevents dupl
   assert.match(migration, /f\.status NOT IN \('REGISTERED', 'CANCELLED'\)/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.reserve_clearance_booking_v2\(uuid,date\) FROM PUBLIC, anon/);
 });
+
+test('live marketplace mutations never fall back to demo behavior when Supabase is missing', () => {
+  assert.doesNotMatch(marketplace, /demoMode\s*\|\|\s*!supabase/);
+  assert.match(marketplace, /Demo mode: buyer demand is not published to the live marketplace/);
+  assert.match(marketplace, /Live Supabase is not configured\. Buyer demand was not published/);
+  assert.match(marketplace, /Live Supabase is not configured\. No residue was added to the pool/);
+  assert.match(marketplace, /Live marketplace records could not be loaded because the server was unreachable/);
+  for (const handler of ['createBuyerDemand', 'createBuyerOffer', 'acceptOffer', 'transitionTransport']) {
+    const start = marketplace.indexOf(`async function ${handler}`);
+    assert.ok(start >= 0, `missing handler ${handler}`);
+    const next = marketplace.indexOf('\n  async function ', start + 1);
+    const end = next < 0 ? marketplace.length : next;
+    const body = marketplace.slice(start, end);
+    assert.match(body, /if \(demoMode\)/, `${handler} must fail closed in demo mode`);
+    assert.match(body, /if \(!supabase\)/, `${handler} must explain missing live configuration`);
+  }
+});
