@@ -21,7 +21,7 @@ test('final release gate explicitly separates CI from live environment proof', (
     'Observability, backup, recovery (P1)',
     'Field pilot and outcome evidence (P1)',
     'P2 — Post-pilot product improvements',
-    'Do not run `supabase db push` against the current production project',
+    'never run `supabase db push` against the current production project',
   ]) assert.ok(doc.includes(phrase), `missing release gate: ${phrase}`);
 });
 
