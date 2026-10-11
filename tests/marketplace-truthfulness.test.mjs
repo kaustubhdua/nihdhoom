@@ -37,3 +37,12 @@ test('booking date validation uses local calendar dates rather than UTC date sli
   assert.match(booking, /date < localDateString\(new Date\(\)\)/);
   assert.doesNotMatch(booking, /toISOString\(\)\.slice\(0, 10\)/);
 });
+
+test('booking RPC uses a valid field lifecycle status and rejects already-active fields', () => {
+  const migration = fs.readFileSync(new URL('../supabase/migrations/202610120001_nirdhoom_booking_field_status_consistency.sql', import.meta.url), 'utf8');
+  assert.match(migration, /fields_status_check/);
+  assert.match(migration, /f\.status NOT IN \('REGISTERED', 'CANCELLED'\)/);
+  assert.match(migration, /SET status = 'SCHEDULED'/);
+  assert.doesNotMatch(migration, /UPDATE public\.fields\s+SET status = 'BOOKED'/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.reserve_clearance_booking_v2\(uuid,date\) TO authenticated/);
+});
