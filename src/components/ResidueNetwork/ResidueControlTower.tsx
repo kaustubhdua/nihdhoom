@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import {
   AlertTriangle, ArrowRight, CheckCircle2, Clock3, Factory, Gauge, MapPinned,
   Route, ShieldAlert, Store, Tractor, Warehouse
