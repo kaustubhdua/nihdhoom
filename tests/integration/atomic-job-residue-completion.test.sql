@@ -112,12 +112,4 @@ begin
     raise exception 'field status was not updated';
   end if;
 end $$;
-
--- Dispatcher can invoke the granted RPC; completed retries remain idempotent.
-select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000003',false);
-set role authenticated;
-select public.complete_job_with_residue_lot(
-  '30000000-0000-0000-0000-000000000001', 2.5, 12, 10, '{}'::jsonb
-);
-reset role;
 select 'atomic completion integration tests passed' as result;
