@@ -80,6 +80,8 @@ The live database had **zero bookings and zero machine-capacity windows** at the
 7. Use `supabase migration repair` only for a documented ledger correction after confirming the SQL effects are already present. Never mark a migration applied if its effects are absent, and never rerun an already-applied DDL migration merely because its filename differs.
 8. Apply reviewed new migrations only through the approved release process, then re-query the remote ledger and schema before enabling any automated production push.
 
+The proposed P0 migration also adds `provider_observation_key` to `firms_observations`, backfills deterministic keys, and creates `firms_observation_field_matches` for many-to-many field linkage. The current FIRMS API release-branch code persists provider results through the server-only service-role credential and upserts both observations and matches idempotently. This is still an unapplied migration; verify the backfill, unique index, RLS grants, and match-table behavior in staging before any production application.
+
 The P0 migration's proposed grant changes are grounded in the same read-only audit: effective anon table privileges were present across the public schema, while all inspected row policies targeted `authenticated`; the only public-schema function with effective anon EXECUTE was `revoke_farmer_network_consent()`. The proposed migration revokes inherited table/view/sequence privileges from `PUBLIC` and `anon`, preserves authenticated grants and RLS policies, and makes consent withdrawal authenticated-only. This has **not** yet been verified in staging or production.
 
 ## Marketplace workflow proposal
