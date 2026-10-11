@@ -152,6 +152,7 @@ const translations: Record<string, string> = {
   'No live machine is assigned yet. Connect an operator machine record before starting field operations.': 'अभी कोई लाइव मशीन असाइन नहीं है। खेत का काम शुरू करने से पहले ऑपरेटर की मशीन जोड़ें।',
   'This deployment is not connected to a database.': 'यह डिप्लॉयमेंट डेटाबेस से जुड़ा नहीं है।',
   'Satellite': 'सैटेलाइट',
+  'NASA imagery': 'NASA इमेजरी',
   'Street map': 'सड़क मानचित्र',
   'Quality not verified': 'गुणवत्ता सत्यापित नहीं',
   'Moisture': 'नमी',
