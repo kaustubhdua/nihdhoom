@@ -15,7 +15,7 @@ test('verification UI does not claim an unsupported confidence or auto-verify fi
 test('demo walkthrough is browser-local and discloses simulation-only behavior', () => {
   const journey = read('../src/components/DemoScenarioJourney/DemoScenarioJourney.tsx');
   assert.match(journey, /SIMULATION ONLY/);
-  assert.match(journey, /nirdhoom\.demo\.journey\.v1/);
+  assert.match(journey, /nirdhoom\.demo\.journey\.v2/);
   assert.match(journey, /does not create real bookings/);
   assert.doesNotMatch(journey, /supabase|fetch\(/i);
 });
@@ -32,14 +32,14 @@ test('demo map labels synthetic fire, buyer and inventory records', () => {
 test('audit summary labels field count honestly', () => {
   const audit = read('../src/components/VerificationLayer/SatelliteAudit.tsx');
   assert.match(audit, /Fields in this review/);
-  assert.match(audit, /auditReport\\.totalFieldsAudited/);
+  assert.ok(audit.includes('auditReport.totalFieldsAudited'));
   assert.doesNotMatch(audit, /Fields checked/);
 });
 
 test('demo journey validates ordered history and never labels review as verified', () => {
   const journey = read('../src/components/DemoScenarioJourney/DemoScenarioJourney.tsx');
-  assert.match(journey, /const expected = STEPS\\[valid.length\\]/);
-  assert.match(journey, /Number\\.isFinite\\(Date\\.parse\\(event\\.at\\)\\)/);
+  assert.ok(journey.includes('const expected = STEPS[valid.length]'));
+  assert.ok(journey.includes('Number.isFinite(Date.parse(event.at))'));
   assert.match(journey, /REVIEW_SUBMITTED/);
   assert.doesNotMatch(journey, /Approve sample review/);
   assert.match(journey, /not a trusted server timestamp/);
