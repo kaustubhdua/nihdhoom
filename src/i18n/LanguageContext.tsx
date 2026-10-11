@@ -4,6 +4,9 @@ export type AppLanguage = 'en' | 'hi';
 type LanguageContextValue = { language: AppLanguage; setLanguage: (language: AppLanguage) => void; t: (english: string) => string };
 
 const translations: Record<string, string> = {
+  'Facility latitude': 'सुविधा का अक्षांश',
+  'Facility longitude': 'सुविधा का देशांतर',
+  'Radius matching uses the facility coordinates you enter. Check them carefully; coordinates are not independently verified.': 'दूरी का मिलान आपके दिए गए सुविधा निर्देशांकों से होगा। इन्हें ध्यान से जाँचें; निर्देशांक स्वतंत्र रूप से सत्यापित नहीं हैं।',
   'Publish buyer demand': 'खरीदार की माँग प्रकाशित करें',
   'Residue type': 'पराली का प्रकार',
   'Target tonnes': 'लक्षित मात्रा (टन)',
