@@ -122,7 +122,14 @@ export function ResiduePooling({ fields, demoMode }: Props) {
       return;
     }
     if (demoMode || !supabase) {
-      setPools(prev => prev.map(p => p.id === poolId ? { ...p, current_tonnes: Math.min(p.target_tonnes, p.current_tonnes + tonnes), status: Math.min(p.target_tonnes, p.current_tonnes + tonnes) >= p.target_tonnes ? 'READY' : 'FILLING' } : p));
+      setPools(prev => {
+        const base = prev.length === 0 && pool?.id === 'demo-1' ? [pool] : prev;
+        return base.map(p => {
+          if (p.id !== poolId) return p;
+          const current_tonnes = Math.min(p.target_tonnes, p.current_tonnes + tonnes);
+          return { ...p, current_tonnes, status: current_tonnes >= p.target_tonnes ? 'READY' : 'FILLING' };
+        });
+      });
       setNotice(`Demo: committed ${tonnes.toFixed(1)} t to the pool. No sale or payment was executed.`);
       return;
     }
