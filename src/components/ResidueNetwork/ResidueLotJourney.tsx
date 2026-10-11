@@ -89,7 +89,7 @@ export function ResidueLotJourney({ field, machine, demoMode }: Props) {
       <div className="residue-journey-header">
         <div>
           <span className="residue-journey-kicker">FIELD → RESIDUE → MARKET</span>
-          <h2 id="residue-journey-title">Residue lot journey</h2>
+          <h2 id="residue-journey-title">{t('Residue lot journey')}</h2>
           <p>
             One traceable story from the field to a potential buyer. External observations support the record; they do not replace it.
           </p>
