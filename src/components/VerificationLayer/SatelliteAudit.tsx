@@ -37,6 +37,63 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
   const [reviewingFieldId, setReviewingFieldId] = useState<string | null>(null);
   const [reviewMessage, setReviewMessage] = useState('');
   const [reviewFocus, setReviewFocus] = useState<{ id: string; nonce: number } | null>(null);
+  const [firmsBusyFieldId, setFirmsBusyFieldId] = useState<string | null>(null);
+  const [firmsScreenings, setFirmsScreenings] = useState<Record<string, { count: number; matchedCount: number; queriedAt: string; error?: string }>>({});
+
+  const screenFieldWithFirms = async (field: Field) => {
+    if (demoMode || firmsBusyFieldId) return;
+    setFirmsBusyFieldId(field.id);
+    setFirmsScreenings((current) => {
+      const next = { ...current };
+      delete next[field.id];
+      return next;
+    });
+    try {
+      if (!supabase) throw new Error('Live Supabase is not configured.');
+      if (!field.dbId || !Number.isFinite(field.center?.lat) || !Number.isFinite(field.center?.lng) ||
+          field.center.lat < -90 || field.center.lat > 90 || field.center.lng < -180 || field.center.lng > 180 ||
+          !Array.isArray(field.geometry) || field.geometry.length < 3) {
+        throw new Error('A saved field UUID, valid centre and field boundary are required for spatial screening.');
+      }
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (sessionError || !token) throw new Error('Sign in again before requesting NASA FIRMS observations.');
+      const response = await fetch('/api/firms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          field: {
+            lat: field.center.lat,
+            lng: field.center.lng,
+            geometry: field.geometry,
+          },
+          radius_km: 12,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(String(payload.error || 'FIRMS screening request failed.'));
+      setFirmsScreenings((current) => ({
+        ...current,
+        [field.id]: {
+          count: Number(payload.count || 0),
+          matchedCount: Number(payload.matched_count || 0),
+          queriedAt: String(payload.queried_at || new Date().toISOString()),
+        },
+      }));
+    } catch (error) {
+      setFirmsScreenings((current) => ({
+        ...current,
+        [field.id]: {
+          count: 0,
+          matchedCount: 0,
+          queriedAt: new Date().toISOString(),
+          error: error instanceof Error ? error.message : 'FIRMS screening failed.',
+        },
+      }));
+    } finally {
+      setFirmsBusyFieldId(null);
+    }
+  };
 
   const handleVerify = async (field: Field) => {
     setReviewingFieldId(field.id);
@@ -279,6 +336,15 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
                             {reviewingFieldId === field.id ? 'Reviewing…' : 'Review field record'}
                           </button>
                         )}
+                        {!demoMode && (
+                          <button
+                            onClick={() => void screenFieldWithFirms(field)}
+                            disabled={firmsBusyFieldId !== null}
+                            className="ui-btn is-sm"
+                          >
+                            {firmsBusyFieldId === field.id ? 'Querying FIRMS…' : 'Query NASA FIRMS'}
+                          </button>
+                        )}
                         {demoMode ? (
                           <button
                             onClick={() => handleOpenRecord(field.id)}
@@ -292,6 +358,19 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
                           </span>
                         )}
                       </div>
+                    </td>
+                    <td className="py-3 px-3" colSpan={0}>
+                      {firmsScreenings[field.id] && (
+                        <div className="text-xs" role="status">
+                          {firmsScreenings[field.id].error ? (
+                            <span className="text-red-700">{firmsScreenings[field.id].error}</span>
+                          ) : (
+                            <span className="text-[var(--muted)]">
+                              NASA FIRMS queried {new Date(firmsScreenings[field.id].queriedAt).toLocaleString()} · {firmsScreenings[field.id].count} nearby observations · {firmsScreenings[field.id].matchedCount} matched to this boundary. Screening only—not verification; results are not persisted.
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
