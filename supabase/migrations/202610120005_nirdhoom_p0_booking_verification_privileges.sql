@@ -624,7 +624,7 @@ GRANT EXECUTE ON FUNCTION public.revoke_farmer_network_consent() TO authenticate
 
 GRANT ALL PRIVILEGES ON TABLE public.firms_observations, public.firms_observation_field_matches TO service_role;
 
-REVOKE ALL ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) FROM PUBLIC, anon;(uuid,date) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) TO authenticated;
 REVOKE ALL ON FUNCTION public.cancel_clearance_booking(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.cancel_clearance_booking(uuid) TO authenticated;
