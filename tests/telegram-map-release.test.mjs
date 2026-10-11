@@ -85,6 +85,12 @@ test('farmer onboarding wires OTP, consent and field creation', () => {
   has(language, 'document.documentElement.lang = language');
 });
 
+test('Telegram setup preserves queued updates when registering the webhook', () => {
+  const setup = read('scripts/telegram-setup.mjs');
+  has(setup, 'drop_pending_updates: false');
+  assert.doesNotMatch(setup, /drop_pending_updates:\s*true/);
+});
+
 test('Telegram UI exposes readiness, loading, and account-link errors', () => {
   const ui = read('src/components/FarmerSurface/TelegramChannel.tsx');
   for (const item of ['botReady', 'accountFeatures', 'linking', 'linkError', 'api/notify/telegram-link', 'Connect my NIRDHOOM account']) has(ui, item);
