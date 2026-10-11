@@ -29,6 +29,12 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [consentAccepted, setConsentAccepted] = useState(false);
+  const [serverQuote, setServerQuote] = useState<number | null>(null);
+  const maxBookingDate = useMemo(() => {
+    const value = new Date();
+    value.setDate(value.getDate() + 90);
+    return String(value.getFullYear()) + '-' + String(value.getMonth() + 1).padStart(2, '0') + '-' + String(value.getDate()).padStart(2, '0');
+  }, []);
 
   useEffect(() => {
     if (!fieldId && bookable[0]?.id) setFieldId(bookable[0].id);
@@ -43,6 +49,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
   async function book() {
     setError('');
     setMessage('');
+    setServerQuote(null);
     if (!selected || !date) {
       setError('Please choose your field and pickup date first.');
       return;
@@ -98,13 +105,18 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
         if (profileError) throw new Error(`Consent was recorded but profile status could not be updated: ${profileError.message}`);
       }
 
+      const { error: consentError } = await supabase.rpc('record_farmer_network_consent');
+      if (consentError) throw new Error(consentError.message);
       const { data, error: rpcError } = await supabase.rpc('reserve_clearance_booking_v2', {
         p_field_id: selected.dbId || selected.id,
         p_requested_date: date,
       });
       if (rpcError) throw new Error(rpcError.message);
-      onBooked(selected.id, Number((data as { quoted_amount?: number } | null)?.quoted_amount || 0));
-      setMessage(`${t('Book parali pickup')} confirmed by the server. The authoritative quote is shown in your field record.`);
+      const quote = Number((data as { quoted_amount?: number } | null)?.quoted_amount || 0);
+      if (!Number.isFinite(quote) || quote <= 0) throw new Error('Booking was created but the server returned no valid quote. Refresh your bookings before retrying.');
+      setServerQuote(quote);
+      onBooked(selected.id, quote);
+      setMessage(`${t('Book parali pickup')} confirmed by the server.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Booking could not be created.');
     } finally {
@@ -142,7 +154,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
       <section className="ui-split">
         <div className="ui-card">
           <label className="ui-label mb-2 block">{t('Field')}</label>
-          <select value={fieldId} onChange={(e) => setFieldId(e.target.value)} className="ui-select">
+          <select value={fieldId} onChange={(e) => { setFieldId(e.target.value); setServerQuote(null); setError(''); setMessage(''); }} className="ui-select">
             {bookable.length === 0 && <option value="">{t('No bookable fields')}</option>}
             {bookable.map((field) => (
               <option key={field.id} value={field.id}>{field.khasra_no} · {field.village} · {Number(field.acreage).toFixed(2)} ac</option>
@@ -196,8 +208,8 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
           </div>
           <div className="mt-6 rounded-2xl border border-[var(--wheat-line)] bg-[var(--surface)] p-4 shadow-sm">
             <span className="ui-kv-label block">{demoMode ? 'Example estimate' : 'Server quote'}</span>
-            <strong className="mt-1 block font-[family-name:var(--font-display)] text-[30px] font-bold leading-tight text-[var(--ink)]">{demoMode ? `₹${estimate.toLocaleString()}` : 'Shown after booking'}</strong>
-            <span className="text-[12px] text-[var(--muted)]">{demoMode ? 'Example only · no payment is made' : 'Authoritative quote comes from the server'}</span>
+            <strong className="mt-1 block font-[family-name:var(--font-display)] text-[30px] font-bold leading-tight text-[var(--ink)]">{demoMode ? `₹${estimate.toLocaleString()}` : serverQuote !== null ? `₹${serverQuote.toLocaleString('en-IN')}` : 'Shown after booking'}</strong>
+            <span className="text-[12px] text-[var(--muted)]">{demoMode ? 'Example only · no payment is made' : serverQuote !== null ? 'Server-confirmed quote · no payment has been taken' : 'Authoritative quote comes from the server'}</span>
           </div>
         </aside>
       </section>
