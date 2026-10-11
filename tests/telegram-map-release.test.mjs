@@ -39,6 +39,8 @@ test('OTP requests catch failures and release loading state', () => {
   has(onboarding, 'phoneDigits.length !== 10');
   has(onboarding, 'missing its Supabase URL or publishable key');
   has(onboarding, 'OTP request failed before Supabase returned a response');
+  has(onboarding, 'aria-live="assertive"');
+  has(onboarding, 'Phone sign-in and an SMS provider must be enabled in Supabase');
 });
 
 test('Telegram webhook validates secrets, bounds payloads and deduplicates updates', () => {
