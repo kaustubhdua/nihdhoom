@@ -387,7 +387,8 @@ export const OpsMap: React.FC<OpsMapProps> = ({
             <div><strong>Capacity:</strong> ${escapeHtml(machine.capacity_acres_day)} acres/day</div>
             <div><strong>Tractor:</strong> ${escapeHtml(machine.tractor_hp_required ? machine.tractor_hp_required + " HP" : "Not sourced")}</div>
             <div><strong>Residue:</strong> ${escapeHtml((machine.residue_types || ["Not established"]).join(", "))}</div>
-            <div><strong>Operator:</strong> ${escapeHtml(machine.operator_name)} (${escapeHtml(machine.operator_phone)})</div>
+            <div><strong>Operator:</strong> ${escapeHtml(machine.operator_name)}</div>
+            <div><strong>Contact:</strong> ${demoMode ? "Demo placeholder — not a real contact" : escapeHtml(machine.operator_phone || "Not provided")}</div>
             </div>
             <div class="map-pop-note">Capability source: ${escapeHtml(machine.capability_source || "Not established")}${machine.capability_source_date ? " · " + escapeHtml(machine.capability_source_date) : ""}</div>
             <div class="map-pop-status"><strong>Status:</strong> <span class="map-pop-chip is-green">${escapeHtml(machine.status)}</span></div>
