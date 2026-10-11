@@ -364,8 +364,10 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
             <span>{t('Operator session')}</span>
             <div className="device-notch"></div>
             <div className="flex items-center gap-1.5 text-xs">
-              <Wifi className="w-3 h-3 text-emerald-400" />
-              <span>{demoMode ? t('PWA Simulation') : t('PWA / device sync')}</span>
+              {offlineSyncActive
+                ? <Wifi className="w-3 h-3 text-emerald-400" aria-hidden="true" />
+                : <WifiOff className="w-3 h-3 text-amber-300" aria-hidden="true" />}
+              <span>{offlineSyncActive ? t('Online') : t('Offline — queued changes will sync later')}</span>
             </div>
           </div>
 
