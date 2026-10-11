@@ -2,7 +2,7 @@
 -- This bundle is for a NEW project only. Do not paste into an existing production database.
 -- Production history uses legacy server-assigned migration versions; see docs/DATABASE-RELEASE-LEDGER.md.
 -- The buyer-offer/transport workflow proposal is intentionally excluded until its staging authorization matrix passes.
--- Generated 2026-10-11 from 36 approved migrations.
+-- Generated 2026-10-11 from 37 approved migrations.
 
 -- >>> 202609270001_nirdhoom_core.sql
 -- NIRDHOOM core schema. Run in Supabase SQL Editor or as a migration.
