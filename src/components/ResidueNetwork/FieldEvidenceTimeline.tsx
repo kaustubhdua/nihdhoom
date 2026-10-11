@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import {
   CheckCircle2,
   CircleDot,
@@ -50,6 +51,7 @@ function eventLabel(eventType: string) {
 }
 
 export function FieldEvidenceTimeline({ field, machine, demoMode }: Props) {
+  const { t } = useAppLanguage();
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -156,7 +158,7 @@ export function FieldEvidenceTimeline({ field, machine, demoMode }: Props) {
               ? `${evidenceItem.latitude.toFixed(5)}, ${evidenceItem.longitude.toFixed(5)}`
               : 'Location coordinates are not available.'
             : isSatellite
-              ? 'Remote sensing is supporting evidence only; absence of a detection does not prove no burning.'
+              ? '{t('Remote sensing')} is supporting evidence only; absence of a detection does not prove no burning.'
               : 'Evidence asset linked to the field record.',
           source: sourceLabel(evidenceItem.source || (isSatellite ? 'NASA_FIRMS' : 'OPERATOR_EVIDENCE')),
           icon: isGps ? MapPin : isSatellite ? Satellite : FileCheck2,
@@ -229,7 +231,7 @@ export function FieldEvidenceTimeline({ field, machine, demoMode }: Props) {
       <div className="residue-journey-header">
         <div>
           <span className="residue-journey-kicker">FIELD EVIDENCE TIMELINE</span>
-          <h2 id="field-evidence-title">One chronological record</h2>
+          <h2 id="field-evidence-title">{t('One chronological record')}</h2>
           <p>
             Harvest, pickup, machine, evidence and verification stay together. Each item names its source instead of implying certainty that the record does not have.
           </p>
@@ -243,7 +245,7 @@ export function FieldEvidenceTimeline({ field, machine, demoMode }: Props) {
       {items.length === 0 ? (
         <div className="market-empty mt-4">
           <Clock3 className="market-empty-icon" />
-          <strong>No field evidence events yet</strong>
+          <strong>{t('No field evidence events yet')}</strong>
           <p>Once a booking, operator event or evidence asset is recorded, the timeline will appear here.</p>
         </div>
       ) : (
@@ -270,8 +272,8 @@ export function FieldEvidenceTimeline({ field, machine, demoMode }: Props) {
       )}
 
       <div className="field-evidence-trust-strip">
-        <div><strong>Field boundary</strong><span>{sourceLabel(field.provenance?.geometry)}</span></div>
-        <div><strong>Remote sensing</strong><span>Supporting evidence only</span></div>
+        <div><strong>{t('Field boundary')}</strong><span>{sourceLabel(field.provenance?.geometry)}</span></div>
+        <div><strong>Remote sensing</strong><span>{t('Supporting evidence only')}</span></div>
         <div><strong>Residue</strong><span>{field.residue_lot_id ? 'Lot linked' : 'Lot not established'}</span></div>
         <div><strong>Latest</strong><span>{latest ? latest.source : 'No source yet'}</span></div>
       </div>
