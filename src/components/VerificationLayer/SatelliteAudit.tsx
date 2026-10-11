@@ -103,9 +103,9 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
 
           <div className="flex shrink-0 items-center gap-4 rounded-2xl border border-[var(--brand-line)] bg-[var(--brand-soft)] px-5 py-4">
             <div>
-              <span className="ui-kv-label block">{t('Fields checked')}</span>
+              <span className="ui-kv-label block">{t('Fields in this review')}</span>
               <div className="font-[family-name:var(--font-display)] text-[34px] font-bold leading-none text-[var(--brand-ink)]">
-                {auditReport.complianceRate}%
+                {auditReport.totalFieldsAudited}
               </div>
             </div>
             <ShieldCheck className="w-8 h-8 text-[var(--brand)]" />
@@ -126,7 +126,7 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
                 {t('FIRMS / VIIRS thermal observations')}
               </span>
               <p className="mt-2 text-[15px] font-semibold text-white">
-                {auditReport.dataAvailability === 'NO_OBSERVATIONS' ? 'No remote-sensing observations are currently available for field screening' : `Matched ${auditReport.cleanFieldsCount} field(s) without a detected fire point in the supplied observations`}
+                {auditReport.dataAvailability === 'NO_OBSERVATIONS' ? 'No remote-sensing observations are currently available for field screening' : `${auditReport.cleanFieldsCount} field(s) have no fire point matched in supplied observations; this is not proof of no burning`}
               </p>
             </div>
             <div className="text-right hidden sm:block">
@@ -265,7 +265,7 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
                     </td>
                     <td className="py-3 px-3">
                       <span className="ui-chip is-wheat">
-                        {demoMode ? 'DEMO / ILLUSTRATIVE' : field.status === 'VERIFIED_NON_BURN' ? 'INTERNAL VERIFIED' : 'NOT VERIFIED'}
+                        {demoMode ? 'DEMO / ILLUSTRATIVE' : field.status === 'VERIFIED_NON_BURN' ? 'INTERNAL STATUS — REVIEW SOURCE' : 'NOT VERIFIED'}
                       </span>
                     </td>
                     <td className="py-3 px-3 text-right">
