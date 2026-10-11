@@ -44,7 +44,7 @@ export function FieldProvenancePanel({ fields, demoMode }: Props) {
         <div className="ui-intro-copy">
           <div className="flex items-center gap-3">
             <MapPinned className="h-6 w-6 text-[var(--brand)]" />
-            <h2 className="ui-title !mt-0">{t('{t('Field provenance & verification')}')}</h2>
+            <h2 className="ui-title !mt-0">{t('Field provenance & verification')}</h2>
           </div>
           <p className="ui-lede">Every operational field value should have a source before it is treated as authoritative.</p>
         </div>
