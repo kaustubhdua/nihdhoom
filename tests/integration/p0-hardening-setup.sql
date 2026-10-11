@@ -95,3 +95,7 @@ INSERT INTO public.machine_capacity_windows(id,machine_id,window_start,window_en
 VALUES ('00000000-0000-0000-0000-000000000300','00000000-0000-0000-0000-000000000100',
   ((CURRENT_DATE+2)::timestamp AT TIME ZONE 'Asia/Kolkata'),
   ((CURRENT_DATE+3)::timestamp AT TIME ZONE 'Asia/Kolkata'),1.00,0,'OPEN');
+INSERT INTO public.machine_capacity_windows(id,machine_id,window_start,window_end,capacity_acres,reserved_acres,status)
+VALUES ('00000000-0000-0000-0000-000000000301','00000000-0000-0000-0000-000000000100',
+  ((CURRENT_DATE+2)::timestamp AT TIME ZONE 'Asia/Kolkata'),
+  ((CURRENT_DATE+3)::timestamp AT TIME ZONE 'Asia/Kolkata'),1.00,0,'OPEN');
