@@ -267,9 +267,13 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
     }, 900);
   };
 
-  const normalizedPhone = phone ? `+91${phone}` : '';
+  // Normalize a 10-digit Indian mobile number to E.164. The input strips
+  // punctuation, so this also protects against a pasted country code.
+  const phoneDigits = phone.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '');
+  const normalizedPhone = phoneDigits ? \`+91\${phoneDigits}\` : '';
 
   const sendLiveOtp = async () => {
+    if (loading) return;
     if (DEMO_MODE) {
       if (currentStep === 'PHONE') {
         advance();
@@ -281,29 +285,43 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
       return;
     }
     if (!supabase) {
-      setOtpError('Live authentication is not configured.');
-      return;
-    }
-    setLoading(true);
-    setOtpError('');
-    setOtpStatus('idle');
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: normalizedPhone,
-      options: { shouldCreateUser: true },
-    });
-    setLoading(false);
-    if (error) {
-      setOtpError(describeAuthError(error.message, 'Unable to send OTP.'));
+      setOtpError(t('Live authentication is not configured. Check the Supabase URL and publishable key for this deployment.'));
       setOtpStatus('error');
       return;
     }
-    setOtp('');
-    setResendSeconds(45);
-    setCurrentStep('OTP');
+    if (phoneDigits.length !== 10 || !name.trim()) {
+      setOtpError(t('Enter your name and a valid 10-digit Indian mobile number.'));
+      setOtpStatus('error');
+      return;
+    }
+
+    setLoading(true);
+    setOtpError('');
+    setOtpStatus('idle');
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: normalizedPhone,
+        options: { shouldCreateUser: true },
+      });
+      if (error) {
+        setOtpError(describeAuthError(error.message, t('Unable to send OTP. Check phone authentication and SMS provider settings.')));
+        setOtpStatus('error');
+        return;
+      }
+      setOtp('');
+      setResendSeconds(45);
+      setCurrentStep('OTP');
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      setOtpError(t('OTP request failed before Supabase returned a response. Check your connection and try again.') + \` (\${detail.slice(0, 180)})\`);
+      setOtpStatus('error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const verifyLiveOtp = async (code: string) => {
-    if (code.length !== 6) return;
+    if (code.length !== 6 || loading) return;
     if (DEMO_MODE) {
       if (code !== '842613') {
         setOtpError('That demo code is incorrect. Try 842613.');
@@ -315,40 +333,45 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
       return;
     }
     if (!supabase) {
-      setOtpError('Live authentication is not configured.');
+      setOtpError(t('Live authentication is not configured. Check the Supabase URL and publishable key for this deployment.'));
       setOtpStatus('error');
       return;
     }
     setLoading(true);
     setOtpError('');
     setOtpStatus('idle');
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone: normalizedPhone,
-      token: code,
-      type: 'sms',
-    });
-    if (error || !data.user) {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: normalizedPhone,
+        token: code,
+        type: 'sms',
+      });
+      if (error || !data.user) {
+        setOtpError(describeAuthError(error?.message, t('OTP verification failed. Please try again.')));
+        setOtpStatus('error');
+        return;
+      }
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: data.user.id,
+        full_name: name.trim(),
+        phone: normalizedPhone,
+        village: village.trim(),
+      }, { onConflict: 'id' });
+      if (profileError) {
+        setOtpError(profileError.message || t('Your phone was verified, but your farmer profile could not be saved.'));
+        setOtpStatus('error');
+        return;
+      }
+      setOtpStatus('success');
+      const hasConsent = await loadAccount(data.user.id);
+      window.setTimeout(() => setCurrentStep(hasConsent ? 'LAND_RECORDS' : 'CONSENT'), 650);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      setOtpError(t('OTP verification request failed. Check your connection and try again.') + \` (\${detail.slice(0, 180)})\`);
+      setOtpStatus('error');
+    } finally {
       setLoading(false);
-      setOtpError(describeAuthError(error?.message, 'OTP verification failed. Please try again.'));
-      setOtpStatus('error');
-      return;
     }
-    const { error: profileError } = await supabase.from('profiles').upsert({
-      id: data.user.id,
-      full_name: name,
-      phone: normalizedPhone,
-      village,
-    }, { onConflict: 'id' });
-    setLoading(false);
-    if (profileError) {
-      setOtpError(profileError.message || 'Verified, but farmer profile could not be saved.');
-      setOtpStatus('error');
-      return;
-    }
-    setOtpStatus('success');
-    // Returning farmers already gave consent: take them straight to their fields.
-    const hasConsent = await loadAccount(data.user.id);
-    window.setTimeout(() => setCurrentStep(hasConsent ? 'LAND_RECORDS' : 'CONSENT'), 650);
   };
 
   const reset = () => {
@@ -500,9 +523,15 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                     </div>
                   </div>
                 </div>
+                {!DEMO_MODE && !supabase && (
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-950/30 p-3 text-sm text-amber-100" role="alert">
+                    {t('Live login is unavailable because this deployment is missing its Supabase URL or publishable key.')}
+                  </div>
+                )}
                 <button
+                  type="button"
                   onClick={sendLiveOtp}
-                  disabled={!phone || phone.length < 10 || !name || loading}
+                  disabled={phoneDigits.length !== 10 || !name.trim() || loading || (!DEMO_MODE && !supabase)}
                   className="ui-btn is-primary is-lg is-block mt-auto"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
