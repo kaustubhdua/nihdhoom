@@ -108,7 +108,9 @@ test('React Bits LatticeLoader supports lifecycle states, patterns, timer, and r
 
 test('farmer login asks only for name and phone before OTP; field location stays in field registration', () => {
   const onboarding = read('src/components/FarmerOnboarding/FarmerOnboarding.tsx');
-  const phoneStep = onboarding.slice(onboarding.indexOf("currentStep === 'PHONE'"), onboarding.indexOf("currentStep === 'OTP'"));
+  const phoneStart = onboarding.lastIndexOf("currentStep === 'PHONE'");
+  const otpStart = onboarding.lastIndexOf("currentStep === 'OTP'");
+  const phoneStep = onboarding.slice(phoneStart, otpStart);
   const fieldStep = onboarding.slice(onboarding.indexOf('id="live-block"'));
   assert.ok(!phoneStep.includes('>Village<'), 'Village must not be part of initial phone login');
   assert.ok(!phoneStep.includes('Select Block'), 'Block/tehsil must not be part of initial phone login');
