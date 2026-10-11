@@ -53,15 +53,27 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
 
   const refreshBookings = useCallback(async () => {
     if (demoMode || !supabase || dbFieldIds.length === 0) {
-      setBookings([]); setBookingHistoryError(''); setBookingsLoading(false); return;
+      setBookings([]);
+      setBookingHistoryError('');
+      setBookingsLoading(false);
+      return;
     }
-    setBookingsLoading(true); setBookingHistoryError('');
-    const { data, error: queryError } = await supabase.from('bookings')
-      .select('id,field_id,requested_date,status,quoted_amount,created_at,cancelled_at')
-      .in('field_id', dbFieldIds).order('created_at', { ascending: false }).limit(25);
-    if (queryError) setBookingHistoryError('Could not load booking history. Please refresh and try again.');
-    else setBookings((data || []) as BookingRecord[]);
-    setBookingsLoading(false);
+    setBookingsLoading(true);
+    setBookingHistoryError('');
+    try {
+      const { data, error: queryError } = await supabase.from('bookings')
+        .select('id,field_id,requested_date,status,quoted_amount,created_at,cancelled_at')
+        .in('field_id', dbFieldIds).order('created_at', { ascending: false }).limit(25);
+      if (queryError) {
+        setBookingHistoryError('Could not load booking history. Please refresh and try again.');
+      } else {
+        setBookings((data || []) as BookingRecord[]);
+      }
+    } catch {
+      setBookingHistoryError('Could not load booking history because the server was unreachable. Check your connection and try again.');
+    } finally {
+      setBookingsLoading(false);
+    }
   }, [demoMode, dbFieldIds]);
 
   useEffect(() => { void refreshBookings(); }, [refreshBookings]);
