@@ -78,10 +78,7 @@ begin
   limit 1
   for update;
 
-  if j.status = 'COMPLETED' then
-    if not found then
-      raise exception 'Job is already completed without a residue lot; operator recovery is required';
-    end if;
+  if j.status = 'COMPLETED' and found then
     return jsonb_build_object(
       'job_id', j.id,
       'job_status', j.status,
@@ -91,8 +88,11 @@ begin
     );
   end if;
 
-  if j.status <> 'PROOF_PENDING' then
+  if j.status not in ('PROOF_PENDING', 'COMPLETED') then
     raise exception 'Job must be in PROOF_PENDING status before completion';
+  end if;
+  if found and j.status <> 'COMPLETED' then
+    raise exception 'A residue lot already exists for this unfinished job; operator review is required';
   end if;
 
   insert into public.residue_lots (
