@@ -9,7 +9,7 @@
 - `REQUESTED` + `reservation_state=UNCONFIRMED` means a request was saved but no capacity was reserved. Its requested date is indicative only; `guaranteed_by_date` is null and penalty is zero.
 - `MACHINE_ASSIGNED` + `reservation_state=RESERVED` is written only in the same transaction that locks an eligible machine-capacity window, increments `reserved_acres`, and creates an active `booking_capacity_reservations` row.
 - Capacity selection uses a row lock with `SKIP LOCKED`. A concurrent request that cannot lock sufficient remaining capacity remains unconfirmed rather than consuming the same capacity.
-- Deferred constraint triggers check both directions at transaction commit: a reserved booking must have an active reservation on the assigned machine, and an active reservation cannot be removed from a still-reserved booking.
+- Deferred constraint triggers check both directions at transaction commit: a reserved booking must have an active reservation on the assigned machine, an active reservation cannot be removed from a still-reserved booking, and each window's `reserved_acres` must equal the sum of its active reservation rows. Machine and window eligibility rows are locked together.
 - Cancellation releases reserved acres and the reservation in one transaction. A booking with a created job cannot be cancelled by the farmer; operations must resolve that workflow.
 - Service penalties remain disabled pending approved contractual terms.
 - Existing booking rows without reservation evidence are downgraded from unsupported guarantees to unconfirmed/non-penalty state. Historical quote values are retained.
