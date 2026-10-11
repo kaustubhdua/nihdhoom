@@ -302,6 +302,9 @@ BEGIN
   IF b.status NOT IN ('REQUESTED','BOOKED','MACHINE_ASSIGNED') THEN
     RAISE EXCEPTION 'Booking cannot be cancelled at this stage';
   END IF;
+  IF EXISTS (SELECT 1 FROM public.jobs j WHERE j.booking_id = b.id) THEN
+    RAISE EXCEPTION 'A booking with a created job must be resolved by operations, not cancelled by the farmer';
+  END IF;
 
   SELECT * INTO r FROM public.booking_capacity_reservations
   WHERE booking_id = b.id AND status = 'ACTIVE' FOR UPDATE;
