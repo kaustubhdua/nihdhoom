@@ -1,7 +1,10 @@
 \set ON_ERROR_STOP on
 -- The direct UPDATE grant must be column-scoped after the migration.
-DO $$
+DO $
 BEGIN
+  IF has_table_privilege('authenticated', 'public.consents', 'INSERT') THEN
+    RAISE EXCEPTION 'authenticated still has direct INSERT on consents';
+  END IF;
   IF has_table_privilege('authenticated', 'public.consents', 'UPDATE') THEN
     RAISE EXCEPTION 'authenticated still has table-wide UPDATE on consents';
   END IF;
