@@ -11,6 +11,8 @@ const translations: Record<string, string> = {
   'Operator session': 'ऑपरेटर सत्र',
   'PWA Simulation': 'PWA उदाहरण',
   'PWA / device sync': 'PWA / डिवाइस सिंक',
+  'Online': 'ऑनलाइन',
+  'Offline — queued changes will sync later': 'ऑफ़लाइन — कतार में रखे बदलाव कनेक्शन लौटने पर सिंक होंगे',
   'GPS status': 'GPS स्थिति',
   'Location available': 'स्थान उपलब्ध',
   'Waiting for device location': 'डिवाइस लोकेशन का इंतज़ार',
