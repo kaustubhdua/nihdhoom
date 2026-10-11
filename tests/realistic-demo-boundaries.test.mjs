@@ -54,4 +54,12 @@ test('live FIRMS screening is authenticated, explicit and not presented as verif
   assert.match(audit, /Query NASA FIRMS/);
   assert.match(audit, /Screening only—not verification; results are not persisted/);
   assert.match(audit, /A saved field UUID, valid centre and field boundary are required/);
+  assert.match(audit, /field_id: field\.dbId/);
+  assert.doesNotMatch(audit, /body: JSON\.stringify\(\{\s*field:\s*\{/);
+  const api = read('../api/firms.ts');
+  assert.match(api, /const user = await verifyUser\(req\)/);
+  assert.match(api, /rest\/v1\/fields\?id=eq\./);
+  assert.match(api, /Authorization: authorization/);
+  assert.match(api, /A valid saved field boundary is required/);
+  assert.doesNotMatch(api, /REQUIRE_AUTH_FOR_FIRMS !== 'false'/);
 });
