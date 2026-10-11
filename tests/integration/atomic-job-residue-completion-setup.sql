@@ -17,7 +17,11 @@ create table public.consents (
 ALTER TABLE public.consents ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "ci select own consent" ON public.consents FOR SELECT TO authenticated USING (profile_id = (SELECT auth.uid()));
 GRANT SELECT ON TABLE public.consents TO authenticated;
-GRANT UPDATE ON TABLE public.consents TO authenticated;
+GRANT INSERT, UPDATE ON TABLE public.consents TO authenticated;
+CREATE OR REPLACE FUNCTION public.record_farmer_network_consent()
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
+AS 'BEGIN INSERT INTO public.consents(profile_id, consent_type, version, accepted_at, revoked_at, source) VALUES (auth.uid(), ''farmer_network'', ''ci-rpc'', now(), NULL, ''ci''); END;';
+GRANT EXECUTE ON FUNCTION public.record_farmer_network_consent() TO authenticated;
 create table public.fields (
   id uuid primary key, owner_id uuid not null, crop text not null default 'Paddy',
   expected_harvest_date date, clearance_deadline timestamptz, boundary_source text,
