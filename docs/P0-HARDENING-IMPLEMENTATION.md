@@ -1,7 +1,7 @@
 # NIRDHOOM P0 hardening implementation
 
 **Status:** proposed migration and tests in review; not applied to production.
-**Migration:** `202610130001_nirdhoom_p0_booking_verification_privileges.sql`
+**Migration:** `202610120005_nirdhoom_p0_booking_verification_privileges.sql`
 **Branch:** `fix/p0-booking-verification-privileges`
 
 ## P0-A — Capacity-backed booking state
