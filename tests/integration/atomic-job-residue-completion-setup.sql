@@ -2,9 +2,10 @@
 create role anon nologin;
 create role authenticated nologin;
 create schema if not exists auth;
-create or replace function auth.uid() returns uuid language sql stable as $$
+create or replace function auth.uid() returns uuid language sql stable as $
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
-$$;
+$;
+GRANT USAGE ON SCHEMA auth TO authenticated;
 create table public.profiles (id uuid primary key, role text not null);
 create table public.consents (
   id uuid primary key default gen_random_uuid(),
