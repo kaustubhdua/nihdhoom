@@ -230,23 +230,10 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
         setWithdrawMessage('Your session has expired. Sign in again to manage consent.');
         return;
       }
-      const now = new Date().toISOString();
-      const { error: consentError } = await supabase
-        .from('consents')
-        .update({ revoked_at: now })
-        .eq('profile_id', data.user.id)
-        .eq('consent_type', 'farmer_network')
-        .is('revoked_at', null);
-      if (consentError) {
-        setWithdrawMessage(consentError.message || 'Consent could not be withdrawn.');
-        return;
-      }
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ consent_status: 'REVOKED' })
-        .eq('id', data.user.id);
-      if (profileError) {
-        setWithdrawMessage(profileError.message || 'Consent was revoked, but profile status could not be updated.');
+      // Use the database transaction so consent history and profile status cannot diverge.
+      const { error } = await supabase.rpc('revoke_farmer_network_consent');
+      if (error) {
+        setWithdrawMessage(error.message || 'Consent could not be withdrawn.');
         return;
       }
       setActiveConsent(false);
