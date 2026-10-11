@@ -1,6 +1,22 @@
 -- Complete the buyer-offer -> farmer acceptance -> transport/delivery workflow.
 -- This migration is intentionally PR-only until its authorization matrix passes against staging.
 
+-- Buyer facility coordinates enable honest radius-based matching; coordinates are buyer-supplied and should be verified operationally.
+ALTER TABLE public.buyer_demands ADD COLUMN IF NOT EXISTS location_lat double precision;
+ALTER TABLE public.buyer_demands ADD COLUMN IF NOT EXISTS location_lng double precision;
+DO $constraints$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'buyer_demands_location_lat_range') THEN
+    ALTER TABLE public.buyer_demands ADD CONSTRAINT buyer_demands_location_lat_range
+      CHECK (location_lat IS NULL OR location_lat BETWEEN -90 AND 90);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'buyer_demands_location_lng_range') THEN
+    ALTER TABLE public.buyer_demands ADD CONSTRAINT buyer_demands_location_lng_range
+      CHECK (location_lng IS NULL OR location_lng BETWEEN -180 AND 180);
+  END IF;
+END;
+$constraints$;
+
 CREATE OR REPLACE FUNCTION public.matchable_residue_lots()
 RETURNS TABLE (
   lot_id uuid,
@@ -49,6 +65,13 @@ BEGIN
         AND (lower(trim(d.residue_type)) = lower(trim(l.residue_type)) OR lower(trim(d.residue_type)) IN ('any','all'))
         AND (d.max_moisture_pct IS NULL OR l.moisture_pct IS NULL OR l.moisture_pct <= d.max_moisture_pct)
         AND (l.pickup_deadline IS NULL OR l.pickup_deadline::date <= d.pickup_deadline)
+        AND d.location_lat IS NOT NULL AND d.location_lng IS NOT NULL
+        AND f.center_lat IS NOT NULL AND f.center_lng IS NOT NULL
+        AND 6371 * acos(greatest(-1::double precision, least(1::double precision,
+          sin(radians(d.location_lat)) * sin(radians(f.center_lat)) +
+          cos(radians(d.location_lat)) * cos(radians(f.center_lat)) *
+          cos(radians(f.center_lng - d.location_lng))
+        ))) <= d.radius_km
     )
   ORDER BY l.pickup_deadline NULLS LAST, l.created_at DESC;
 END;
