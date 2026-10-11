@@ -31,6 +31,8 @@ test('live map uses stored device locations instead of simulated GPS movement', 
 test('buyers can offer only on verified available lots and cannot accept their own offer', () => {
   assert.match(workflow, /CREATE OR REPLACE FUNCTION public\.matchable_residue_lots\(\)/i);
   assert.match(workflow, /l\.verified_quantity_tonnes > 0/i);
+  assert.match(workflow, /d\.location_lat IS NOT NULL AND d\.location_lng IS NOT NULL/i);
+  assert.match(workflow, /<= d\.radius_km/i);
   assert.match(workflow, /CREATE OR REPLACE FUNCTION public\.create_buyer_offer/i);
   assert.match(workflow, /COALESCE\(role_name, ''\) <> 'buyer'/i);
   assert.match(workflow, /p_quantity_tonnes > LEAST\(lot_row\.quantity_tonnes, lot_row\.verified_quantity_tonnes\)/i);
