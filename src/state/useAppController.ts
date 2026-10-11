@@ -274,9 +274,9 @@ export function useAppController() {
               ...field,
               status: newStatus,
               payout_amount: payoutAmt ?? field.payout_amount,
-              is_verified_non_burn:
-                newStatus === 'CLEARED_PENDING_AUDIT' ||
-                newStatus === 'VERIFIED_NON_BURN',
+              // Clearance is an operational milestone, not a verification decision.
+              // Only the explicit verified state may set this flag.
+              is_verified_non_burn: newStatus === 'VERIFIED_NON_BURN',
             }
           : field,
       ),
