@@ -93,12 +93,6 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: 'radius_km must be between 1 and 50' });
   }
 
-  const polygon = Array.isArray(field.geometry) ? field.geometry : [];
-  if (polygon.length && (polygon.length < 3 || polygon.length > 500 ||
-      polygon.some((point: any) => !validPoint(point)))) {
-    return res.status(400).json({ error: 'field.geometry must contain 3–500 valid coordinates' });
-  }
-
   const dLat = radius / 111;
   const dLng = radius / (111 * Math.max(0.2, Math.cos(Number(field.lat) * Math.PI / 180)));
   const bbox = `${Number(field.lng) - dLng},${Number(field.lat) - dLat},${Number(field.lng) + dLng},${Number(field.lat) + dLat}`;
