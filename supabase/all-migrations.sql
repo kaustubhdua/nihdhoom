@@ -3489,7 +3489,6 @@ BEGIN
   SELECT * INTO f FROM public.fields WHERE id = p_field_id FOR UPDATE;
   IF NOT FOUND OR f.owner_id <> auth.uid() THEN RAISE EXCEPTION 'Field is not owned by the current farmer'; END IF;
   IF f.status = 'VERIFIED_NON_BURN' THEN RAISE EXCEPTION 'This field is already verified as cleared and cannot be booked again'; END IF;
-  IF f.status NOT IN ('REGISTERED', 'CANCELLED') THEN RAISE EXCEPTION 'This field already has an active or completed clearance workflow'; END IF;
   IF NOT EXISTS (
     SELECT 1 FROM public.consents c
     WHERE c.profile_id = auth.uid() AND c.consent_type = 'farmer_network' AND c.revoked_at IS NULL
