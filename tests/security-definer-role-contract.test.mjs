@@ -10,7 +10,7 @@ const migrationNames = read('supabase/migration-order.txt').trim().split(/\r?\n/
 const migrationSql = migrationNames.map((name) => read(`supabase/migrations/${name}`)).join('\n');
 
 function latestFunction(name) {
-  const pattern = new RegExp(`CREATE OR REPLACE FUNCTION public\\.\\${name}\\s*\\(`, 'gi');
+  const pattern = new RegExp('CREATE OR REPLACE FUNCTION public\\\\.' + name + '\\\\s*\\\\(', 'gi');
   const matches = [...migrationSql.matchAll(pattern)];
   assert.ok(matches.length > 0, `missing SQL definition for public.${name}`);
   const start = matches[matches.length - 1].index;
