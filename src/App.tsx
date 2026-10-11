@@ -162,18 +162,18 @@ function WorkspaceHeader({ activeTab, demoMode, onNavigate }: WorkspaceHeaderPro
       <div className="workspace-hero-copy">
         <div className="workspace-eyebrow">
           <span className="workspace-eyebrow-dot" />
-          {meta.eyebrow}
-          <span className="workspace-mode">{demoMode ? 'Demo records' : 'Live records'}</span>
+          {t(meta.eyebrow)}
+          <span className="workspace-mode">{demoMode ? t('Demo records') : t('Live records')}</span>
         </div>
-        <h1 id="workspace-title">{meta.title}</h1>
-        <p>{meta.description}</p>
+        <h1 id="workspace-title">{t(meta.title)}</h1>
+        <p>{t(meta.description)}</p>
         {meta.action && (
           <button type="button" onClick={() => onNavigate(meta.action!.tab)} onMouseEnter={() => prefetchWorkspace(meta.action!.tab)} onFocus={() => prefetchWorkspace(meta.action!.tab)} className="workspace-action">
-            {meta.action.label} <span aria-hidden="true">→</span>
+            {t(meta.action.label)} <span aria-hidden="true">→</span>
           </button>
         )}
 
-        <div className="workspace-journey" aria-label="NIRDHOOM journey">
+        <div className="workspace-journey" aria-label={t('NIRDHOOM journey')}>
           {journey.map((item, index) => (
             <button
               key={item.label}
@@ -182,10 +182,10 @@ function WorkspaceHeader({ activeTab, demoMode, onNavigate }: WorkspaceHeaderPro
               onClick={() => onNavigate(item.tab)}
               onMouseEnter={() => prefetchWorkspace(item.tab)}
               onFocus={() => prefetchWorkspace(item.tab)}
-              title={item.label}
+              title={t(item.label)}
             >
               <span className="workspace-journey-number">{index + 1}</span>
-              <span>{item.label}</span>
+              <span>{t(item.label)}</span>
             </button>
           ))}
         </div>
@@ -246,7 +246,7 @@ export function App() {
       {!demoMode && !liveConfigured && (
         <div className="live-state-banner live-state-banner-error" role="alert">
           <strong>{t('This deployment is not connected to a database.')}</strong>
-          <span>Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Vercel for the environment that built this page, then redeploy.</span>
+          <span>{t('Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Vercel for the environment that built this page, then redeploy.')}</span>
         </div>
       )}
       {!demoMode && liveConfigured && loadingLiveData && <div className="live-state-banner live-state-banner-loading" role="status">{t('Loading live operational records…')}</div>}
