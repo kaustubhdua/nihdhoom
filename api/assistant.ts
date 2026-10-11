@@ -45,8 +45,17 @@ export default async function handler(req:any,res:any){
     try{const verify=await fetch(`${((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) || process.env.VITE_SUPABASE_URL)}/auth/v1/user`,{headers:{apikey:((process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY) || process.env.VITE_SUPABASE_PUBLISHABLE_KEY),Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(8000)});if(!verify.ok)return res.status(401).json({error:'Invalid session'})}catch{return res.status(401).json({error:'Authentication check failed'})}
   }
   let liveField=null;
-  if(token&&((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) || process.env.VITE_SUPABASE_URL)&&field?.dbId)liveField=await readLiveField(((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) || process.env.VITE_SUPABASE_URL),token,String(field.dbId));
-  const source=liveField||(field?.dbId?{}:(field||{}));
+  const supabaseUrl=(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
+  if (field?.dbId) {
+    liveField=await readLiveField(supabaseUrl || '',token,String(field.dbId));
+    // A requested database-backed field must never silently fall back to client data.
+    if (!liveField) return res.status(404).json({error:'Saved field not found or not accessible to this account'});
+  } else if (!demoMode) {
+    // In live mode the client cannot manufacture field facts by posting an arbitrary
+    // object. Require a saved field ID and derive the answer context from Supabase.
+    return res.status(400).json({error:'A saved field ID is required for live field-specific answers'});
+  }
+  const source=liveField||(demoMode?(field||{}):{});
   const safeField={id:source.id||'',village:typeof source.village==='string'?source.village:'',block:typeof source.block==='string'?source.block:'',acres:Number(source.acreage??source.acres??0),variety:typeof source.variety==='string'?source.variety:'',crop:typeof source.crop==='string'?source.crop:'Paddy',status:typeof source.status==='string'?source.status:'',machine:typeof source.machine==='string'?source.machine:'',payout:Number(source.payout||0),harvest:source.expected_harvest_date||source.harvest||'',deadline:source.clearance_deadline||source.deadline||''};
   try{
     const groqAnswer=await askGroq(question,safeField);
