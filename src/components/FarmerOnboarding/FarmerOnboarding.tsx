@@ -171,7 +171,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
     if (!supabase) { setFieldError('Live database is not configured.'); return; }
     if (!khasra.trim()) { setFieldError('Enter the Khasra or survey number from your land record.'); return; }
     if (!village.trim()) { setFieldError('Enter the village.'); return; }
-    if (!Number.isFinite(acres) || acres <= 0 || acres > 500) { setFieldError('Enter the area in acres, between 0.01 and 500.'); return; }
+    if (!Number.isFinite(acres) || acres < 0.01 || acres > 500) { setFieldError('Enter the area in acres, between 0.01 and 500.'); return; }
     if (!lat || !lng || !Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < 6 || latitude > 38 || longitude < 68 || longitude > 98) {
       setFieldError('Add the field location with the button, or type a valid latitude and longitude.');
       return;
