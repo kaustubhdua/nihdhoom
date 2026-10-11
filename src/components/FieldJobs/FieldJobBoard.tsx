@@ -85,7 +85,6 @@ const stageClasses: Record<string, string> = {
 };
 
 export function FieldJobBoard({
-  const { t } = useAppLanguage();
   fields,
   machines,
   demoMode,
@@ -94,6 +93,7 @@ export function FieldJobBoard({
   onOpenResidue,
   onOpenImpact,
 }: Props) {
+  const { t } = useAppLanguage();
   const [jobs, setJobs] = useState<JobRecord[]>([]);
   const [evidence, setProof] = useState<ProofRecord[]>([]);
   const [lots, setLots] = useState<LotRecord[]>([]);
