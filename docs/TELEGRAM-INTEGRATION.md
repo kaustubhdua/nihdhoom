@@ -61,8 +61,9 @@ The farmer surface links to https://t.me/<BOT_USERNAME>. The website now has an 
 6. Link Telegram identity to an authenticated NIRDHOOM profile before exposing field data.
 7. Store Telegram chat/user IDs as operational identifiers, not public farmer identity.
 8. Add consent and notification preferences.
-9. Add durable update_id deduplication before relying on side-effecting workflows.
-10. Keep payment disabled in this release.
+9. Confirm the `telegram_webhook_updates` migration is applied and that duplicate `update_id` values return a harmless duplicate acknowledgement. The current webhook claims an update before sending its reply; after a process crash, a claimed update may not be replayed, so do not use the webhook as a guaranteed delivery queue for critical alerts. For critical alerts, persist an outbound notification job and retry it independently.
+10. Test the bot with a linked test farmer: `/start`, link token, expired token, each inline menu, language switching, duplicate Telegram update, disabled notifications, missing Supabase config, and Bot API timeout.
+11. Keep payment disabled in this release.
 
 ## Setup
 
