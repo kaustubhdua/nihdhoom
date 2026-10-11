@@ -61,11 +61,7 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          field: {
-            lat: field.center.lat,
-            lng: field.center.lng,
-            geometry: field.geometry,
-          },
+          field_id: field.dbId,
           radius_km: 12,
         }),
       });
