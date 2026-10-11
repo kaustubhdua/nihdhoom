@@ -61,8 +61,8 @@ begin
 
   if not exists (
     select 1 from public.evidence_assets e
-    where e.booking_id = j.booking_id
-      and e.field_id = b.field_id
+    where e.field_id = b.field_id
+      and e.created_at >= j.created_at
       and e.kind in ('field_photo', 'bale_photo', 'weighment')
       and e.storage_path is not null
       and length(trim(e.storage_path)) > 0
