@@ -17,14 +17,14 @@
 ## P0-B — Truthful verification provenance
 
 - The method is `field_evidence_only` unless the verifier explicitly supplies FIRMS observation IDs.
-- Supplied IDs are validated against `firms_observations.matched_field_id`; unknown or mismatched IDs reject the review.
+- Supplied IDs are validated against `firms_observation_field_matches`; unknown or mismatched IDs reject the review. The legacy `matched_field_id` column is retained for compatibility, not trusted as the sole source of field linkage.
 - The event metadata records observation ID, source, sensor, acquisition timestamp, confidence, FRP, and temporal relation to job completion.
 - A missing or late observation is not interpreted as proof that no burning occurred. The human decision, confidence, and review trail remain explicit.
 
 ## P0-C — Least-privilege grants
 
 - Production read-only inspection on 2026-10-12 found effective anonymous table privileges across the public schema despite RLS policies targeting authenticated users.
-- The migration revokes table/view/materialized-view privileges and sequence privileges from `PUBLIC` and `anon` across `public`, without changing RLS policies or authenticated grants.
+- The migration revokes table/view/materialized-view privileges and sequence privileges from `PUBLIC` and `anon` across `public`, without changing RLS policies. It preserves existing authenticated grants for normal workflows but explicitly revokes client-role access to the server-only FIRMS observation and match tables.
 - Default table/sequence privileges for the standard `postgres` migration owner are narrowed to prevent grants from silently returning.
 - The consent-withdrawal RPC is changed to authenticated-only because the production function inventory showed it was the only public-schema function executable by `anon`.
 - Telegram link-token and webhook-update tables remain server-only; no broad policies are added to silence advisor warnings.
@@ -72,7 +72,7 @@ These are not marked complete by static inspection or isolated PostgreSQL tests.
 ## P2 sequence after core workflow reliability
 
 1. Residue custody/transport/inventory lineage and buyer contract/acceptance terms.
-2. FIRMS ingestion and provenance, weather/forecast/soil source lineage, and freshness/quality controls.
+2. Validate the newly implemented FIRMS persistence and match workflow in staging; implement weather/forecast/soil source lineage and freshness/quality controls.
 3. AI Sathi authorization, timeouts, safe fallback, and source-backed operational analytics.
 4. Monitoring/alert ownership, backup retention, restore drills, incident response, and pilot outcome tracking.
 5. Carbon-accounting validation and independent methodology review before any credit/impact claim.
