@@ -1,0 +1,154 @@
+# NIRDHOOM final release gate
+
+Updated: 2026-10-12
+
+This checklist is the release contract for the next NIRDHOOM field pilot. It deliberately separates repository/CI evidence from proof that a connected external service works. A checked box means someone recorded evidence for the exact environment and commit; code presence, a successful build, or a preview deployment alone is not enough.
+
+## Release status
+
+- Repository automated checks: CI has coverage for TypeScript, repository integrity, unit/source-contract tests, generated migration-bundle consistency, isolated PostgreSQL integration tests, build, and dispatch-service unit tests.
+- Real end-to-end browser/device flow: not yet evidenced by this document.
+- Supabase production migration reconciliation: open; do not run `supabase db push` blindly.
+- Atomic job-completion RPC: the latest read-only production check reported it absent. Recheck before release.
+- Vercel production alias/commit: reconcile against the exact production-target deployment; preview READY is not production.
+- Real OTP delivery, Telegram delivery, and dispatch service: require environment-specific smoke tests.
+- Payments and carbon issuance: intentionally out of scope and must remain non-live.
+
+## Gate A — Release identity and rollback (P0)
+
+- [ ] Record the intended `main` commit SHA.
+- [ ] Inspect Vercel deployment target and verify the production alias points at that commit.
+- [ ] Confirm the deployed environment has `VITE_NIRDHOOM_DEMO_MODE=false`.
+- [ ] Confirm required browser-safe Supabase URL/publishable key are configured for Production; confirm server-only secrets are configured only server-side.
+- [ ] Resolve any Vercel deployment quota block through normal account/plan controls; do not bypass deployment controls.
+- [ ] Open the production URL and verify the loaded app/version; smoke-test critical routes and API health.
+- [ ] Review recent runtime errors and logs for the exact production deployment.
+- [ ] Record a known-good rollback deployment and a rollback owner/procedure.
+- [ ] Do not claim release complete until post-deployment smoke tests pass.
+
+## Gate B — Supabase schema and migration integrity (P0)
+
+- [ ] Export a schema-only snapshot from production using the approved secure process.
+- [ ] Build a clean disposable database from `supabase/migration-order.txt` / generated bundle.
+- [ ] Review the schema-only diff, extensions, indexes, constraints, triggers, RLS policies, grants, storage policies, and functions.
+- [ ] Map each remote migration-ledger entry to its exact source migration, including historical split/combined entries.
+- [ ] Reconcile the CLI migration baseline only after that mapping is reviewed.
+- [ ] Apply the atomic job/residue-lot completion migration to a staging schema first.
+- [ ] Verify RPC signature, function owner/search_path, authorization checks, grants, evidence gate, measurements, row locks, rollback behavior, and retry idempotency.
+- [ ] Run SQL integration tests on the staging schema, including unauthorized actor, missing evidence, invalid measurements, forced rollback, duplicate retry, and retry after evidence archival.
+- [ ] Confirm the marketplace proposal migration remains excluded until its buyer/farmer/dispatcher/transport authorization matrix passes.
+- [ ] Only apply reviewed migrations to production in an approved maintenance/release window with rollback/recovery steps.
+
+**Hard stop:** never run `supabase db push` against the current production project until migration history and schema drift are reconciled.
+
+## Gate C — Real farmer authentication and consent (P0)
+
+Use a dedicated test phone/account, not a real farmer's identity.
+
+- [ ] Verify Supabase Phone Auth is enabled for the target environment.
+- [ ] Verify SMS provider credentials, sender/header, approved message template, and applicable India DLT/consent requirements.
+- [ ] Verify OTP arrives on the designated test phone.
+- [ ] Test invalid number, wrong code, expired code, resend cooldown, rate limiting/CAPTCHA, provider outage, network timeout, and duplicate taps.
+- [ ] Verify successful OTP creates a session and profile with the authenticated user ID.
+- [ ] Verify returning-user flow does not require re-registering existing fields or losing consent state.
+- [ ] Verify session survives reload, expires safely, and sign-out clears private state.
+- [ ] Verify consent text/version/time are recorded; withdrawal changes server state and future booking actions are blocked until renewed consent.
+- [ ] Verify no Aadhaar, selfie, bank, land-registry, payment, or identity verification is presented as live unless a real authorized integration exists.
+
+## Gate D — End-to-end operational journey (P0)
+
+Run in staging with dedicated farmer, operator, dispatcher, verifier, buyer, and admin test accounts.
+
+- [ ] Farmer signs in, grants consent, and registers a field.
+- [ ] Field location and boundary provenance are labelled accurately; manual/demo geometry is never called authoritative cadastral data.
+- [ ] Farmer requests clearance and sees real state, next action, and a helpful no-capacity reason.
+- [ ] Dispatcher assigns a machine/job and sees solver fallback state truthfully.
+- [ ] Unassigned operator cannot start or complete the job.
+- [ ] Operator records measured quantity, moisture, bale count, timestamp, and required evidence.
+- [ ] Missing/invalid measurements and missing evidence block live completion.
+- [ ] Completion updates the job/booking/field and creates exactly one residue lot in one transaction.
+- [ ] Retrying after lost response returns the same lot and does not duplicate records.
+- [ ] Verifier can review provenance/evidence; completion is not automatically described as verified non-burning.
+- [ ] Lot shows source field, job/machine lineage, quantity/quality, evidence, verification, custody, and destination state.
+- [ ] Pickup/storage/pooling/buyer transitions are authorized and proposal, offer, accepted deal, and transport are distinct states.
+- [ ] All failure responses are visible to the user; no false success toast/state.
+
+## Gate E — Role matrix and storage security (P0)
+
+- [ ] Farmer A cannot read/update Farmer B's profile, fields, bookings, evidence, or residue.
+- [ ] Operator cannot complete a job assigned to another operator.
+- [ ] Operator cannot alter farmer-owned field attributes or self-grant privileged roles.
+- [ ] Verifier cannot approve without the required evidence and completed operational record.
+- [ ] Buyer sees only authorized demand/matching records and cannot claim the same lot twice.
+- [ ] Dispatcher/admin endpoints reject anonymous and lower-privilege callers.
+- [ ] Direct REST/table access and direct RPC/API calls are tested, not only hidden UI buttons.
+- [ ] Storage paths, object reads, evidence metadata, and signed URL lifetime obey the same role/ownership rules.
+- [ ] Secrets never appear in browser bundles, logs, error messages, screenshots, or committed files.
+
+## Gate F — Offline evidence and field device reliability (P1)
+
+- [ ] Capture evidence while offline, reload/close the app, reconnect, and verify the queued blob remains available.
+- [ ] Test upload-success/response-lost retry, metadata-insert failure, duplicate replay, and storage 409 behavior.
+- [ ] Switch accounts and verify queued evidence is not replayed as another user.
+- [ ] Test expired session, IndexedDB failure, quota exhaustion, unsupported file type, spoofed MIME/header, oversized/empty image, and corrupt image.
+- [ ] UI exposes pending/syncing/synced/failed counts and actionable retry/recovery messaging.
+- [ ] Test GPS permission denied, inaccurate/stale GPS, unavailable geolocation, and slow network.
+- [ ] Test on a real Android device, narrow viewport, low-end hardware, and throttled/unstable network.
+
+## Gate G — Telegram, dispatch, and external providers (P1)
+
+- [ ] Telegram webhook uses HTTPS and validates the secret-token header.
+- [ ] Test signed Mini App initData, invalid HMAC, stale auth_date, unlinked user, expired/single-use link token, and duplicate update_id.
+- [ ] Test Hindi, Punjabi, English, missing configuration, Bot API timeout, disabled notification preference, and account unlinking/consent.
+- [ ] Critical notifications have durable retry/outbox behavior; webhook acknowledgment is not treated as proof of delivery.
+- [ ] Dispatch service health and authenticated solve endpoint work from the deployed gateway.
+- [ ] Invalid solver responses, timeouts, unavailable service, and heuristic fallback are visible and safe.
+- [ ] FIRMS, weather, IVR, and cadastral adapters are smoke-tested only if enabled; source, timestamps, attribution, provider license, and data limits are visible.
+- [ ] No satellite observation alone is represented as field-level proof.
+- [ ] No buyer request is represented as a contract or confirmed offtake without evidence.
+
+## Gate H — Browser automation, accessibility, and UX (P1)
+
+- [ ] Add/maintain browser end-to-end tests for the primary farmer and operator flows against a controlled test environment.
+- [ ] Run desktop and mobile viewports, keyboard-only navigation, visible focus, labels, contrast, reduced motion, and accessible errors.
+- [ ] Test empty, loading, success, partial-data, unauthorized, timeout, and offline states for every critical screen.
+- [ ] Test image/map fallback and missing third-party resources.
+- [ ] Verify English, Hindi, and Punjabi coverage for labels, validation errors, consent, notifications, and offline status.
+- [ ] Ensure critical actions have loading/disabled states and prevent double submission.
+- [ ] Test every primary button by clicking it in the deployed environment; source-level checks are not a substitute.
+
+## Gate I — Observability, backup, recovery (P1)
+
+- [ ] Correlate client-visible request IDs with server logs without recording farmer PII, OTPs, tokens, or evidence contents.
+- [ ] Monitor OTP failures, booking errors, dispatch failures, evidence replay failures, webhook failures, and RPC exceptions.
+- [ ] Configure alert ownership and escalation for critical failures.
+- [ ] Document backup retention and recovery point/objectives appropriate to the pilot.
+- [ ] Perform a restore/recovery drill and verify data integrity.
+- [ ] Document incident response, contact ownership, rollback steps, and customer communication.
+
+## Gate J — Field pilot and outcome evidence (P1)
+
+- [ ] Conduct a supervised pilot with real consent and dedicated support.
+- [ ] Record task completion rate/time, support interventions, booking assignment latency, sync success, duplicate/error rate, and user feedback.
+- [ ] Validate actual machine capacity and buyer demand before making availability or offtake promises.
+- [ ] Verify the lineage of measured tonnes and reconcile physical measurements with digital records.
+- [ ] Do not publish impact/carbon claims until a defensible methodology and verified input data support them.
+- [ ] Review pilot findings and close all severity-0/1 issues before broader release.
+
+## P2 — Post-pilot product improvements
+
+- [ ] Add exception-focused control tower views for deadlines, capacity conflicts, pickup backlog, and unassigned reasons.
+- [ ] Improve geographic demand/capacity matching and route efficiency using validated operational data.
+- [ ] Track KPIs: request-to-assignment time, on-time clearance, machine utilization, verified tonnes, tonnes awaiting pickup, evidence completeness, sync success, and exception resolution time.
+- [ ] Add AI explanations/suggestions only on authenticated data; AI never dispatches, verifies, or creates commercial commitments autonomously.
+- [ ] Improve performance budgets, image attribution, caching, map fallback, and low-bandwidth behavior.
+- [ ] Keep payments/carbon issuance disabled until provider integration, ledger, reconciliation, audit, and compliance controls are real.
+
+## Final decision
+
+- [ ] All P0 gates pass with evidence.
+- [ ] All P1 items needed for this pilot pass or are explicitly excluded from pilot scope with a safe fallback.
+- [ ] P2 items are recorded as planned, not silently treated as release blockers.
+- [ ] A named release owner signs off on the exact commit, database migration set, environment, smoke-test evidence, and rollback target.
+
+**Status rule:** until the gates above have evidence, describe NIRDHOOM as a prototype/integration foundation under release validation—not as production-complete.
