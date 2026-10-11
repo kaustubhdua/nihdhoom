@@ -49,6 +49,13 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
     && moistureValue !== null && Number.isFinite(moistureValue) && moistureValue >= 0 && moistureValue <= 100
     && balesCount !== null && Number.isInteger(balesCount) && balesCount >= 1 && balesCount <= 1000000;
 
+  useEffect(() => {
+    // Never carry demo controls into a live session as if they were field measurements.
+    setMoistureValue(null);
+    setBalesCount(null);
+    setResidueTonnes(0);
+  }, [demoMode]);
+
   // Network state is independent of GPS permission and demo/live mode.
   useEffect(() => {
     const updateNetworkState = () => setOfflineSyncActive(navigator.onLine);
