@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import { CalendarDays, CheckCircle2, ClipboardCheck, Loader2, MapPin, ShieldCheck, Tractor } from 'lucide-react';
 import { Field } from '../../types';
 import { supabase } from '../../lib/supabase';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
+  const { t } = useAppLanguage();
   const bookable = useMemo(
     () => fields.filter((f) => !['VERIFIED_NON_BURN'].includes(f.status)),
     [fields],
@@ -61,7 +63,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
       });
       if (rpcError) throw new Error(rpcError.message);
       onBooked(selected.id, Number((data as { quoted_amount?: number } | null)?.quoted_amount || 0));
-      setMessage('Book parali pickup confirmed by the server. The authoritative quote is shown in your field record.');
+      setMessage('{t('Book parali pickup')} confirmed by the server. The authoritative quote is shown in your field record.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Booking could not be created.');
     } finally {
@@ -82,18 +84,18 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
             </div>
             <h1 className="ui-title">Book parali pickup</h1>
             <p className="ui-lede">
-              Choose your field and the day you want the machine to come. In Live mode, the final quote is decided by the server.
+              {t('Choose your field')} and the day you want the machine to come. In Live mode, the final quote is decided by the server.
             </p>
           </div>
         </div>
       </section>
 
       <section className="farmer-step-strip" aria-label="Booking steps">
-        <div className={stepClass(1)}><span>1</span><strong>Choose your field</strong><small>Select the field where parali needs to be collected</small></div>
+        <div className={stepClass(1)}><span>1</span><strong>Choose your field</strong><small>{t('Select the field where parali needs to be collected')}</small></div>
         <i aria-hidden="true" />
-        <div className={stepClass(2)}><span>2</span><strong>Choose a date</strong><small>Tell us when you want the machine</small></div>
+        <div className={stepClass(2)}><span>2</span><strong>{t('Choose a date')}</strong><small>{t('Tell us when you want the machine')}</small></div>
         <i aria-hidden="true" />
-        <div className={stepClass(3)}><span>3</span><strong>Confirm</strong><small>Check details and book</small></div>
+        <div className={stepClass(3)}><span>3</span><strong>Confirm</strong><small>{t('Check details and book')}</small></div>
       </section>
 
       <section className="ui-split">
