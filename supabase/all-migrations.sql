@@ -2,7 +2,7 @@
 -- Paste into Supabase > SQL Editor and press Run ONCE on a fresh project.
 -- If it stops with an error, note the "-- >>> file" line above it, fix the cause,
 -- then run only the files from that one onward (see docs/GO-LIVE.md).
--- Generated 2026-10-11 from 30 files.
+-- Generated 2026-10-11 from 31 files.
 
 -- >>> 202609270001_nirdhoom_core.sql
 -- NIRDHOOM core schema. Run in Supabase SQL Editor or as a migration.
