@@ -60,8 +60,10 @@ CREATE TABLE public.residue_lots (
 );
 CREATE TABLE public.firms_observations (
   id uuid PRIMARY KEY, source text NOT NULL, sensor text NOT NULL,
+  latitude double precision NOT NULL DEFAULT 28.0,
+  longitude double precision NOT NULL DEFAULT 77.0,
   acquired_at timestamptz, matched_field_id uuid REFERENCES public.fields(id),
-  confidence text, frp numeric(12,3)
+  confidence text, frp numeric(12,3), raw jsonb NOT NULL DEFAULT '{}'::jsonb
 );
 CREATE TABLE public.verification_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), field_id uuid NOT NULL REFERENCES public.fields(id),
