@@ -37,3 +37,36 @@ test('language switch remains shared, persisted, and accessible on desktop and m
   assert.match(header, /t\('Close navigation'\)/);
   assert.match(header, /t\('All NIRDHOOM surfaces'\)/);
 });
+
+test('every declared navigation tab is wired to a rendered app surface', () => {
+  const tabs = [
+    'OVERVIEW', 'RESIDUE_POOLS', 'IMPACT_RESEARCH', 'HARVEST_INTELLIGENCE',
+    'FIELD_PROVENANCE', 'FIELD_JOBS', 'OPS_CONSOLE', 'FARMER_SURFACE',
+    'BALER_OPERATOR', 'SATELLITE_AUDIT', 'OFFTAKE_AUCTION',
+    'FARMER_ONBOARDING', 'FARMER_KYC',
+  ];
+  for (const tab of tabs) {
+    assert.ok(header.includes(`' ${tab}'`.trim()) || header.includes(`'${tab}'`), `navigation type missing ${tab}`);
+    if (tab === 'OVERVIEW') {
+      assert.match(app, /activeTab === 'OVERVIEW'/, 'overview surface must render');
+    } else {
+      assert.match(app, new RegExp(`activeTab === '${tab}'`), `no explicit render branch for ${tab}`);
+    }
+  }
+});
+
+test('all primary and secondary navigation destinations exist in the typed tab union', () => {
+  const union = header.slice(header.indexOf('export type ActiveTab'), header.indexOf(';', header.indexOf('export type ActiveTab')));
+  for (const source of [header.match(/const primaryNav: NavItem\[\] = \[([\s\S]*?)\];/)?.[1], header.match(/const secondaryNav: NavItem\[\] = \[([\s\S]*?)\];/)?.[1]]) {
+    assert.ok(source, 'navigation list must be defined');
+    for (const match of source.matchAll(/id: '([A-Z_]+)'/g)) {
+      assert.ok(union.includes(`'${match[1]}'`), `navigation destination ${match[1]} missing from ActiveTab`);
+    }
+  }
+});
+
+test('operator, verification and buyer workflows are reachable from the app render tree', () => {
+  for (const name of ['BalerPWA', 'SatelliteAudit', 'MultiOfftakeAuction', 'HarvestForecast', 'ResiduePooling', 'ImpactResearch', 'HarvestIntelligence', 'FieldProvenancePanel', 'FieldJobBoard', 'FieldEvidenceTimeline', 'ClearanceBooking', 'ResidueControlTower', 'TelegramChannel', 'FarmerOnboarding']) {
+    assert.ok(app.includes(name), `expected workflow component ${name} to be imported or rendered`);
+  }
+});
