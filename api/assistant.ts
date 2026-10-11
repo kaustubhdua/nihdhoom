@@ -36,7 +36,10 @@ export default async function handler(req:any,res:any){
   if(!question||typeof question!=='string'||question.length>2000)return res.status(400).json({error:'question is required and must be at most 2000 characters'});
   const auth=String(req.headers?.authorization||'');const token=auth.startsWith('Bearer ')?auth.slice(7):'';
   const aiConfigured=Boolean(process.env.GROQ_API_KEY||process.env.OPENAI_API_KEY);
-  const authRequired=process.env.REQUIRE_AUTH_FOR_AI==='true'||aiConfigured||Boolean(field?.dbId);
+  const demoMode=process.env.VITE_NIRDHOOM_DEMO_MODE==='true';
+  // Live deployments require a verified Supabase session by default; demo-only
+  // unauthenticated use is allowed only when demo mode is explicitly enabled.
+  const authRequired=!demoMode||process.env.REQUIRE_AUTH_FOR_AI==='true'||aiConfigured||Boolean(field?.dbId);
   if(authRequired){
     if(!token||!((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) || process.env.VITE_SUPABASE_URL)||!((process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY) || process.env.VITE_SUPABASE_PUBLISHABLE_KEY))return res.status(401).json({error:'Authentication required'});
     try{const verify=await fetch(`${((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) || process.env.VITE_SUPABASE_URL)}/auth/v1/user`,{headers:{apikey:((process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY) || process.env.VITE_SUPABASE_PUBLISHABLE_KEY),Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(8000)});if(!verify.ok)return res.status(401).json({error:'Invalid session'})}catch{return res.status(401).json({error:'Authentication check failed'})}
