@@ -278,7 +278,7 @@ export function EvidenceReview({ fields, fireEvents, demoMode, focusFieldId, foc
     if (action === 'approved') await onApprove(field);
     setDecisions((current) => ({
       ...current,
-      [field.id]: [{ action, note: (notes[field.id] || '').trim(), at: Date.now() }, ...(current[field.id] ?? [])],
+      [field.id]: [{ action: action === 'approved' ? 'review-submitted' : action, note: (notes[field.id] || '').trim(), at: Date.now() }, ...(current[field.id] ?? [])],
     }));
     setNotes((current) => ({ ...current, [field.id]: '' }));
   }
