@@ -100,7 +100,8 @@ export function useAppController() {
     }
     setLoadingLiveData(true);
     setLiveDataError(null);
-    const client = supabase;
+    try {
+      const client = supabase;
 
     // Operational tables are readable only by signed-in users. Say so plainly
     // instead of surfacing a database "permission denied" to every visitor.
@@ -241,6 +242,18 @@ export function useAppController() {
     setFireEvents([]);
     setSelectedField((current) => normalizedFields.find((f) => f.id === current?.id) || normalizedFields[0] || null);
     setLoadingLiveData(false);
+    } catch {
+      setLiveDataError('Live operational data could not be loaded because the server was unreachable. Refresh and try again.');
+      setLiveSignedOut(false);
+      setFields([]);
+      setMachines([]);
+      setResidueLots([]);
+      setBuyers([]);
+      setStorageYards([]);
+      setSelectedField(null);
+    } finally {
+      setLoadingLiveData(false);
+    }
   }, []);
 
   useEffect(() => {
