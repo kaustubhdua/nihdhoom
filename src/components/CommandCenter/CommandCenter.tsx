@@ -119,7 +119,7 @@ export function CommandCenter({
               whileHover={{ y: -3 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Icon /><span><b>{value}</b><small>{label}</small></span>
+              <Icon /><span><b>{value}</b><small>{t(label)}</small></span>
             </motion.button>
           ))}
         </div>
