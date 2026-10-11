@@ -9,14 +9,15 @@ const TELEGRAM_API = () => {
 
 async function telegram(method: string, body: Record<string, unknown>) {
   const api = TELEGRAM_API();
-  if (!api) return false;
+  if (!api) throw new Error('Telegram Bot API is not configured');
   const response = await fetch(`${api}/${method}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(9000),
   });
-  return response.ok;
+  if (!response.ok) throw new Error(`Telegram Bot API request failed (${response.status})`);
+  return true;
 }
 
 async function sendMessage(chatId: number, text: string, replyMarkup?: unknown) {
@@ -68,6 +69,22 @@ async function claimTelegramUpdate(updateId: number) {
   });
   if (response.status === 409) return 'duplicate' as const;
   return response.ok ? 'claimed' as const : 'unavailable' as const;
+}
+
+async function releaseTelegramUpdate(updateId: number) {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  if (!serviceKey || !supabaseUrl) {
+    recentUpdates.delete(updateId);
+    return;
+  }
+  // If handling fails, remove the claim so Telegram's retry can be processed.
+  // The unique update_id remains the concurrency guard for successful updates.
+  await fetch(`${supabaseUrl}/rest/v1/telegram_webhook_updates?update_id=eq.${updateId}`, {
+    method: 'DELETE',
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' },
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => {});
 }
 
 async function linkTelegramIdentity(token: string, message: any) {
@@ -225,6 +242,7 @@ function parseCallback(data: string, fallback: BotLang): { kind: 'lang' | 'actio
 async function handle(request: Request) {
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
   if (!secret) return Response.json({ error: 'Telegram webhook secret is not configured' }, { status: 503 });
+  if (!process.env.TELEGRAM_BOT_TOKEN) return Response.json({ error: 'Telegram bot token is not configured' }, { status: 503 });
   if (request.headers.get('x-telegram-bot-api-secret-token') !== secret) {
     return Response.json({ error: 'Invalid Telegram webhook secret' }, { status: 401 });
   }
@@ -242,6 +260,7 @@ async function handle(request: Request) {
   if (claim === 'unavailable') return Response.json({ error: 'Telegram webhook persistence is unavailable' }, { status: 503 });
   if (claim === 'duplicate') return Response.json({ ok: true, duplicate: true, update_id: updateId });
 
+  try {
   const message = update?.message;
   const callback = update?.callback_query;
   const chatId = Number(message?.chat?.id ?? callback?.message?.chat?.id);
@@ -296,6 +315,10 @@ async function handle(request: Request) {
 
   await sendMessage(chatId, t.unknown, menu(userLang));
   return Response.json({ ok: true, update_id: updateId });
+  } catch {
+    await releaseTelegramUpdate(updateId);
+    return Response.json({ error: 'Telegram update processing failed; retry requested' }, { status: 503 });
+  }
 }
 
 export default async function handler(req: any, res: any) {
