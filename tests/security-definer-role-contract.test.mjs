@@ -21,7 +21,7 @@ function latestFunction(name) {
 
 const contracts = [
   ['accept_buyer_offer', /role_name[^;]{0,180}not in \('buyer','dispatcher','admin'\)/is, /offer does not belong to the authenticated buyer/i],
-  ['cancel_clearance_booking', /f\.owner_id=auth\.uid\(\)/i, /Booking is not owned by the current farmer/i],
+  ['cancel_clearance_booking', /f\.owner_id\s*=\s*actor/i, /Booking is not owned by the current farmer/i],
   ['create_residue_pool', /role_name[^;]{0,180}not in \('buyer','dispatcher','admin'\)/is, /buyer demand is not available to this user/i],
   ['join_residue_pool', /f\.owner_id=actor/i, /no verified residue lot with sufficient uncommitted quantity/i],
   ['record_farmer_network_consent', /role_name[^;]{0,180}<>\s*'farmer'/is, /authentication required/i],
