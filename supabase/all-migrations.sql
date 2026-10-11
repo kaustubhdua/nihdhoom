@@ -3582,6 +3582,16 @@ WITH CHECK (
 -- NIRDHOOM P0 release hardening: capacity-backed bookings, truthful verification provenance,
 -- and least-privilege anonymous access. New migration only; do not edit applied history.
 
+DO $preflight$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public.machine_capacity_windows WHERE reserved_acres > 0
+  ) THEN
+    RAISE EXCEPTION 'P0 booking migration stopped: existing reserved acres lack auditable reservation rows; reconcile capacity manually before applying';
+  END IF;
+END;
+$preflight$;
+
 ALTER TABLE public.bookings
   ADD COLUMN IF NOT EXISTS reservation_state text NOT NULL DEFAULT 'UNCONFIRMED';
 
