@@ -45,6 +45,7 @@ test('live completion requires operator-entered moisture and bale measurements i
   assert.match(source, /Measured moisture \(%\):/);
   assert.match(source, /Measured bale count:/);
   assert.match(source, /completionMeasurementsValid/);
+  assert.match(source, /Never carry demo controls into a live session as if they were field measurements/);
   assert.match(source, /p_moisture_pct: moistureValue/);
   assert.match(source, /p_bales_count: balesCount/);
   assert.doesNotMatch(source, /p_moisture_pct: Number\(moistureValue\)/);
