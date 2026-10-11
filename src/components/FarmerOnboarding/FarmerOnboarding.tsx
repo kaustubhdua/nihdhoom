@@ -42,7 +42,7 @@ const DEMO_MODE = import.meta.env.VITE_NIRDHOOM_DEMO_MODE === 'true';
 const LIVE_ORDER: KYCStep[] = ['PHONE', 'OTP', 'CONSENT', 'LAND_RECORDS', 'DONE'];
 const LIVE_LABELS: Partial<Record<KYCStep, { label: string; sublabel: string }>> = {
   LAND_RECORDS: { label: 'Register your field', sublabel: 'Where the machine should go' },
-  DONE: { label: 'Account ready', sublabel: '{t('Book a pickup')} or open Telegram' },
+  DONE: { label: 'Account ready', sublabel: 'Book a pickup or open Telegram' },
 };
 const FLOW: KYCStep[] = DEMO_MODE ? STEP_ORDER : LIVE_ORDER;
 const VISIBLE_STEPS = FLOW.map((id) => {
@@ -389,7 +389,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
           </div>
           <button type="button" onClick={() => void withdrawConsent()} disabled={withdrawBusy}
             className="min-h-10 rounded-xl border border-amber-300 bg-white px-3 text-xs font-bold text-amber-900 transition hover:bg-amber-100 disabled:opacity-50">
-            {withdrawBusy ? 'Withdrawing…' : '{t('Withdraw consent')}'}
+            {withdrawBusy ? 'Withdrawing…' : t('Withdraw consent')}
           </button>
         </div>
       )}
@@ -506,7 +506,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                   className="ui-btn is-primary is-lg is-block mt-auto"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  {DEMO_MODE ? '{t('Send Demo OTP')}' : '{t('Send OTP via SMS')}'}
+                  {DEMO_MODE ? t('Send Demo OTP') : t('Send OTP via SMS')}
                 </button>
               </>
             )}
@@ -784,7 +784,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                   className="ui-btn is-primary is-lg is-block mt-auto"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                  {DEMO_MODE ? '{t('Continue')}' : 'Bank verification unavailable'}
+                  {DEMO_MODE ? t('Continue') : t('Bank verification unavailable')}
                 </button>
               </>
             )}
@@ -853,7 +853,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                     <span className="text-xs font-bold text-slate-300"><MapPin className="mr-1 inline h-3.5 w-3.5 text-emerald-400" />Field location</span>
                     <button type="button" className="ui-btn" onClick={useMyLocation} disabled={locating}>
                       {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-                      {locating ? '{t('Finding location…')}' : '{t('Use my current location')}'}
+                      {locating ? t('Finding location…') : t('Use my current location')}
                     </button>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
