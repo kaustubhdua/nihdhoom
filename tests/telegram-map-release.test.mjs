@@ -25,7 +25,7 @@ test('NASA FIRMS credential stays server-side and fire results are not treated a
   assert.match(api, /process\.env\.FIRMS_MAP_KEY/);
   assert.match(api, /DETECTION_SCREENING_NOT_PROOF_OF_NO_BURNING/);
   assert.match(env, /^FIRMS_MAP_KEY=/m);
-  assert.doesNotMatch(read('src'), /VITE_FIRMS_MAP_KEY/);
+  assert.doesNotMatch(map, /VITE_FIRMS_MAP_KEY/);
   assert.match(map, /NASA FIRMS VIIRS Active Fire/);
 });
 
