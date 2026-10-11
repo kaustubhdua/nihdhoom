@@ -45,7 +45,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layerGroupRef = useRef<L.LayerGroup | null>(null);
 
-  const [tileMode] = useState<'satellite'>('satellite');
+  const [tileMode, setTileMode] = useState<'satellite' | 'street'>('satellite');
   const [showFires, setShowFires] = useState(true);
   const [showMachines, setShowMachines] = useState(true);
   const [showFields, setShowFields] = useState(true);
@@ -133,7 +133,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
       center: [30.2458, 75.8421],
       zoom: 11,
       zoomControl: false,
-      attributionControl: false,
+      attributionControl: true,
     });
     } catch (error) {
       console.error('[NIRDHOOM] Leaflet initialization failed:', error);
@@ -253,11 +253,18 @@ export const OpsMap: React.FC<OpsMapProps> = ({
       }
     });
 
-    // Machine tracking uses a field satellite layer only; avoid a second visual language.
-    L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom: 18, maxNativeZoom: 17 }
-    ).addTo(map);
+    // Switchable satellite imagery and street labels. Keep provider attribution visible.
+    if (tileMode === 'satellite') {
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 18, maxNativeZoom: 17, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community' }
+      ).addTo(map);
+    } else {
+      L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { maxZoom: 19, attribution: '© OpenStreetMap contributors' }
+      ).addTo(map);
+    }
   }, [tileMode]);
 
   // Render Polygons, Markers, FIRMS Fires, and Route
@@ -652,6 +659,10 @@ export const OpsMap: React.FC<OpsMapProps> = ({
             <div className="map-layers-heading">
               <Layers className="h-3.5 w-3.5" />
               <span>{t('GIS map layers')}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1 p-2">
+              <button type="button" aria-pressed={tileMode === 'satellite'} onClick={() => setTileMode('satellite')} className={`rounded-lg px-2 py-2 text-xs font-bold ${tileMode === 'satellite' ? 'bg-emerald-800 text-white' : 'bg-white text-slate-700 border border-slate-200'}`}>{t('Satellite')}</button>
+              <button type="button" aria-pressed={tileMode === 'street'} onClick={() => setTileMode('street')} className={`rounded-lg px-2 py-2 text-xs font-bold ${tileMode === 'street' ? 'bg-emerald-800 text-white' : 'bg-white text-slate-700 border border-slate-200'}`}>{t('Street map')}</button>
             </div>
             {layerToggles.map((layer) => (
               <label key={layer.key} className={`map-layer-row ${layer.tone || ''}`}>
