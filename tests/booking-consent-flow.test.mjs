@@ -22,7 +22,7 @@ test('booking date window is enforced in both the UI and database', () => {
 test('booking history uses protected read and cancellation workflows', () => {
   assert.match(booking, /from\('bookings'\)/);
   assert.match(booking, /rpc\('cancel_clearance_booking'/);
-  assert.match(booking, /\['BOOKED', 'MACHINE_ASSIGNED'\]\.includes\(booking\.status\)/);
+  assert.match(booking, /\['REQUESTED', 'BOOKED', 'MACHINE_ASSIGNED'\]\.includes\(booking\.status\)/);
   assert.match(booking, /onBookingChanged\?\.\(\)/);
 });
 
