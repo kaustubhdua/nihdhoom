@@ -70,3 +70,15 @@ test('CI is configured to run source-contract tests and isolated PostgreSQL inte
   assert.match(workflow, /atomic job completion migration/);
   assert.match(workflow, /npm run build/);
 });
+
+test('field registration always clears its busy state after network exceptions', () => {
+  const onboarding = read('src/components/FarmerOnboarding/FarmerOnboarding.tsx');
+  const start = onboarding.indexOf('const registerField = async () =>');
+  const end = onboarding.indexOf('const withdrawConsent = async () =>', start);
+  assert.ok(start >= 0 && end > start, 'field registration function should be present');
+  const registration = onboarding.slice(start, end);
+  assert.match(registration, /try\s*\{/);
+  assert.match(registration, /catch\s*\{/);
+  assert.match(registration, /finally\s*\{\s*setFieldBusy\(false\);/);
+  assert.match(registration, /Field registration could not reach the server/);
+});
