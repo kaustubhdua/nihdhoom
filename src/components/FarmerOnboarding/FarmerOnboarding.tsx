@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import CodeSlots from './CodeSlots';
 import LatticeLoader from '../LatticeLoader/LatticeLoader';
 import Stepper, { Step } from './Stepper';
@@ -76,6 +76,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
   const [bankVerified, setBankVerified] = useState(false);
   const [otpError, setOtpError] = useState('');
   const [otpStatus, setOtpStatus] = useState<'idle' | 'error' | 'success'>('idle');
+  const otpVerificationInFlight = useRef(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
   const [activeConsent, setActiveConsent] = useState(false);
@@ -322,7 +323,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
   };
 
   const verifyLiveOtp = async (code: string) => {
-    if (code.length !== 6 || loading) return;
+    if (code.length !== 6 || loading || otpVerificationInFlight.current) return;
     if (DEMO_MODE) {
       if (code !== '842613') {
         setOtpError('That demo code is incorrect. Try 842613.');
@@ -338,6 +339,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
       setOtpStatus('error');
       return;
     }
+    otpVerificationInFlight.current = true;
     setLoading(true);
     setOtpError('');
     setOtpStatus('idle');
@@ -370,6 +372,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
       setOtpError(t('OTP verification request failed. Check your connection and try again.') + ` (${detail.slice(0, 180)})`);
       setOtpStatus('error');
     } finally {
+      otpVerificationInFlight.current = false;
       setLoading(false);
     }
   };
