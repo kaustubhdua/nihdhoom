@@ -348,7 +348,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
             </div>
             <div class="map-pop-note">Capability source: ${machine.capability_source || "Not established"}${machine.capability_source_date ? " · " + machine.capability_source_date : ""}</div>
             <div class="map-pop-status"><strong>Status:</strong> <span class="map-pop-chip is-green">${machine.status}</span></div>
-            <div class="map-pop-note">${demoMode ? 'Demo position — not live GPS' : `Last device GPS: ${locationTimestamps[machine.id] ? new Date(locationTimestamps[machine.id]).toLocaleString('en-IN') : 'Unavailable'}`}</div>
+            <div class="map-pop-note">${demoMode ? 'Demo position — not live GPS' : 'Last device GPS: ' + (locationTimestamps[machine.id] ? new Date(locationTimestamps[machine.id]).toLocaleString('en-IN') : 'Unavailable')}</div>
           </div>
         `);
 
