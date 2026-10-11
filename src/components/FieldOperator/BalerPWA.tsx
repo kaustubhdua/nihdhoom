@@ -124,11 +124,6 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
 
   const handleEvidenceCapture = async (file: File) => {
     setEvidenceMessage('');
-    const validationError = await validateEvidenceFile(file, file.name);
-    if (validationError) {
-      setEvidenceMessage(validationError);
-      return;
-    }
     const capturedAt = new Date().toISOString();
     const gps = gpsState;
     if (demoMode) {
@@ -141,74 +136,112 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
       setEvidenceMessage('Live Supabase is not configured. Evidence was not uploaded.');
       return;
     }
-    const { data } = await client.auth.getSession();
-    const user = data.session?.user;
-    if (!user) {
-      setEvidenceMessage('Sign in as the assigned operator before uploading evidence.');
-      return;
-    }
 
-    if (!navigator.onLine) {
-      await queueEvidence({
-        ownerUserId: user.id,
-        fieldId: currentField.dbId || currentField.id,
-        fileName: file.name,
-        fileType: file.type,
-        blob: file,
-        capturedAt,
+    let ownerUserId: string | null = null;
+    let uploadedPath: string | null = null;
+    let metadataWriteStarted = false;
+    try {
+      const validationError = await validateEvidenceFile(file, file.name);
+      if (validationError) {
+        setEvidenceMessage(validationError);
+        return;
+      }
+      const { data } = await client.auth.getSession();
+      const user = data.session?.user;
+      if (!user) {
+        setEvidenceMessage('Sign in as the assigned operator before uploading evidence.');
+        return;
+      }
+      ownerUserId = user.id;
+
+      const queueCurrentEvidence = async () => {
+        await queueEvidence({
+          ownerUserId: user.id,
+          fieldId: currentField.dbId || currentField.id,
+          fileName: file.name,
+          fileType: file.type,
+          blob: file,
+          capturedAt,
+          latitude: gps?.lat ?? null,
+          longitude: gps?.lng ?? null,
+          accuracyM: gps?.accuracy ?? null,
+        });
+        setQueuedEvidence(await queuedEvidenceCount());
+      };
+
+      if (!navigator.onLine) {
+        await queueCurrentEvidence();
+        setEvidenceMessage('Offline: evidence saved to the device queue and will sync when the connection returns.');
+        return;
+      }
+
+      const id = crypto.randomUUID();
+      const path = `${user.id}/${currentField.dbId || currentField.id}/${id}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      uploadedPath = path;
+      const upload = await client.storage.from('evidence').upload(path, file, { contentType: file.type, upsert: false });
+      if (upload.error) {
+        try { await client.storage.from('evidence').remove([path]); } catch { /* cleanup is best effort */ }
+        uploadedPath = null;
+        await queueCurrentEvidence();
+        setEvidenceMessage(`Upload unavailable; evidence queued safely for replay. ${upload.error.message}`);
+        return;
+      }
+
+      const bytes = await file.arrayBuffer();
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      const hash = Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+      metadataWriteStarted = true;
+      const { error } = await client.from('evidence_assets').insert({
+        field_id: currentField.dbId || currentField.id,
+        kind: 'field_photo',
+        storage_path: path,
+        source: 'operator-pwa',
+        captured_at: capturedAt,
         latitude: gps?.lat ?? null,
         longitude: gps?.lng ?? null,
-        accuracyM: gps?.accuracy ?? null,
+        gps_accuracy_m: gps?.accuracy ?? null,
+        sha256: hash,
+        created_by: user.id,
+        sync_source: 'online',
+        metadata: { file_name: file.name, mime_type: file.type },
       });
-      setQueuedEvidence(await queuedEvidenceCount());
-      setEvidenceMessage('Offline: evidence saved to the device queue and will sync when the connection returns.');
-      return;
-    }
 
-    const id = crypto.randomUUID();
-    const path = `${user.id}/${currentField.dbId || currentField.id}/${id}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-    const upload = await client.storage.from('evidence').upload(path, file, { contentType: file.type, upsert: false });
-    if (upload.error) {
-      await queueEvidence({
-        ownerUserId: user.id,
-        fieldId: currentField.dbId || currentField.id,
-        fileName: file.name,
-        fileType: file.type,
-        blob: file,
-        capturedAt,
-        latitude: gps?.lat ?? null,
-        longitude: gps?.lng ?? null,
-        accuracyM: gps?.accuracy ?? null,
-      });
-      setQueuedEvidence(await queuedEvidenceCount());
-      setEvidenceMessage(`Upload unavailable; evidence queued safely for replay. ${upload.error.message}`);
-      return;
+      if (error) {
+        await client.storage.from('evidence').remove([path]);
+        uploadedPath = null;
+        setEvidenceMessage(`Evidence metadata could not be recorded: ${error.message}`);
+        return;
+      }
+      uploadedPath = null;
+      setEvidenceMessage('Evidence uploaded, hashed and linked to the field record.');
+    } catch {
+      if (metadataWriteStarted) {
+        setEvidenceMessage('Evidence upload status could not be confirmed. Refresh the evidence timeline before retrying to avoid duplicates.');
+        return;
+      }
+      if (uploadedPath) {
+        try { await client.storage.from('evidence').remove([uploadedPath]); } catch { /* cleanup is best effort */ }
+      }
+      if (ownerUserId) {
+        try {
+          await queueEvidence({
+            ownerUserId,
+            fieldId: currentField.dbId || currentField.id,
+            fileName: file.name,
+            fileType: file.type,
+            blob: file,
+            capturedAt,
+            latitude: gps?.lat ?? null,
+            longitude: gps?.lng ?? null,
+            accuracyM: gps?.accuracy ?? null,
+          });
+          setQueuedEvidence(await queuedEvidenceCount());
+          setEvidenceMessage('Evidence upload was interrupted; the file was queued safely for replay.');
+          return;
+        } catch { /* fall through to the explicit recovery message */ }
+      }
+      setEvidenceMessage('Evidence could not be uploaded or queued. No evidence completion was confirmed; check the connection and retry.');
     }
-
-    const bytes = await file.arrayBuffer();
-    const digest = await crypto.subtle.digest('SHA-256', bytes);
-    const hash = Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
-    const { error } = await client.from('evidence_assets').insert({
-      field_id: currentField.dbId || currentField.id,
-      kind: 'field_photo',
-      storage_path: path,
-      source: 'operator-pwa',
-      captured_at: capturedAt,
-      latitude: gps?.lat ?? null,
-      longitude: gps?.lng ?? null,
-      gps_accuracy_m: gps?.accuracy ?? null,
-      sha256: hash,
-      created_by: user.id,
-      sync_source: 'online',
-      metadata: { file_name: file.name, mime_type: file.type },
-    });
-
-    if (error) {
-      await client.storage.from('evidence').remove([path]);
-      setEvidenceMessage(`Evidence metadata could not be recorded: ${error.message}`);
-      return;
-    }
-    setEvidenceMessage('Evidence uploaded, hashed and linked to the field record.');
   };
 
   const [gpsState, setGpsState] = useState<{ lat: number; lng: number; accuracy: number; recordedAt: number } | null>(null);
