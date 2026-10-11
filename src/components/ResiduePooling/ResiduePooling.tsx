@@ -93,46 +93,54 @@ export function ResiduePooling({ fields, demoMode }: Props) {
   }, [demoMode, fields, lots, offers]);
 
   async function load() {
-    if (demoMode || !supabase) return;
-    const db = supabase as any;
-    const { data: userData } = await supabase.auth.getUser();
-    const profileId = userData.user?.id;
-    let role = '';
-    if (profileId) {
-      const { data: profile } = await db.from('profiles').select('role').eq('id', profileId).maybeSingle();
-      role = String(profile?.role || '');
+    if (demoMode) return;
+    if (!supabase) {
+      setNotice('Live Supabase is not configured. Marketplace records are unavailable and no live action can be completed.');
+      return;
     }
-    setCurrentRole(role);
-    if (role === 'buyer' && profileId) {
-      const { data: buyerProfile } = await db.from('buyers').select('name').eq('profile_id', profileId).eq('active', true).maybeSingle();
-      setCurrentBuyerName(String(buyerProfile?.name || ''));
-    } else setCurrentBuyerName('');
-    if (['buyer', 'dispatcher', 'admin'].includes(role)) {
-      const { data: matched, error: matchError } = await db.rpc('matchable_residue_lots');
-      if (!matchError) setMatchableLots(matched || []);
-      else setNotice('Buyer matching is not available until the marketplace workflow migration is installed.');
-    } else {
-      setMatchableLots([]);
-    }
-    if (['dispatcher', 'admin'].includes(role)) {
-      const { data: machines } = await db.from('machines').select('id,name').order('name');
-      setDispatchMachines(machines || []);
-    } else setDispatchMachines([]);
+    try {
+      const db = supabase as any;
+      const { data: userData } = await supabase.auth.getUser();
+      const profileId = userData.user?.id;
+      let role = '';
+      if (profileId) {
+        const { data: profile } = await db.from('profiles').select('role').eq('id', profileId).maybeSingle();
+        role = String(profile?.role || '');
+      }
+      setCurrentRole(role);
+      if (role === 'buyer' && profileId) {
+        const { data: buyerProfile } = await db.from('buyers').select('name').eq('profile_id', profileId).eq('active', true).maybeSingle();
+        setCurrentBuyerName(String(buyerProfile?.name || ''));
+      } else setCurrentBuyerName('');
+      if (['buyer', 'dispatcher', 'admin'].includes(role)) {
+        const { data: matched, error: matchError } = await db.rpc('matchable_residue_lots');
+        if (!matchError) setMatchableLots(matched || []);
+        else setNotice('Buyer matching is not available until the marketplace workflow migration is installed.');
+      } else {
+        setMatchableLots([]);
+      }
+      if (['dispatcher', 'admin'].includes(role)) {
+        const { data: machines } = await db.from('machines').select('id,name').order('name');
+        setDispatchMachines(machines || []);
+      } else setDispatchMachines([]);
 
-    const [p, d, l, o, j] = await Promise.all([
-      db.from('residue_pools').select('id,name,target_tonnes,current_tonnes,status,buyer_demand_id').order('created_at', { ascending: false }),
-      db.from('buyer_demands').select('id,buyer_name,target_tonnes,pickup_deadline,radius_km,status').eq('status','OPEN').order('created_at', { ascending: false }),
-      db.from('residue_lots').select('id,field_id,quantity_tonnes,verified_quantity_tonnes,moisture_pct,quality_grade,residue_type,ready_from,pickup_deadline,status,assigned_buyer_id').in('status',['AVAILABLE','VERIFIED','VERIFIED_NON_BURN']).order('created_at', { ascending: false }),
-      db.from('buyer_offers').select('id,lot_id,price_per_tonne,quantity_tonnes,status').eq('status','OPEN').order('price_per_tonne', { ascending: false }),
-      db.from('residue_transport_jobs').select('id,residue_lot_id,origin_type,destination_type,assigned_machine_id,status,planned_start,planned_arrival,actual_departure,actual_arrival,updated_at').order('created_at', { ascending: false }).limit(100),
-    ]);
-    if (!p.error) setPools(p.data || []);
-    if (!d.error) setDemands(d.data || []);
-    if (!l.error) setLots(l.data || []);
-    if (!o.error) setOffers(o.data || []);
-    if (!j.error) setTransportJobs(j.data || []);
-    const failed = [p, d, l, o, j].some((result) => Boolean(result.error));
-    if (failed) setNotice('Some live marketplace records could not be loaded. Refresh or check database permissions before acting on this information.');
+      const [p, d, l, o, j] = await Promise.all([
+        db.from('residue_pools').select('id,name,target_tonnes,current_tonnes,status,buyer_demand_id').order('created_at', { ascending: false }),
+        db.from('buyer_demands').select('id,buyer_name,target_tonnes,pickup_deadline,radius_km,status').eq('status','OPEN').order('created_at', { ascending: false }),
+        db.from('residue_lots').select('id,field_id,quantity_tonnes,verified_quantity_tonnes,moisture_pct,quality_grade,residue_type,ready_from,pickup_deadline,status,assigned_buyer_id').in('status',['AVAILABLE','VERIFIED','VERIFIED_NON_BURN']).order('created_at', { ascending: false }),
+        db.from('buyer_offers').select('id,lot_id,price_per_tonne,quantity_tonnes,status').eq('status','OPEN').order('price_per_tonne', { ascending: false }),
+        db.from('residue_transport_jobs').select('id,residue_lot_id,origin_type,destination_type,assigned_machine_id,status,planned_start,planned_arrival,actual_departure,actual_arrival,updated_at').order('created_at', { ascending: false }).limit(100),
+      ]);
+      if (!p.error) setPools(p.data || []);
+      if (!d.error) setDemands(d.data || []);
+      if (!l.error) setLots(l.data || []);
+      if (!o.error) setOffers(o.data || []);
+      if (!j.error) setTransportJobs(j.data || []);
+      const failed = [p, d, l, o, j].some((result) => Boolean(result.error));
+      if (failed) setNotice('Some live marketplace records could not be loaded. Refresh or check database permissions before acting on this information.');
+    } catch {
+      setNotice('Live marketplace records could not be loaded because the server was unreachable. Refresh and try again.');
+    }
   }
 
   useEffect(() => { void load(); }, [demoMode]);
