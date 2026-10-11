@@ -365,7 +365,7 @@ export function App() {
                   </p>
                 </div>
                 <div className="section-bar-meta">
-                  <span className="pill pill-green">{demoMode ? 'Demo GPS feed' : 'Live operator telemetry'}</span>
+                  <span className="pill pill-green">{demoMode ? 'Demo GPS feed' : 'Connected machine records'}</span>
                   <span className="pill">{fields.length} Farms • {machines.length} Balers</span>
                 </div>
               </div>
