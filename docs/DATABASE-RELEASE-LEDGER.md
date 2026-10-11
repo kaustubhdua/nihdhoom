@@ -55,6 +55,33 @@ Read from Supabase `list_migrations` on 2026-10-12. Versions below are the actua
 
 Never reorder or rename historical migrations casually. Add a new, reviewed migration for future changes. The generated bundle is for a clean project only, not a production repair script.
 
+## Reconciliation findings from the 2026-10-12 read-only audit
+
+The live ledger contains **36 records**. The repository's explicit fresh-install manifest now contains **38 files** because it includes the unapplied atomic job/residue-completion migration and the proposed P0 hardening migration. The count difference is not a repair instruction: the historical records are not a one-to-one filename mapping.
+
+Known source-history mismatches that must be resolved before enabling pushes:
+
+- Production records `202609270003a_nirdhoom_v6_schema` and `202609270003b_nirdhoom_v6_storage_policies`; the current source manifest has a single `202609270003_nirdhoom_v6.sql`. Recover the exact split SQL or verify each effect against the production schema before mapping either ledger entry.
+- Production records `nirdhoom_booking_active_field_guard_20261012`, but the manifest has no same-named file. The current booking/status migrations are not sufficient proof that this historical entry's exact SQL has been reconciled.
+- The manifest includes `202610050001_nirdhoom_telegram_identity.sql` and `202610050002_nirdhoom_telegram_webhook_idempotency.sql`; production's ledger instead names `20261005_nirdhoom_telegram_identity_live_repair`. Do not assume the live repair is byte-for-byte equivalent to both files without recovering the source that was applied.
+- `202610120004_atomic_job_residue_completion.sql` is in the source bundle but is absent from the production ledger, and `public.complete_job_with_residue_lot(uuid,numeric,numeric,integer,jsonb)` was absent from the production function inventory.
+- `202610120005_nirdhoom_p0_booking_verification_privileges.sql` is a proposed migration in this PR; it is not applied to production.
+
+The live database had **zero bookings and zero machine-capacity windows** at the time of the read-only check. That makes migration dry-run and synthetic concurrency tests possible, but does not substitute for role-based staging acceptance.
+
+### Safe repair plan
+
+1. Keep production `db push` disabled. Do not change remote ledger versions just to make them resemble repository filenames.
+2. Export a schema-only snapshot and a catalog snapshot of functions, constraints, indexes, policies, grants, and default privileges.
+3. Build a disposable database from the reviewed bundle; compare its schema with production and classify every difference as expected, missing, extra, or ambiguous.
+4. Produce a signed-off mapping table for every remote version: ledger version/name, exact source path and Git commit, SQL digest, schema effects, whether the effect exists in production, and reviewer.
+5. Recover split/combined historical SQL from the original applied commit or deployment artifact. If exact source cannot be recovered, treat the entry as **unreconciled**; do not invent a mapping.
+6. Test pending migrations in staging and verify grants and RPC behavior using anon, authenticated farmer, operator, dispatcher, verifier, admin, and service-role contexts.
+7. Use `supabase migration repair` only for a documented ledger correction after confirming the SQL effects are already present. Never mark a migration applied if its effects are absent, and never rerun an already-applied DDL migration merely because its filename differs.
+8. Apply reviewed new migrations only through the approved release process, then re-query the remote ledger and schema before enabling any automated production push.
+
+The P0 migration's proposed grant changes are grounded in the same read-only audit: effective anon table privileges were present across the public schema, while all inspected row policies targeted `authenticated`; the only public-schema function with effective anon EXECUTE was `revoke_farmer_network_consent()`. The proposed migration revokes inherited table/view/sequence privileges from `PUBLIC` and `anon`, preserves authenticated grants and RLS policies, and makes consent withdrawal authenticated-only. This has **not** yet been verified in staging or production.
+
 ## Marketplace workflow proposal
 
 `supabase/proposals/202610110002_nirdhoom_marketplace_transaction_workflow.sql` is **not approved for production** yet. Its source explicitly requires a staging authorization matrix. It is excluded from the fresh-install bundle until buyer/dispatcher/farmer authorization, ownership boundaries, and transport transitions pass that matrix. The marketplace UI must treat missing RPCs as an unavailable capability, not as proof that the workflow succeeded.
@@ -75,7 +102,7 @@ Never reorder or rename historical migrations casually. Add a new, reviewed migr
 
 ## Last read-only production observations
 
-- The core operational tables `profiles`, `fields`, `bookings`, `jobs`, `consents`, `evidence_assets`, `telegram_identities`, `residue_lots`, `residue_pools`, and `residue_matches` each had zero rows at the last check.
+- The core operational tables `profiles`, `fields`, `bookings`, `jobs`, `consents`, `evidence_assets`, `telegram_identities`, `residue_lots`, `residue_pools`, and `residue_matches` each had zero rows at the last check; `machine_capacity_windows` also had zero rows and zero reserved acres.
 - `fields.status` allows `SCHEDULED`; booking status remains `BOOKED`. The booking RPC is executable by `authenticated`, not `anon`.
 - On 2026-10-12, the consent audit privilege migration was applied and verified: `authenticated` no longer has table INSERT/UPDATE or `accepted_at` UPDATE on `public.consents`, but retains column UPDATE for `revoked_at` and EXECUTE on the guarded accept/withdraw RPCs. The atomic job-completion RPC remains absent from production.
 - Evidence bucket policies require authenticated users and restrict reads to the owner's folder or authorized operations roles.
