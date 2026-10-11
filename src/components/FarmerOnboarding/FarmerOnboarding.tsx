@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import CodeSlots from './CodeSlots';
+import LatticeLoader from '../LatticeLoader/LatticeLoader';
 import Stepper, { Step } from './Stepper';
 import { supabase } from '../../lib/supabase';
 import { describeAuthError } from '../../lib/liveStatus';
@@ -355,7 +356,6 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
         id: data.user.id,
         full_name: name.trim(),
         phone: normalizedPhone,
-        village: village.trim(),
       }, { onConflict: 'id' });
       if (profileError) {
         setOtpError(profileError.message || t('Your phone was verified, but your farmer profile could not be saved.'));
@@ -465,62 +465,49 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
         {/* Active Step Form */}
         <div className="lg:col-span-8">
           <div className="ui-card flex min-h-[400px] flex-col gap-4 !p-6">
+            {loading && (
+              <div className="flex justify-center rounded-xl bg-amber-50 px-4 py-3 text-amber-900">
+                <LatticeLoader label={currentStep === 'OTP' ? 'Verifying phone' : currentStep === 'LAND_RECORDS' ? 'Saving field' : 'Sending secure code'} color="#92400e" doneColor="#16a34a" cellSize={7} gap={2} fontSize={13} step={80} />
+              </div>
+            )}
             {currentStep === 'PHONE' && (
               <>
                 <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
                   <Phone className="w-4 h-4 text-emerald-400" />
                   <h4 className="font-bold text-sm text-white">{t('Step 1: Mobile Number Verification')}</h4>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Enter the farmer's mobile number. In live mode, Supabase Auth sends a real SMS OTP; demo mode uses a local test code.
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Start with just your name and mobile number. We ask for village, district and field location later, when you register a specific field—not during login.
                 </p>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
                   <div>
-                    <label className="text-xs text-slate-400 block mb-1">Full Name (as per land records)</label>
+                    <label htmlFor="farmer-full-name" className="text-sm font-semibold text-slate-700 block mb-1.5">Full name</label>
                     <input
+                      id="farmer-full-name"
+                      autoComplete="name"
                       className="ui-input"
-                      placeholder="Gurpreet Singh Brar"
+                      placeholder="Enter your name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-400 block mb-1">{t('Mobile Number (+91)')}</label>
-                    <input
-                      type="tel"
-                      maxLength={10}
-                      className="ui-input font-mono"
-                      placeholder="98765 43210"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-xs text-slate-400 block mb-1">Village</label>
+                    <label htmlFor="farmer-mobile-number" className="text-sm font-semibold text-slate-700 block mb-1.5">{t('Mobile Number (+91)')}</label>
+                    <div className="flex items-center rounded-xl border border-slate-200 bg-white focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-100">
+                      <span className="px-3 py-3 text-sm font-bold text-slate-500 border-r border-slate-200">+91</span>
                       <input
-                        className="ui-input"
-                        placeholder="Ubhawal"
-                        value={village}
-                        onChange={(e) => setVillage(e.target.value)}
+                        id="farmer-mobile-number"
+                        type="tel"
+                        inputMode="numeric"
+                        autoComplete="tel-national"
+                        maxLength={10}
+                        className="min-w-0 flex-1 bg-transparent px-3 py-3 text-base text-slate-900 outline-none"
+                        placeholder="98765 43210"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       />
                     </div>
-                    <div>
-                      <label className="text-xs text-slate-400 block mb-1">Block</label>
-                      <select
-                        className="ui-select"
-                        value={block}
-                        onChange={(e) => setBlock(e.target.value)}
-                      >
-                        <option value="">Select Block</option>
-                        <option>Sangrur</option>
-                        <option>Sunam</option>
-                        <option>Dhuri</option>
-                        <option>Bhawanigarh</option>
-                        <option>Dirba</option>
-                        <option>Lehragaga</option>
-                      </select>
-                    </div>
+                    <p className="mt-1.5 text-xs text-slate-500">We’ll send a one-time code to verify this number.</p>
                   </div>
                 </div>
                 {!DEMO_MODE && !supabase && (
@@ -539,7 +526,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                   disabled={phoneDigits.length !== 10 || !name.trim() || loading || (!DEMO_MODE && !supabase)}
                   className="ui-btn is-primary is-lg is-block mt-auto"
                 >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {loading ? <LatticeLoader label="Sending OTP" color="#ffffff" cellSize={4} gap={1} fontSize={12} showTimer={false} /> : <Sparkles className="w-4 h-4" />}
                   {DEMO_MODE ? t('Send Demo OTP') : t('Send OTP via SMS')}
                 </button>
               </>
@@ -861,11 +848,18 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                     <input id="live-acres" type="number" inputMode="decimal" min={0.01} max={500} step={0.01} className="ui-input font-mono" placeholder="3.5" value={acreage} onChange={(e) => setAcreage(e.target.value)} />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-400 block mb-1" htmlFor="live-village">Village</label>
-                    <input id="live-village" className="ui-input" value={village} onChange={(e) => setVillage(e.target.value)} />
+                    <label className="text-xs text-slate-600 block mb-1.5" htmlFor="live-village">Village</label>
+                    <input id="live-village" className="ui-input" autoComplete="address-level3" placeholder="Enter field village" value={village} onChange={(e) => setVillage(e.target.value)} />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-400 block mb-1" htmlFor="live-district">District</label>
+                    <label className="text-xs text-slate-600 block mb-1.5" htmlFor="live-block">Block / Tehsil (optional)</label>
+                    <select id="live-block" className="ui-select" value={block} onChange={(e) => setBlock(e.target.value)}>
+                      <option value="">Select block / tehsil</option>
+                      <option>Sangrur</option><option>Sunam</option><option>Dhuri</option><option>Bhawanigarh</option><option>Dirba</option><option>Lehragaga</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-600 block mb-1.5" htmlFor="live-district">District</label>
                     <select id="live-district" className="ui-select" value={district} onChange={(e) => setDistrict(e.target.value)}>
                       {DISTRICTS.map((d) => <option key={d}>{d}</option>)}
                     </select>
