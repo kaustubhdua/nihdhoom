@@ -85,6 +85,7 @@ const stageClasses: Record<string, string> = {
 };
 
 export function FieldJobBoard({
+  const { t } = useAppLanguage();
   fields,
   machines,
   demoMode,
