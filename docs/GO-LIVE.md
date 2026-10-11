@@ -47,11 +47,17 @@ Vercel > your project > **Settings > Environment Variables**. Select the environ
 | `VITE_NIRDHOOM_DEMO_MODE` | `false` | The website (omit it for the same effect) |
 | `SUPABASE_URL` | Project URL again | Telegram bot and server functions |
 | `SUPABASE_PUBLISHABLE_KEY` | anon / publishable key again | Server functions |
-| `SUPABASE_SERVICE_ROLE_KEY` | service_role key | Telegram account linking |
-| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_BOT_USERNAME` | from BotFather and your own secret | Telegram bot (already done) |
-| `NIRDHOOM_PUBLIC_URL` | `https://YOUR-SITE.vercel.app` | Buttons in the bot |
+| `SUPABASE_SERVICE_ROLE_KEY` | server-only Supabase service-role/secret key | Telegram account linking; production value was empty on 2026-10-12 |
+| `TELEGRAM_BOT_TOKEN` | token from @BotFather | Telegram bot replies; production value was empty on 2026-10-12 |
+| `TELEGRAM_WEBHOOK_SECRET` | strong random secret | Webhook verification; production value was empty on 2026-10-12 |
+| `TELEGRAM_BOT_USERNAME`, `VITE_TELEGRAM_BOT_USERNAME` | bot username without `@` | Telegram link and UI |
+| `NIRDHOOM_PUBLIC_URL` | `https://YOUR-SITE.vercel.app` | Buttons in the bot; production value was empty on 2026-10-12 |
+| `GROQ_API_KEY` | API key from the Groq console | Sathi AI provider; code reads this exact name, while production currently has a separate `GROQ_API` variable |
+| `REQUIRE_AUTH_FOR_AI` | `true` | Explicitly require authentication for the assistant in production |
 
 Never put the service_role key in a name that starts with `VITE_`: everything starting with `VITE_` is published inside the website's code.
+
+**Do not treat the production bot or AI as configured yet.** A read-only Vercel environment inspection on 2026-10-12 found the server-only Telegram/Supabase values above empty and did not find `GROQ_API_KEY`. Fill the variables in Vercel's encrypted UI, keep secrets out of Git and browser-prefixed variables, then redeploy after the daily deployment limit permits it. Run `npm run telegram:setup -- --url https://nihdhoom-9qiu.vercel.app` from a trusted local shell only after the token and secret are configured; the script talks to the live Telegram Bot API.
 
 Then **Deployments > the latest > ... > Redeploy**. Values that start with `VITE_` are baked in while the site is built, so they only take effect on a new deployment.
 
