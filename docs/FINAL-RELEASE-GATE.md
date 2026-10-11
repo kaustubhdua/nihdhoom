@@ -84,6 +84,8 @@ Run in staging with dedicated farmer, operator, dispatcher, verifier, buyer, and
 - [ ] Direct REST/table access and direct RPC/API calls are tested, not only hidden UI buttons.
 - [ ] Storage paths, object reads, evidence metadata, and signed URL lifetime obey the same role/ownership rules.
 - [ ] Secrets never appear in browser bundles, logs, error messages, screenshots, or committed files.
+- [ ] Review the current Supabase security advisor findings. The 2026-10-12 read-only check reported nine authenticated-callable SECURITY DEFINER functions; inspect every function's auth-null behavior, role/ownership predicates, pinned search_path, and grants before deciding whether any grant is excessive. Do not blanket-revoke required workflow RPCs.
+- [ ] Confirm `telegram_link_tokens` and `telegram_webhook_updates` are intentionally server-only tables with RLS enabled and no client policies; validate service-role access is confined to server endpoints and never exposed to browser code.
 
 ## Gate F — Offline evidence and field device reliability (P1)
 
@@ -141,7 +143,7 @@ Run in staging with dedicated farmer, operator, dispatcher, verifier, buyer, and
 - [ ] Improve geographic demand/capacity matching and route efficiency using validated operational data.
 - [ ] Track KPIs: request-to-assignment time, on-time clearance, machine utilization, verified tonnes, tonnes awaiting pickup, evidence completeness, sync success, and exception resolution time.
 - [ ] Add AI explanations/suggestions only on authenticated data; AI never dispatches, verifies, or creates commercial commitments autonomously.
-- [ ] Improve performance budgets, image attribution, caching, map fallback, and low-bandwidth behavior.
+- [ ] Revisit the Supabase performance advisor after representative pilot traffic. The 2026-10-12 read-only check reported 67 unused indexes on a largely empty project; do not remove indexes solely from that snapshot, because low usage may reflect the absence of production workload.\n- [ ] Improve performance budgets, image attribution, caching, map fallback, and low-bandwidth behavior.
 - [ ] Keep payments/carbon issuance disabled until provider integration, ledger, reconciliation, audit, and compliance controls are real.
 
 ## Final decision
