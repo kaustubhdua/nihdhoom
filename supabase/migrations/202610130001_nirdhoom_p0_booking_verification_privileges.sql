@@ -124,6 +124,22 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'An active capacity reservation cannot be removed from a guaranteed booking';
   END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM public.booking_capacity_reservations r
+    JOIN public.machine_capacity_windows w ON w.id = r.capacity_window_id
+    JOIN public.booking_capacity_reservations other_r
+      ON other_r.status = 'ACTIVE'
+     AND other_r.capacity_window_id <> r.capacity_window_id
+    JOIN public.machine_capacity_windows other_w ON other_w.id = other_r.capacity_window_id
+    WHERE r.booking_id = target_booking_id
+      AND r.status = 'ACTIVE'
+      AND w.machine_id = other_w.machine_id
+      AND w.window_start < other_w.window_end
+      AND w.window_end > other_w.window_start
+  ) THEN
+    RAISE EXCEPTION 'A machine cannot have active reservations in overlapping capacity windows';
+  END IF;
   RETURN NULL;
 END;
 $function$;
@@ -250,6 +266,16 @@ BEGIN
     AND cw.window_start < ((p_requested_date + 1)::timestamp AT TIME ZONE 'Asia/Kolkata')
     AND cw.window_end > (p_requested_date::timestamp AT TIME ZONE 'Asia/Kolkata')
     AND cw.reserved_acres + f.acreage <= cw.capacity_acres
+    AND NOT EXISTS (
+      SELECT 1
+      FROM public.booking_capacity_reservations active_r
+      JOIN public.machine_capacity_windows active_w ON active_w.id = active_r.capacity_window_id
+      WHERE active_r.status = 'ACTIVE'
+        AND active_w.machine_id = cw.machine_id
+        AND active_w.id <> cw.id
+        AND active_w.window_start < cw.window_end
+        AND active_w.window_end > cw.window_start
+    )
   ORDER BY cw.window_start, cw.created_at, cw.id
   LIMIT 1
   FOR UPDATE OF cw, m SKIP LOCKED;
@@ -388,6 +414,8 @@ DECLARE
   matched_firms_count integer := 0;
   firms_details jsonb := '[]'::jsonb;
   firms_ids uuid[] := ARRAY[]::uuid[];
+  evidence_sources jsonb := '[]'::jsonb;
+  verification_method text;
 BEGIN
   IF actor IS NULL THEN RAISE EXCEPTION 'authentication required'; END IF;
   SELECT p.role INTO role_name FROM public.profiles p WHERE p.id = actor;
@@ -468,17 +496,24 @@ BEGIN
     RAISE EXCEPTION 'Verification requires completed job, evidence asset and residue lot';
   END IF;
 
+  IF evidence_count > 0 THEN evidence_sources := evidence_sources || jsonb_build_array('field_evidence'); END IF;
+  IF matched_firms_count > 0 THEN evidence_sources := evidence_sources || jsonb_build_array('firms_observations'); END IF;
+  verification_method := CASE
+    WHEN evidence_count > 0 AND matched_firms_count > 0 THEN 'field_evidence_plus_firms'
+    WHEN evidence_count > 0 THEN 'field_evidence_only'
+    WHEN matched_firms_count > 0 THEN 'firms_observations_only'
+    ELSE 'reviewer_assessment_only'
+  END;
+
   INSERT INTO public.verification_events(field_id, method, result, confidence, metadata)
   VALUES (
     p_field_id,
-    CASE WHEN matched_firms_count > 0 THEN 'field_evidence_plus_firms' ELSE 'field_evidence_only' END,
+    verification_method,
     p_result,
     p_confidence,
     (COALESCE(p_metadata, '{}'::jsonb) - 'firms_observation_ids')
       || jsonb_build_object(
-        'evidence_sources', CASE WHEN matched_firms_count > 0
-          THEN jsonb_build_array('field_evidence','firms_observations')
-          ELSE jsonb_build_array('field_evidence') END,
+        'evidence_sources', evidence_sources,
         'firms_observations_reviewed', firms_details,
         'firms_observation_ids', CASE WHEN matched_firms_count > 0
           THEN to_jsonb(firms_ids) ELSE '[]'::jsonb END,
@@ -486,7 +521,7 @@ BEGIN
         'server_lot_count', lot_count,
         'completed_job_id', completed_job,
         'firms_absence_interpretation',
-          'No matching or selected FIRMS observation is not proof that burning did not occur.'
+          'Absence of a matching or selected FIRMS observation is not proof that burning did not occur.'
       )
   ) RETURNING * INTO v;
 
