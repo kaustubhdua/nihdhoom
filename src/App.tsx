@@ -21,6 +21,7 @@ const FieldJobBoard = lazy(() => import('./components/FieldJobs/FieldJobBoard').
 const FieldEvidenceTimeline = lazy(() => import('./components/ResidueNetwork/FieldEvidenceTimeline').then((m) => ({ default: m.FieldEvidenceTimeline })));
 const ClearanceBooking = lazy(() => import('./components/ClearanceBooking/ClearanceBooking').then((m) => ({ default: m.ClearanceBooking })));
 const ResidueControlTower = lazy(() => import('./components/ResidueNetwork/ResidueControlTower').then((m) => ({ default: m.ResidueControlTower })));
+const DemoScenarioJourney = lazy(() => import('./components/DemoScenarioJourney/DemoScenarioJourney').then((m) => ({ default: m.DemoScenarioJourney })));
 
 
 import { INITIAL_STORAGE_YARDS, INITIAL_BUYERS, INITIAL_RESIDUE_LOTS } from './data/mockData';
@@ -287,6 +288,11 @@ export function App() {
             onNavigate={(tab) => navigate(tab as ActiveTab)}
             demoMode={demoMode}
           />
+        )}
+        {activeTab === 'OVERVIEW' && demoMode && (
+          <div className="px-4 pb-6 sm:px-6 lg:px-8">
+            <DemoScenarioJourney onOpenMap={() => navigate('OPS_CONSOLE')} />
+          </div>
         )}
 
         {activeTab === 'FARMER_ONBOARDING' && (
