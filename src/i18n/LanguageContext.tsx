@@ -4,6 +4,19 @@ export type AppLanguage = 'en' | 'hi';
 type LanguageContextValue = { language: AppLanguage; setLanguage: (language: AppLanguage) => void; t: (english: string) => string };
 
 const translations: Record<string, string> = {
+  'Skip to main content': 'मुख्य सामग्री पर जाएँ',
+  'This deployment is not connected to a database.': 'यह डिप्लॉयमेंट डेटाबेस से जुड़ा नहीं है।',
+  'Loading live operational records…': 'लाइव संचालन रिकॉर्ड लोड हो रहे हैं…',
+  'Sign in to see live fields.': 'लाइव खेत देखने के लिए साइन इन करें।',
+  'Sign in or create account': 'साइन इन करें या खाता बनाएँ',
+  'Central Ops & VRP Dispatch Console': 'केंद्रीय संचालन और रूट योजना',
+  'GIS operations prototype for a Sangrur cluster using demo machinery and FIRMS-style event data': 'संगरूर क्षेत्र के लिए GIS संचालन प्रोटोटाइप; मशीनरी और FIRMS जैसे इवेंट डेटा उदाहरण हैं।',
+  'Field Operator PWA': 'खेत मशीन ऑपरेटर ऐप',
+  'No live machine is assigned yet. Connect an operator machine record before starting field operations.': 'अभी कोई लाइव मशीन असाइन नहीं है। खेत का काम शुरू करने से पहले ऑपरेटर की मशीन जोड़ें।',
+  'Live fields': 'लाइव खेत',
+  'Assigned machines': 'असाइन की गई मशीनें',
+  'Field operations • Evidence • Residue • Buyer pathways': 'खेत संचालन • प्रमाण • पराली • खरीदार विकल्प',
+  'Evidence-first prototype': 'प्रमाण-आधारित प्रोटोटाइप',
   'Home': 'होम',
   'My Fields': 'मेरे खेत',
   'Book Parali Pickup': 'पराली उठवाएँ',
