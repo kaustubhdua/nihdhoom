@@ -44,6 +44,18 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
   const [offlineSyncActive, setOfflineSyncActive] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const currentField = fields.find((f) => f.id === selectedFieldId) || fields[0];
 
+  // Network state is independent of GPS permission and demo/live mode.
+  useEffect(() => {
+    const updateNetworkState = () => setOfflineSyncActive(navigator.onLine);
+    updateNetworkState();
+    window.addEventListener('online', updateNetworkState);
+    window.addEventListener('offline', updateNetworkState);
+    return () => {
+      window.removeEventListener('online', updateNetworkState);
+      window.removeEventListener('offline', updateNetworkState);
+    };
+  }, []);
+
   useEffect(() => {
     const client = supabase;
     if (demoMode || !client || typeof navigator === 'undefined' || !navigator.geolocation) return;
@@ -79,16 +91,9 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
       maximumAge: 10000,
       timeout: 15000,
     });
-    const onOnline = () => setOfflineSyncActive(true);
-    const onOffline = () => setOfflineSyncActive(false);
-    window.addEventListener('online', onOnline);
-    window.addEventListener('offline', onOffline);
-
     return () => {
       cancelled = true;
       navigator.geolocation.clearWatch(watchId);
-      window.removeEventListener('online', onOnline);
-      window.removeEventListener('offline', onOffline);
     };
   }, [activeMachine.id, demoMode]);
 
@@ -378,9 +383,19 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30 text-[10px] text-emerald-300 font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-              <span>{t('Sync Active')}</span>
+            <div
+              role="status"
+              aria-live="polite"
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[10px] font-semibold ${
+                offlineSyncActive
+                  ? 'bg-emerald-950/80 border-emerald-500/30 text-emerald-300'
+                  : 'bg-amber-950/80 border-amber-500/40 text-amber-200'
+              }`}
+            >
+              {offlineSyncActive
+                ? <Wifi className="w-3 h-3" aria-hidden="true" />
+                : <WifiOff className="w-3 h-3" aria-hidden="true" />}
+              <span>{offlineSyncActive ? t('Online') : t('Offline — queued changes will sync later')}</span>
             </div>
           </div>
 
