@@ -92,5 +92,6 @@ test('consent withdrawal always clears its busy state after network exceptions',
   assert.match(withdrawal, /try\s*\{/);
   assert.match(withdrawal, /catch\s*\{/);
   assert.match(withdrawal, /finally\s*\{\s*setWithdrawBusy\(false\);/);
-  assert.match(withdrawal, /rpc\('revoke_farmer_network_consent'\)/);\n  assert.doesNotMatch(withdrawal, /from\('consents'\)\\s*\\n\\s*\\.update/);\n  assert.match(withdrawal, /Consent could not be updated because the server was unreachable/);
+  assert.match(withdrawal, /rpc\('revoke_farmer_network_consent'\)/);
+  assert.doesNotMatch(withdrawal, /from\('consents'\)\s*\.update/);\n  assert.match(withdrawal, /Consent could not be updated because the server was unreachable/);
 });
