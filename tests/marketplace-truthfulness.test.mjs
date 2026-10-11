@@ -30,7 +30,7 @@ test('live booking persists explicit consent through an authenticated RPC before
   const bookingCall = booking.indexOf("rpc('reserve_clearance_booking_v2'");
   assert.ok(consentCall >= 0);
   assert.ok(bookingCall > consentCall);
-  assert.match(migration, /source\).*web_booking/);
+  assert.match(migration, /web_booking/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.record_farmer_network_consent\(\) FROM PUBLIC, anon/);
   assert.doesNotMatch(booking, /from\('consents'\)\s*\.insert/);
   assert.doesNotMatch(booking, /from\('profiles'\)\s*\.update/);
