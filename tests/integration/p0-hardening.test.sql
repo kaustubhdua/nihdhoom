@@ -52,8 +52,10 @@ BEGIN
   INSERT INTO public.evidence_assets(field_id,booking_id) VALUES (b.field_id,b.id);
   INSERT INTO public.residue_lots(field_id,job_id,booking_id)
     VALUES (b.field_id,'00000000-0000-0000-0000-000000000403',b.id);
-  INSERT INTO public.firms_observations(id,source,sensor,acquired_at,matched_field_id,confidence,frp)
-    VALUES ('00000000-0000-0000-0000-000000000501','NASA FIRMS','VIIRS',now()-interval '120 days',b.field_id,'nominal',1.2);
+  INSERT INTO public.firms_observations(id,source,sensor,acquired_at,matched_field_id,confidence,frp,provider_observation_key)
+    VALUES ('00000000-0000-0000-0000-000000000501','NASA FIRMS','VIIRS',now()-interval '120 days',b.field_id,'nominal',1.2,'test|viirs|observation-501');
+  INSERT INTO public.firms_observation_field_matches(observation_id,field_id,match_type,source)
+    VALUES ('00000000-0000-0000-0000-000000000501',b.field_id,'point_in_polygon','NASA FIRMS');
 
   PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000003',true);
   event_row := public.record_verification_review(b.field_id,'REVIEW_REQUIRED',55,'{}'::jsonb);
