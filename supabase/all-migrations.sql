@@ -3218,8 +3218,8 @@ DECLARE role_name text;
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'authentication required'; END IF;
   SELECT p.role INTO role_name FROM public.profiles p WHERE p.id = auth.uid();
-  IF COALESCE(role_name, '') NOT IN ('buyer','dispatcher','admin') THEN
-    RAISE EXCEPTION 'Buyer or operations role required';
+  IF COALESCE(role_name, '') <> 'buyer' THEN
+    RAISE EXCEPTION 'Buyer role required';
   END IF;
 
   RETURN QUERY
