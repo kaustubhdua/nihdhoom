@@ -38,6 +38,20 @@ test('operator completion uses one RPC and does not insert residue lots from the
 });
 
 
+test('live completion requires operator-entered moisture and bale measurements instead of demo defaults', () => {
+  const source = read('src/components/FieldOperator/BalerPWA.tsx');
+  assert.match(source, /const \[moistureValue, setMoistureValue\] = useState<number \| null>\(null\)/);
+  assert.match(source, /const \[balesCount, setBalesCount\] = useState<number \| null>\(null\)/);
+  assert.match(source, /Measured moisture \(%\):/);
+  assert.match(source, /Measured bale count:/);
+  assert.match(source, /completionMeasurementsValid/);
+  assert.match(source, /Never carry demo controls into a live session as if they were field measurements/);
+  assert.match(source, /p_moisture_pct: moistureValue/);
+  assert.match(source, /p_bales_count: balesCount/);
+  assert.doesNotMatch(source, /p_moisture_pct: Number\(moistureValue\)/);
+  assert.doesNotMatch(source, /p_bales_count: Number\(balesCount\)/);
+});
+
 test('completion RPC rejects invalid measurements and malformed metadata before writes', () => {
   const sql = read('supabase/migrations/202610120004_atomic_job_residue_completion.sql');
   assert.match(sql, /p_quantity_tonnes is null or p_quantity_tonnes <= 0 or p_quantity_tonnes > 10000/i);
