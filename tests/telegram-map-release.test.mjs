@@ -87,3 +87,35 @@ test('Telegram UI exposes readiness, loading, and account-link errors', () => {
   const ui = read('src/components/FarmerSurface/TelegramChannel.tsx');
   for (const item of ['botReady', 'accountFeatures', 'linking', 'linkError', 'api/notify/telegram-link', 'Connect my NIRDHOOM account']) has(ui, item);
 });
+
+
+test('React Bits LatticeLoader supports lifecycle states, patterns, timer, and reduced motion', () => {
+  const loader = read('src/components/LatticeLoader/LatticeLoader.tsx');
+  const css = read('src/components/LatticeLoader/LatticeLoader.css');
+  const workspace = read('src/components/WorkspaceLoading.tsx');
+  const onboarding = read('src/components/FarmerOnboarding/FarmerOnboarding.tsx');
+  const booking = read('src/components/ClearanceBooking/ClearanceBooking.tsx');
+  has(loader, "type LoaderStatus = 'working' | 'done' | 'error'");
+  has(loader, "'orbit'");
+  has(loader, "'pulse'");
+  has(loader, 'prefers-reduced-motion');
+  has(css, '@media (prefers-reduced-motion: reduce)');
+  has(css, 'lattice-on-45');
+  has(workspace, 'LatticeLoader');
+  has(onboarding, 'LatticeLoader');
+  has(booking, 'LatticeLoader');
+});
+
+test('farmer login asks only for name and phone before OTP; field location stays in field registration', () => {
+  const onboarding = read('src/components/FarmerOnboarding/FarmerOnboarding.tsx');
+  const phoneStep = onboarding.slice(onboarding.indexOf("currentStep === 'PHONE'"), onboarding.indexOf("currentStep === 'OTP'"));
+  const fieldStep = onboarding.slice(onboarding.indexOf('id="live-village"'));
+  assert.ok(!phoneStep.includes('>Village<'), 'Village must not be part of initial phone login');
+  assert.ok(!phoneStep.includes('Select Block'), 'Block/tehsil must not be part of initial phone login');
+  has(phoneStep, 'farmer-full-name');
+  has(phoneStep, 'farmer-mobile-number');
+  has(fieldStep, 'live-block');
+  has(fieldStep, 'live-district');
+  has(onboarding, 'Phone sign-in and an SMS provider must be enabled in Supabase');
+  has(onboarding, 'finally {');
+});
