@@ -25,9 +25,9 @@ const priorityClass = {
 };
 
 export function ResidueControlTower({
-  const { t } = useAppLanguage();
   fields, machines, buyers, storageYards, residueLots = [], demoMode, onSelectField, onNavigate,
 }: Props) {
+  const { t } = useAppLanguage();
   const [view, setView] = useState<'exceptions' | 'capacity' | 'demand'>('exceptions');
   const summary = useMemo(() => buildResidueSummary(fields, machines, buyers, storageYards, residueLots), [fields, machines, buyers, storageYards, residueLots]);
   const recommendations = useMemo(() => machineRecommendations(fields, machines), [fields, machines]);
