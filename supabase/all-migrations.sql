@@ -3534,7 +3534,6 @@ $function$;
 REVOKE ALL ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) TO authenticated;
 
-
 -- >>> 202610120002_nirdhoom_booking_active_field_guard.sql
 -- Prevent a second active clearance workflow for a field, even on a different date.
 CREATE OR REPLACE FUNCTION public.reserve_clearance_booking_v2(p_field_id uuid,p_requested_date date)
