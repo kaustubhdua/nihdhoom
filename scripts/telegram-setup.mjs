@@ -82,7 +82,8 @@ await tg('setWebhook', {
   url: webhookUrl,
   secret_token: secret,
   allowed_updates: ['message', 'callback_query'],
-  drop_pending_updates: true,
+  // Preserve queued farmer messages during setup/re-registration.
+  drop_pending_updates: false,
 });
 console.log(`✓ Webhook → ${webhookUrl}`);
 
