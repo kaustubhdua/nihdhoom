@@ -35,14 +35,26 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
 }) => {
   const { t } = useAppLanguage();
   const [selectedFieldId, setSelectedFieldId] = useState<string>(fields[0]?.id || 'FIELD-101');
-  const [moistureValue, setMoistureValue] = useState<number>(14.2);
-  const [balesCount, setBalesCount] = useState<number>(38);
+  const [moistureValue, setMoistureValue] = useState<number | null>(null);
+  const [balesCount, setBalesCount] = useState<number | null>(null);
   const [residueTonnes, setResidueTonnes] = useState<number>(0);
   const [jobStatus, setJobStatus] = useState<string | null>(null);
   const [jobBusy, setJobBusy] = useState(false);
   const [jobMessage, setJobMessage] = useState('');
   const [offlineSyncActive, setOfflineSyncActive] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const currentField = fields.find((f) => f.id === selectedFieldId) || fields[0];
+  const displayedMoisture = demoMode ? (moistureValue ?? 14.2) : moistureValue;
+  const displayedBalesCount = demoMode ? (balesCount ?? 38) : balesCount;
+  const completionMeasurementsValid = Number.isFinite(residueTonnes) && residueTonnes > 0
+    && moistureValue !== null && Number.isFinite(moistureValue) && moistureValue >= 0 && moistureValue <= 100
+    && balesCount !== null && Number.isInteger(balesCount) && balesCount >= 1 && balesCount <= 1000000;
+
+  useEffect(() => {
+    // Never carry demo controls into a live session as if they were field measurements.
+    setMoistureValue(null);
+    setBalesCount(null);
+    setResidueTonnes(0);
+  }, [demoMode]);
 
   // Network state is independent of GPS permission and demo/live mode.
   useEffect(() => {
@@ -241,8 +253,16 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
       setJobMessage('No active server job is assigned to this field yet.');
       return;
     }
-    if (next === 'COMPLETED' && Number(residueTonnes) <= 0) {
+    if (next === 'COMPLETED' && (!Number.isFinite(residueTonnes) || residueTonnes <= 0)) {
       setJobMessage('Enter the measured residue quantity in tonnes before completing this job.');
+      return;
+    }
+    if (next === 'COMPLETED' && (moistureValue === null || !Number.isFinite(moistureValue) || moistureValue < 0 || moistureValue > 100)) {
+      setJobMessage('Enter a measured moisture percentage between 0 and 100 before completing this job.');
+      return;
+    }
+    if (next === 'COMPLETED' && (balesCount === null || !Number.isInteger(balesCount) || balesCount < 1 || balesCount > 1000000)) {
+      setJobMessage('Enter the measured bale count before completing this job.');
       return;
     }
 
@@ -266,15 +286,15 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
         source: 'operator-pwa',
         field_id: currentField.dbId || currentField.id,
         gps_available: Boolean(gpsState),
-        bales_count: Number(balesCount),
+        bales_count: balesCount,
       };
 
       if (next === 'COMPLETED') {
         const { data, error } = await client.rpc('complete_job_with_residue_lot', {
           p_job_id: lookup.data.id,
           p_quantity_tonnes: Number(residueTonnes),
-          p_moisture_pct: Number(moistureValue),
-          p_bales_count: Number(balesCount),
+          p_moisture_pct: moistureValue,
+          p_bales_count: balesCount,
           p_metadata: metadata,
         });
         if (error) throw new Error(error.message);
@@ -505,26 +525,58 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400 flex items-center gap-1">
                     <Droplet className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>{demoMode ? t('Demo moisture control:') : t('Moisture sensor:')}</span>
+                    <span>{demoMode ? t('Demo moisture control:') : t('Measured moisture (%):')}</span>
                   </span>
-                  <strong className={`font-mono ${moistureValue > 20 ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {moistureValue}% {moistureValue <= 20 ? t('Optimal') : t('High Moisture Alert!')}
+                  <strong className={`font-mono ${(displayedMoisture ?? 0) > 20 ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {displayedMoisture === null ? t('Not measured') : `${displayedMoisture}% ${displayedMoisture <= 20 ? t('Optimal') : t('High Moisture Alert!')}`}
                   </strong>
                 </div>
-                <input
-                  type="range"
-                  min="10"
-                  max="25"
-                  step="0.5"
-                  value={moistureValue}
-                  onChange={(e) => setMoistureValue(Number(e.target.value))}
-                  disabled={!demoMode}
-                  className="w-full accent-cyan-400 cursor-pointer"
-                />
+                {demoMode ? (
+                  <input
+                    type="range"
+                    min="10"
+                    max="25"
+                    step="0.5"
+                    value={displayedMoisture ?? 14.2}
+                    onChange={(e) => setMoistureValue(Number(e.target.value))}
+                    className="w-full accent-cyan-400 cursor-pointer"
+                    aria-label="Demo moisture percentage"
+                  />
+                ) : (
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={moistureValue ?? ''}
+                    onChange={(e) => setMoistureValue(e.target.value === '' ? null : Number(e.target.value))}
+                    placeholder="Enter measured %"
+                    className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-right text-xs font-mono text-white"
+                    aria-label="Measured moisture percentage"
+                  />
+                )}
 
                 <div className="flex justify-between items-center pt-1 border-t border-slate-800 text-[11px]">
-                  <span className="text-slate-400">{demoMode ? t('Estimated straw yield:') : t('Straw quantity:')}</span>
-                  <strong className="text-white font-mono">{balesCount} {t('Bales')} (~{Math.round(currentField.acreage * 2.2 * 10) / 10} Tonnes)</strong>
+                  <span className="text-slate-400">{demoMode ? t('Estimated straw yield:') : t('Measured bale count:')}</span>
+                  {demoMode ? (
+                    <strong className="text-white font-mono">{displayedBalesCount} {t('Bales')} (~{Math.round(currentField.acreage * 2.2 * 10) / 10} Tonnes)</strong>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <input
+                        id="measured-bales-count"
+                        type="number"
+                        min="1"
+                        max="1000000"
+                        step="1"
+                        value={balesCount ?? ''}
+                        onChange={(e) => setBalesCount(e.target.value === '' ? null : Number(e.target.value))}
+                        placeholder="Count"
+                        className="w-24 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-right text-xs font-mono text-white"
+                        aria-label="Measured bale count"
+                      />
+                      <span className="text-slate-500">{t('Bales')}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between gap-2 text-[11px]">
@@ -595,11 +647,11 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
                   onClick={() => {
                     void advanceLiveJob();
                   }}
-                  disabled={jobBusy || (!demoMode && (!jobStatus || (jobStatus === 'PROOF_PENDING' && residueTonnes <= 0)))}
+                  disabled={jobBusy || (!demoMode && (!jobStatus || (jobStatus === 'PROOF_PENDING' && !completionMeasurementsValid)))}
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
                 >
                   <Zap className="w-4 h-4 fill-current text-amber-300" />
-                  <span>{jobBusy ? 'Updating job…' : demoMode ? 'Complete demo field record' : jobStatus === 'PROOF_PENDING' && residueTonnes <= 0 ? 'Enter measured tonnes to complete' : jobStatus ? `Advance job: ${jobStatus.replace(/_/g, ' ')} →` : 'No active server job'}</span>
+                  <span>{jobBusy ? 'Updating job…' : demoMode ? 'Complete demo field record' : jobStatus === 'PROOF_PENDING' && !completionMeasurementsValid ? 'Enter measured quantity, moisture and bale count' : jobStatus ? `Advance job: ${jobStatus.replace(/_/g, ' ')} →` : 'No active server job'}</span>
                 </button>
               ) : (
                 <div className="p-2.5 rounded-xl bg-emerald-950/70 border border-emerald-500/50 text-emerald-300 text-xs font-bold text-center flex items-center justify-center gap-2">
