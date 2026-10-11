@@ -2,7 +2,7 @@
 create role anon nologin;
 create role authenticated nologin;
 create schema if not exists auth;
-create or replace function auth.uid() returns uuid language sql stable AS 'select nullif(current_setting(''request.jwt.claim.sub'', true), '''')::uuid';
+create or replace function auth.uid() returns uuid language plpgsql stable AS 'BEGIN RETURN NULLIF(current_setting(''request.jwt.claim.sub'', true), '''')::uuid; END;';
 GRANT USAGE ON SCHEMA auth TO authenticated;
 create table public.profiles (id uuid primary key, role text not null);
 create table public.consents (
