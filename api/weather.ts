@@ -82,23 +82,31 @@ export default async function handler(req: any, res: any) {
   if (!weatherResponse.ok) return json(res, 502, { error: 'Weather provider unavailable' });
   const payload = await weatherResponse.json();
 
+  // Forecast availability and snapshot persistence are separate outcomes. Never
+  // silently claim persistence when the optional server-side write is unavailable.
+  let persistenceStatus: 'saved' | 'failed' | 'not_configured' = 'not_configured';
   if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    await fetch(`${(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL)}/rest/v1/weather_snapshots`, {
-      method: 'POST',
-      headers: {
-        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
-      },
-      body: JSON.stringify({
-        field_id: field.id,
-        provider: 'open-meteo',
-        observed_at: new Date().toISOString(),
-        payload,
-      }),
-      signal: AbortSignal.timeout(8000),
-    }).catch(() => undefined);
+    try {
+      const snapshotResponse = await fetch(`${(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL)}/rest/v1/weather_snapshots`, {
+        method: 'POST',
+        headers: {
+          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({
+          field_id: field.id,
+          provider: 'open-meteo',
+          observed_at: new Date().toISOString(),
+          payload,
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+      persistenceStatus = snapshotResponse.ok ? 'saved' : 'failed';
+    } catch {
+      persistenceStatus = 'failed';
+    }
   }
 
   return json(res, 200, {
@@ -108,6 +116,7 @@ export default async function handler(req: any, res: any) {
     latitude: lat,
     longitude: lng,
     fetched_at: new Date().toISOString(),
+    persistence_status: persistenceStatus,
     forecast: payload,
   });
 }
