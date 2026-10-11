@@ -1,6 +1,6 @@
 # NIRDHOOM connected Supabase
 
-The dedicated NIRDHOOM Supabase project is connected to the application. This document describes the current repository migration chain and release boundaries.
+The dedicated NIRDHOOM Supabase project is connected to the application. This document describes the repository migration chain and production release boundaries.
 
 ## Project
 
@@ -10,32 +10,13 @@ The dedicated NIRDHOOM Supabase project is connected to the application. This do
 - Never commit service-role, provider, AI or webhook secrets.
 - Payments remain deliberately non-live for the current release scope.
 
-## Current repository migration chain
+## Migration source of truth and production safety
 
-The repository currently contains 20 ordered migrations:
+The canonical fresh-install order is maintained in `supabase/migration-order.txt` (35 migrations at the 2026-10-12 repository review). `supabase/all-migrations.sql` is a generated bundle and CI validates that it matches the manifest. Do not maintain a second hand-written list here; it became stale as new migrations were added.
 
-1. 202609270001_nirdhoom_core
-2. 202609270002_nirdhoom_production
-3. 202609270003_nirdhoom_v6
-4. 202609270004_nirdhoom_v7
-5. 202610010001_field_geometry_verification
-6. 202610010002_verified_area_booking
-7. 202610010005_nirdhoom_booking_integrity
-8. 202610010006_nirdhoom_verification_and_settlement_integrity
-9. 202610010007_nirdhoom_operational_integrity
-10. 20261001_nirdhoom_database_hygiene
-11. 20261001_nirdhoom_rls_initplan_fix
-12. 202610020008_nirdhoom_client_write_integrity
-13. 202610020009_nirdhoom_security_advisor_cleanup
-14. 202610020010_nirdhoom_residue_pooling_and_research
-15. 202610020011_nirdhoom_residue_pooling_security_and_indexes
-16. 202610020012_nirdhoom_residue_pool_verification_gate
-17. 202610040001_machine_privacy_and_pool_member_visibility
-18. 202610040002_revoke_trigger_function_execute
-19. 202610050001_nirdhoom_telegram_identity
-20. 202610050002_nirdhoom_telegram_webhook_idempotency
+**Do not run `supabase db push` against production yet.** The live project's migration ledger uses server-assigned versions and historical split/combined records that do not directly match the repository filenames. The source SQL and production ledger must be reconciled before automated CLI pushes are safe. See `docs/DATABASE-RELEASE-LEDGER.md` for the observed ledger and the required schema-only comparison. The generated bundle is for clean installs only, not a production repair script.
 
-See `docs/DATABASE-RELEASE-LEDGER.md` for the release checklist and migration rules.
+Marketplace transaction workflow SQL under `supabase/proposals/` is deliberately excluded from the approved migration bundle until the staging authorization matrix passes.
 
 ## Current integrity boundaries
 
@@ -59,15 +40,15 @@ Demo mode is explicit via `VITE_NIRDHOOM_DEMO_MODE=true` and persists demo state
 These are intentionally not faked by the application:
 
 - Supabase SMS provider and real farmer OTP delivery
-- authoritative cadastral/Khasra source and import workflow
-- real verifier/operator accounts for end-to-end RLS/RPC testing
-- real machine/operator records and device GPS
-- production dispatch/OR-Tools service and operational validation
+- Authoritative cadastral/Khasra source and import workflow
+- Real verifier/operator accounts for end-to-end RLS/RPC testing
+- Real machine/operator records and device GPS
+- Production dispatch/OR-Tools service and operational validation
 - FIRMS provider key and scheduled ingestion
 - Telegram bot/webhook configuration and delivery validation
 - IVR provider credentials and delivery validation
-- real buyer/offtake contracts and allocation validation
-- production deployment configuration
-- field-pilot validation with real operators and farmers
+- Real buyer/offtake contracts and allocation validation
+- Production deployment configuration
+- Field-pilot validation with real operators and farmers
 
 Payments are explicitly outside this release scope.
