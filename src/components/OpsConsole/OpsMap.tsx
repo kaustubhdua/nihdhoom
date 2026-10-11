@@ -369,7 +369,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
         const farmerName = field.farmer_name || 'Demo farmer';
         const farmerIcon = L.divIcon({
-          html: '<div class="map-demo-farmer-pin" aria-hidden="true"><span>👨🏽‍🌾</span></div>',
+          html: '<div class="map-demo-farmer-pin" aria-hidden="true" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;border-radius:50%;background:#f2a900;box-shadow:0 2px 8px #17251c66;font-size:17px"><span>👨🏽‍🌾</span></div>',
           className: 'map-demo-farmer-pin-wrap',
           iconSize: [30, 30],
           iconAnchor: [15, 15],
