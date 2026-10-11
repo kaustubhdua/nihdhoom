@@ -161,10 +161,11 @@ export const OpsMap: React.FC<OpsMapProps> = ({
       setLastRefresh(new Date());
       return;
     }
+    const client = supabase;
     let active = true;
     const refreshLocations = async () => {
       try {
-        const { data: sessionResult } = await supabase.auth.getSession();
+        const { data: sessionResult } = await client.auth.getSession();
         const token = sessionResult.session?.access_token;
         if (!token) {
           if (active) {
@@ -174,7 +175,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
           }
           return;
         }
-        const { data, error } = await supabase
+        const { data, error } = await client
           .from('machine_locations')
           .select('machine_id,latitude,longitude,recorded_at')
           .order('recorded_at', { ascending: false })
