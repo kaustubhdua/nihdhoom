@@ -26,5 +26,6 @@ test('offline evidence replay recovers safely after partial upload or lost respo
   assert.match(queue, /\.eq\('storage_path', path\)/);
   assert.match(queue, /if \(existing\.error\) continue;/);
   assert.match(queue, /if \(existing\.data\) \{\s*await removeQueued\(item\.id\);/);
-  assert.match(queue, /upsert: true/);
+  assert.match(queue, /upload\.error\.statusCode !== '409'/);
+  assert.match(queue, /upsert: false/);
 });
