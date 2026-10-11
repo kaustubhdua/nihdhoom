@@ -599,6 +599,10 @@ test('field-first UI kit and open-source interaction surfaces remain wired', () 
 
 test('consent withdrawal is server-authorized and records revocation', () => {
   const migration = read('supabase/migrations/202610070001_nirdhoom_consent_withdrawal.sql');
+  const auditMigration = read('supabase/migrations/202610120005_consent_audit_immutability.sql');
+  assert.match(auditMigration, /REVOKE UPDATE ON TABLE public\.consents FROM authenticated/);
+  assert.match(auditMigration, /GRANT UPDATE \(revoked_at\) ON TABLE public\.consents TO authenticated/);
+  assert.match(auditMigration, /WITH CHECK \([\s\S]*revoked_at IS NOT NULL/);
   const onboarding = read('src/components/FarmerOnboarding/FarmerOnboarding.tsx');
   assert.match(migration, /revoke_farmer_network_consent/);
   assert.match(migration, /profile_id = \(select auth\.uid\(\)\)/);
