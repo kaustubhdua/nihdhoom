@@ -465,9 +465,9 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
         {/* Active Step Form */}
         <div className="lg:col-span-8">
           <div className="ui-card flex min-h-[400px] flex-col gap-4 !p-6">
-            {loading && (
-              <div className="flex justify-center rounded-xl bg-amber-50 px-4 py-3 text-amber-900">
-                <LatticeLoader label={currentStep === 'OTP' ? 'Verifying phone' : currentStep === 'LAND_RECORDS' ? 'Saving field' : 'Sending secure code'} color="#92400e" doneColor="#16a34a" cellSize={7} gap={2} fontSize={13} step={80} />
+            {(loading || fieldBusy) && (
+              <div className="flex justify-center rounded-xl bg-amber-50 px-4 py-3 text-amber-900" role="status" aria-live="polite">
+                <LatticeLoader label={fieldBusy ? 'Saving field' : currentStep === 'OTP' ? 'Verifying phone' : 'Sending secure code'} color="#92400e" doneColor="#16a34a" cellSize={7} gap={2} fontSize={13} step={80} />
               </div>
             )}
             {currentStep === 'PHONE' && (
