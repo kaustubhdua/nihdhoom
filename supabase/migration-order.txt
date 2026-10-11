@@ -33,3 +33,4 @@
 202610120001_nirdhoom_booking_field_status_consistency.sql
 202610120002_nirdhoom_fk_indexes.sql
 202610120003_nirdhoom_storage_yard_policy_consolidation.sql
+202610120004_atomic_job_residue_completion.sql
