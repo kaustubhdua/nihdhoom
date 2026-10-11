@@ -624,8 +624,10 @@ test('residue is a first-class traceable domain object', () => {
   assert.match(migration, /revoke insert, update, delete on public\.residue_lot_events/);
   assert.match(timeline, /FIELD EVIDENCE TIMELINE/);
   assert.match(timeline, /absence of a detection does not prove no burning/);
-  assert.match(baler, /estimated_quantity_tonnes: quantity/);
-  assert.match(baler, /geometry_provenance:/);
+  assert.match(baler, /rpc\('complete_job_with_residue_lot'/);
+  const atomicCompletion = read('supabase/migrations/202610120004_atomic_job_residue_completion.sql');
+  assert.match(atomicCompletion, /geometry_provenance/);
+  assert.match(atomicCompletion, /estimated_quantity_tonnes/);
 });
 
 test('machine capability claims carry source metadata', () => {
