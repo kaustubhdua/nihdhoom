@@ -355,6 +355,37 @@ export const OpsMap: React.FC<OpsMapProps> = ({
       });
     }
 
+    // Demo farmer markers are intentionally distinct from field polygons. They are
+    // simulated household locations derived from seeded field centres, never live
+    // farmer GPS or verified residential addresses.
+    if (demoMode && showFields) {
+      const seenFarmers = new Set<string>();
+      fields.forEach((field) => {
+        const farmerId = String(field.farmer_id || field.farmer_name || field.id);
+        if (seenFarmers.has(farmerId)) return;
+        seenFarmers.add(farmerId);
+        const lat = Number(field.center?.lat);
+        const lng = Number(field.center?.lng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+        const farmerName = field.farmer_name || 'Demo farmer';
+        const farmerIcon = L.divIcon({
+          html: '<div class="map-demo-farmer-pin" aria-hidden="true"><span>👨🏽‍🌾</span></div>',
+          className: 'map-demo-farmer-pin-wrap',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+        });
+        L.marker([lat, lng], { icon: farmerIcon, zIndexOffset: 650 })
+          .bindPopup(
+            '<div class="map-pop"><div class="map-pop-title">' + escapeHtml(farmerName) + '</div>' +
+            '<div class="map-pop-sub">' + escapeHtml(field.village || 'Village not specified') + ' · ' + escapeHtml(field.block || field.district || 'Punjab') + '</div>' +
+            '<div class="map-pop-rows"><div><strong>Field:</strong> ' + escapeHtml(field.khasra_no || field.id) + '</div>' +
+            '<div><strong>Area:</strong> ' + escapeHtml(field.acreage) + ' acres</div></div>' +
+            '<div class="map-pop-note">SIMULATED DEMO LOCATION — not a real farmer location or live registration.</div></div>'
+          )
+          .addTo(layerGroup);
+      });
+    }
+
     // 2. Render Registered Machine Capacity
     if (showMachines) {
       machines.forEach((machine) => {
