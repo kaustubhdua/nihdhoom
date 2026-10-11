@@ -508,6 +508,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                       />
                     </div>
                     <p className="mt-1.5 text-xs text-slate-500">We’ll send a one-time code to verify this number.</p>
+                    {!DEMO_MODE && <p className="mt-1 text-xs text-slate-500">Phone sign-in and an SMS provider must be enabled in Supabase before a real code can be delivered.</p>}
                   </div>
                 </div>
                 {!DEMO_MODE && !supabase && (
