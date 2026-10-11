@@ -525,3 +525,96 @@
   .map-field-pin.is-selected span { width: 20px; height: 20px; border-color: var(--ink); }
   .map-field-pin.is-selected b { background: var(--ink); color: #fff; }
 }
+
+/* Release polish: predictable overlays, keyboard focus and small-screen ergonomics. */
+@layer components {
+  .map-shell :is(button, input, [role="button"]):focus-visible {
+    outline: 3px solid #92400e;
+    outline-offset: 3px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .map-shell .leaflet-control-attribution {
+    max-width: min(70%, 360px);
+    padding: 2px 6px;
+    border-top-left-radius: 8px;
+    background: rgba(255, 251, 243, .9);
+    color: #334155;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .map-legend {
+    max-height: min(28vh, 190px);
+    overflow: auto;
+    scrollbar-width: thin;
+    overscroll-behavior: contain;
+  }
+
+  .map-stage {
+    min-height: 34px;
+    border-radius: 9px;
+    transition: background-color .15s var(--ease), opacity .15s var(--ease);
+  }
+  .map-stage:focus-visible { outline-offset: 1px; }
+  .map-stage:not(.is-static):hover { background: rgba(146, 64, 14, .08); }
+
+  .map-finder-panel,
+  .map-layers-panel {
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #c6b99f transparent;
+  }
+
+  .map-shell .leaflet-popup-content {
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 640px) {
+    .map-gps {
+      left: 8px;
+      top: 8px;
+      gap: 6px;
+      padding-inline: 10px;
+      max-width: calc(100% - 112px);
+    }
+    .map-layers { top: 8px; right: 8px; }
+    .map-finder { top: 52px; left: 8px; }
+    .map-zoom { right: 8px; }
+    .map-bottom {
+      left: 8px;
+      right: 8px;
+      bottom: max(8px, env(safe-area-inset-bottom));
+      gap: 6px;
+    }
+    .map-legend {
+      gap: 4px 8px;
+      padding: 7px 8px;
+      font-size: 11px;
+      max-height: 23vh;
+    }
+    .map-clusters {
+      max-width: 100%;
+      padding: 4px;
+    }
+    .map-clusters-label { font-size: 11px; }
+    .map-clusters button { min-height: 34px; padding-inline: 10px; }
+    .map-finder-panel {
+      width: min(280px, calc(100vw - 32px));
+      max-height: min(340px, 42vh);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .map-shell *,
+    .map-shell *::before,
+    .map-shell *::after {
+      scroll-behavior: auto !important;
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+  }
+}
+
