@@ -44,7 +44,7 @@ test('verification records only explicitly selected, field-matched FIRMS observa
 
 test('anonymous access is revoked without revoking authenticated application table reads', () => {
   const sql = read(migrationPath);
-  assert.match(sql, /REVOKE ALL PRIVILEGES ON TABLE public\\.%I FROM PUBLIC, anon/i);
+  assert.match(sql, /REVOKE ALL PRIVILEGES ON TABLE public\.%I FROM PUBLIC, anon/i);
   assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.reserve_clearance_booking_v2\(uuid,date\) TO authenticated/i);
   assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.record_verification_review\(uuid,text,numeric,jsonb\) TO authenticated/i);
 });
