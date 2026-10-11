@@ -45,7 +45,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layerGroupRef = useRef<L.LayerGroup | null>(null);
 
-  const [tileMode, setTileMode] = useState<'satellite' | 'street'>('satellite');
+  const [tileMode, setTileMode] = useState<'satellite' | 'street' | 'nasa'>('satellite');
   const [showFires, setShowFires] = useState(true);
   const [showMachines, setShowMachines] = useState(true);
   const [showFields, setShowFields] = useState(true);
@@ -255,11 +255,18 @@ export const OpsMap: React.FC<OpsMapProps> = ({
       }
     });
 
-    // Switchable satellite imagery and street labels. Keep provider attribution visible.
+    // Basemaps are independent from operational overlays. NASA GIBS is public imagery;
+    // use an older date to reduce empty tiles caused by same-day processing latency.
     if (tileMode === 'satellite') {
       L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         { maxZoom: 18, maxNativeZoom: 17, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community' }
+      ).addTo(map);
+    } else if (tileMode === 'nasa') {
+      const imageryDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      L.tileLayer(
+        `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${imageryDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
+        { maxZoom: 18, maxNativeZoom: 9, attribution: 'NASA GIBS / NASA EOSDIS · MODIS Terra true-colour imagery (\u00a9 NASA)' }
       ).addTo(map);
     } else {
       L.tileLayer(
@@ -662,8 +669,9 @@ export const OpsMap: React.FC<OpsMapProps> = ({
               <Layers className="h-3.5 w-3.5" />
               <span>{t('GIS map layers')}</span>
             </div>
-            <div className="grid grid-cols-2 gap-1 p-2">
+            <div className="grid grid-cols-3 gap-1 p-2">
               <button type="button" aria-pressed={tileMode === 'satellite'} onClick={() => setTileMode('satellite')} className={`rounded-lg px-2 py-2 text-xs font-bold ${tileMode === 'satellite' ? 'bg-emerald-800 text-white' : 'bg-white text-slate-700 border border-slate-200'}`}>{t('Satellite')}</button>
+              <button type="button" aria-pressed={tileMode === 'nasa'} onClick={() => setTileMode('nasa')} className={`rounded-lg px-2 py-2 text-xs font-bold ${tileMode === 'nasa' ? 'bg-emerald-800 text-white' : 'bg-white text-slate-700 border border-slate-200'}`}>{t('NASA imagery')}</button>
               <button type="button" aria-pressed={tileMode === 'street'} onClick={() => setTileMode('street')} className={`rounded-lg px-2 py-2 text-xs font-bold ${tileMode === 'street' ? 'bg-emerald-800 text-white' : 'bg-white text-slate-700 border border-slate-200'}`}>{t('Street map')}</button>
             </div>
             {layerToggles.map((layer) => (
