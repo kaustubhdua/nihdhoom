@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import { Buyer, BuyerType } from '../../types';
 import { INITIAL_BUYERS } from '../../data/mockData';
 import { 
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 
 export const MultiOfftakeAuction: React.FC = () => {
+  const { t } = useAppLanguage();
   const [buyers] = useState<Buyer[]>(INITIAL_BUYERS);
   const [testMoisture, setTestMoisture] = useState<number>(14.0);
   const [testSilica, setTestSilica] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('LOW');
@@ -42,14 +44,14 @@ export const MultiOfftakeAuction: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-[family-name:var(--font-display)] text-[24px] font-bold leading-tight text-[var(--ink)]">
-                  Multi-offtake planning simulator
+                  {t('Multi-offtake planning simulator')}
                 </h3>
                 <span className="badge badge-emerald text-xs">
-                  ILLUSTRATIVE SCENARIO
+                  {t('ILLUSTRATIVE SCENARIO')}
                 </span>
               </div>
               <p className="ui-card-sub max-w-2xl !text-[14px]">
-                This simulator demonstrates how residue lots could be compared against buyer requirements using moisture, quality and logistics. Prices below are mock records; no live offer or contract is created.
+                {t('This simulator demonstrates how residue lots could be compared against buyer requirements using moisture, quality and logistics. Prices below are mock records; no live offer or contract is created.')}
               </p>
             </div>
           </div>
@@ -73,8 +75,8 @@ export const MultiOfftakeAuction: React.FC = () => {
               </p>
             </div>
             <div className="text-right hidden sm:block">
-              <span className="text-xs font-mono text-emerald-800 font-bold block">Illustrative price spread</span>
-              <span className="text-[10px] text-emerald-950/55">Demo comparison only</span>
+              <span className="text-xs font-mono text-emerald-800 font-bold block">{t('Illustrative price spread')}</span>
+              <span className="text-[10px] text-emerald-950/55">{t('Demo comparison only')}</span>
             </div>
           </div>
         </div>
@@ -86,11 +88,11 @@ export const MultiOfftakeAuction: React.FC = () => {
           <div className="flex items-center gap-2">
             <Scale className="w-5 h-5 text-amber-700" />
             <h4 className="font-bold text-base text-emerald-950">
-              Interactive Lot Offtake Router
+              {t('Interactive Lot Offtake Router')}
             </h4>
           </div>
           <span className="text-xs text-emerald-950/55">
-            Demo quality-matching simulator
+            {t('Demo quality-matching simulator')}
           </span>
         </div>
 
@@ -98,7 +100,7 @@ export const MultiOfftakeAuction: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-emerald-50/60 p-4 rounded-xl border border-emerald-900/10">
           <div>
             <label className="text-xs text-emerald-950/55 block mb-1">
-              Straw Moisture Level: <strong className="text-emerald-800 font-mono">{testMoisture}%</strong>
+              {t('Straw Moisture Level:')} <strong className="text-emerald-800 font-mono">{testMoisture}%</strong>
             </label>
             <input
               type="range"
