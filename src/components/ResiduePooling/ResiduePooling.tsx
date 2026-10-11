@@ -37,6 +37,8 @@ export function ResiduePooling({ fields, demoMode }: Props) {
   const { t } = useAppLanguage();
   const [poolQuantities, setPoolQuantities] = useState<Record<string, string>>({});
   const [currentRole, setCurrentRole] = useState('');
+  const [currentBuyerName, setCurrentBuyerName] = useState('');
+  const [demandDraft, setDemandDraft] = useState({ residueType: 'Paddy straw', targetTonnes: '50', pickupDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), radiusKm: '25', maxMoisturePct: '20' });
   const [matchableLots, setMatchableLots] = useState<MatchableLot[]>([]);
   const [offerDrafts, setOfferDrafts] = useState<Record<string, { price: string; quantity: string }>>({});
   const [transportJobs, setTransportJobs] = useState<TransportJob[]>([]);
@@ -101,6 +103,10 @@ export function ResiduePooling({ fields, demoMode }: Props) {
       role = String(profile?.role || '');
     }
     setCurrentRole(role);
+    if (role === 'buyer' && profileId) {
+      const { data: buyerProfile } = await db.from('buyers').select('name').eq('profile_id', profileId).eq('active', true).maybeSingle();
+      setCurrentBuyerName(String(buyerProfile?.name || ''));
+    } else setCurrentBuyerName('');
     if (['buyer', 'dispatcher', 'admin'].includes(role)) {
       const { data: matched, error: matchError } = await db.rpc('matchable_residue_lots');
       if (!matchError) setMatchableLots(matched || []);
@@ -146,6 +152,33 @@ export function ResiduePooling({ fields, demoMode }: Props) {
       p_buyer_demand_id: demand.id,
     });
     setNotice(error ? error.message : `Pool ${data?.id || ''} created from buyer demand.`);
+    if (!error) await load();
+  }
+
+  async function createBuyerDemand() {
+    if (!supabase || currentRole !== 'buyer') return;
+    const targetTonnes = Number(demandDraft.targetTonnes);
+    const radiusKm = Number(demandDraft.radiusKm);
+    const maxMoisturePct = Number(demandDraft.maxMoisturePct);
+    if (!currentBuyerName) {
+      setNotice('This account is not linked to an active buyer profile. Ask an administrator to link it before publishing demand.');
+      return;
+    }
+    if (!demandDraft.residueType.trim() || !Number.isFinite(targetTonnes) || targetTonnes <= 0 ||
+        !demandDraft.pickupDeadline || demandDraft.pickupDeadline < new Date().toISOString().slice(0, 10) ||
+        !Number.isFinite(radiusKm) || radiusKm <= 0 || !Number.isFinite(maxMoisturePct) || maxMoisturePct < 0 || maxMoisturePct > 100) {
+      setNotice('Check residue type, positive target quantity, future pickup deadline, radius and moisture limit.');
+      return;
+    }
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) { setNotice('Sign in before publishing buyer demand.'); return; }
+    const { error } = await (supabase as any).from('buyer_demands').insert({
+      buyer_id: userId, buyer_name: currentBuyerName, residue_type: demandDraft.residueType.trim(),
+      target_tonnes: targetTonnes, pickup_deadline: demandDraft.pickupDeadline, radius_km: radiusKm,
+      max_moisture_pct: maxMoisturePct, status: 'OPEN',
+    });
+    setNotice(error ? error.message : 'Buyer demand published. Matching lots will use residue type, moisture and pickup window.');
     if (!error) await load();
   }
 
@@ -256,6 +289,21 @@ export function ResiduePooling({ fields, demoMode }: Props) {
           </div>
         </section>
       </div>
+
+      {currentRole === 'buyer' && (
+        <section className="market-card">
+          <div className="market-card-heading"><div><span className="market-card-kicker">{t('BUYER')}</span><h2>{t('Publish buyer demand')}</h2></div></div>
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <label className="text-sm">{t('Residue type')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" value={demandDraft.residueType} onChange={(event) => setDemandDraft((prev) => ({ ...prev, residueType: event.target.value }))} /></label>
+            <label className="text-sm">{t('Target tonnes')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="number" min="0.1" step="0.1" value={demandDraft.targetTonnes} onChange={(event) => setDemandDraft((prev) => ({ ...prev, targetTonnes: event.target.value }))} /></label>
+            <label className="text-sm">{t('Pickup deadline')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="date" min={new Date().toISOString().slice(0, 10)} value={demandDraft.pickupDeadline} onChange={(event) => setDemandDraft((prev) => ({ ...prev, pickupDeadline: event.target.value }))} /></label>
+            <label className="text-sm">{t('Maximum radius (km)')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="number" min="1" step="1" value={demandDraft.radiusKm} onChange={(event) => setDemandDraft((prev) => ({ ...prev, radiusKm: event.target.value }))} /></label>
+            <label className="text-sm">{t('Maximum moisture (%)')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="number" min="0" max="100" step="1" value={demandDraft.maxMoisturePct} onChange={(event) => setDemandDraft((prev) => ({ ...prev, maxMoisturePct: event.target.value }))} /></label>
+          </div>
+          <button onClick={() => void createBuyerDemand()} className="market-primary-action mt-3">{t('Publish buyer demand')}</button>
+          {!currentBuyerName && <p className="market-row-meta mt-2">{t('Buyer profile linking is required before publishing demand or offers.')}</p>}
+        </section>
+      )}
 
       {['buyer', 'dispatcher', 'admin'].includes(currentRole) && (
         <section className="market-card">
