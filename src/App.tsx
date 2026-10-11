@@ -144,6 +144,7 @@ const WORKSPACE_META: Partial<Record<ActiveTab, {
 };
 
 function WorkspaceHeader({ activeTab, demoMode, onNavigate }: WorkspaceHeaderProps) {
+  const { t } = useAppLanguage();
   const meta = WORKSPACE_META[activeTab];
   if (!meta) return null;
   const accentClass = meta.accent === 'amber' ? 'is-amber' : meta.accent === 'sky' ? 'is-sky' : 'is-green';
