@@ -357,20 +357,18 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
                             Certificate unavailable
                           </span>
                         )}
+                        {firmsScreenings[field.id] && (
+                          <div className="mt-2 max-w-xs text-left text-xs" role="status">
+                            {firmsScreenings[field.id].error ? (
+                              <span className="text-red-700">{firmsScreenings[field.id].error}</span>
+                            ) : (
+                              <span className="text-[var(--muted)]">
+                                NASA FIRMS queried {new Date(firmsScreenings[field.id].queriedAt).toLocaleString()} · {firmsScreenings[field.id].count} nearby observations · {firmsScreenings[field.id].matchedCount} matched to this boundary. Screening only—not verification; results are not persisted.
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    </td>
-                    <td className="py-3 px-3" colSpan={0}>
-                      {firmsScreenings[field.id] && (
-                        <div className="text-xs" role="status">
-                          {firmsScreenings[field.id].error ? (
-                            <span className="text-red-700">{firmsScreenings[field.id].error}</span>
-                          ) : (
-                            <span className="text-[var(--muted)]">
-                              NASA FIRMS queried {new Date(firmsScreenings[field.id].queriedAt).toLocaleString()} · {firmsScreenings[field.id].count} nearby observations · {firmsScreenings[field.id].matchedCount} matched to this boundary. Screening only—not verification; results are not persisted.
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </td>
                   </tr>
                 );
