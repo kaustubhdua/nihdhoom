@@ -3456,7 +3456,6 @@ GRANT EXECUTE ON FUNCTION public.create_buyer_offer(uuid,numeric,numeric,timesta
 GRANT EXECUTE ON FUNCTION public.accept_buyer_offer(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.transition_residue_transport_job(uuid,text,uuid) TO authenticated;
 
-
 -- >>> 202610120001_nirdhoom_booking_field_status_consistency.sql
 -- NIRDHOOM: keep the field lifecycle status inside its declared constraint.
 -- bookings.status remains BOOKED; fields.status uses SCHEDULED while a booking is active.
