@@ -25,6 +25,7 @@ const priorityClass = {
 };
 
 export function ResidueControlTower({
+  const { t } = useAppLanguage();
   fields, machines, buyers, storageYards, residueLots = [], demoMode, onSelectField, onNavigate,
 }: Props) {
   const [view, setView] = useState<'exceptions' | 'capacity' | 'demand'>('exceptions');
