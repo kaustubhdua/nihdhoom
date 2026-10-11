@@ -2,6 +2,7 @@ import { StrictMode, Component } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import { App } from './App.tsx';
+import { LanguageProvider } from './i18n/LanguageContext';
 import { installInteractions } from './lib/interactions';
 
 class AppErrorBoundary extends Component {
@@ -92,7 +93,9 @@ installInteractions();
 createRoot(root).render(
   <StrictMode>
     <AppErrorBoundary>
-      <App />
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
     </AppErrorBoundary>
   </StrictMode>,
 );
