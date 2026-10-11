@@ -4,6 +4,10 @@ export type AppLanguage = 'en' | 'hi';
 type LanguageContextValue = { language: AppLanguage; setLanguage: (language: AppLanguage) => void; t: (english: string) => string };
 
 const translations: Record<string, string> = {
+  'Book Clearance': 'पराली उठाने की बुकिंग',
+  'Track Clearance': 'उठान की स्थिति देखें',
+  'Verify': 'सत्यापन करें',
+  'Parali Market': 'पराली बाज़ार',
   'NIRDHOOM connects a farmer request to machine capacity, field evidence and the next residue pathway without turning uncertain information into a promise.': 'NIRDHOOM किसान की माँग को मशीन क्षमता, खेत के प्रमाण और पराली के अगले रास्ते से जोड़ता है—बिना अनिश्चित जानकारी को वादा बनाए।',
   'Today': 'आज',
   'Start with the next field action.': 'अगली खेत कार्रवाई से शुरू करें।',
@@ -139,7 +143,6 @@ const translations: Record<string, string> = {
   'My Fields': 'मेरे खेत',
   'Book Parali Pickup': 'पराली उठवाएँ',
   'Track My Machine': 'मशीन ट्रैक करें',
-  'Parali Market': 'पराली बाज़ार',
   'More': 'और विकल्प',
   'Language': 'भाषा',
   'Harvest Timing': 'फसल कटाई का समय',
