@@ -224,36 +224,39 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
     if (!confirmed) return;
     setWithdrawBusy(true);
     setWithdrawMessage('');
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) {
+    try {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        setWithdrawMessage('Your session has expired. Sign in again to manage consent.');
+        return;
+      }
+      const now = new Date().toISOString();
+      const { error: consentError } = await supabase
+        .from('consents')
+        .update({ revoked_at: now })
+        .eq('profile_id', data.user.id)
+        .eq('consent_type', 'farmer_network')
+        .is('revoked_at', null);
+      if (consentError) {
+        setWithdrawMessage(consentError.message || 'Consent could not be withdrawn.');
+        return;
+      }
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ consent_status: 'REVOKED' })
+        .eq('id', data.user.id);
+      if (profileError) {
+        setWithdrawMessage(profileError.message || 'Consent was revoked, but profile status could not be updated.');
+        return;
+      }
+      setActiveConsent(false);
+      setConsentAccepted(false);
+      setWithdrawMessage('Consent withdrawn. New booking actions will require fresh consent.');
+    } catch {
+      setWithdrawMessage('Consent could not be updated because the server was unreachable. Check your connection and try again.');
+    } finally {
       setWithdrawBusy(false);
-      setWithdrawMessage('Your session has expired. Sign in again to manage consent.');
-      return;
     }
-    const now = new Date().toISOString();
-    const { error: consentError } = await supabase
-      .from('consents')
-      .update({ revoked_at: now })
-      .eq('profile_id', data.user.id)
-      .eq('consent_type', 'farmer_network')
-      .is('revoked_at', null);
-    if (consentError) {
-      setWithdrawBusy(false);
-      setWithdrawMessage(consentError.message || 'Consent could not be withdrawn.');
-      return;
-    }
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ consent_status: 'REVOKED' })
-      .eq('id', data.user.id);
-    setWithdrawBusy(false);
-    if (profileError) {
-      setWithdrawMessage(profileError.message || 'Consent was revoked, but profile status could not be updated.');
-      return;
-    }
-    setActiveConsent(false);
-    setConsentAccepted(false);
-    setWithdrawMessage('Consent withdrawn. New booking actions will require fresh consent.');
   };
 
   useEffect(() => {
