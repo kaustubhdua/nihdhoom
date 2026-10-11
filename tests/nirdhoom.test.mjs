@@ -213,6 +213,11 @@ test('Telegram webhook is idempotent and server-persisted', () => {
   assert.match(source, /telegram_webhook_updates/);
   assert.match(source, /response.status === 409/);
   assert.match(source, /duplicate: true/);
+  assert.match(source, /releaseTelegramUpdate/);
+  assert.match(source, /Telegram update processing failed; retry requested/);
+  assert.match(source, /if \(!response\.ok\) throw new Error/);
+  assert.match(source, /Telegram bot token is not configured/);
+
 });
 
 test('Telegram outbound notifications remain dispatcher/admin-only', () => {
