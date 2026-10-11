@@ -46,3 +46,12 @@ test('demo journey validates ordered history and never labels review as verified
   assert.doesNotMatch(journey, /Approve sample review/);
   assert.match(journey, /not a trusted server timestamp/);
 });
+
+test('live FIRMS screening is authenticated, explicit and not presented as verification', () => {
+  const audit = read('../src/components/VerificationLayer/SatelliteAudit.tsx');
+  assert.match(audit, /fetch\('\/api\/firms'/);
+  assert.match(audit, /Authorization: `Bearer \$\{token\}`/);
+  assert.match(audit, /Query NASA FIRMS/);
+  assert.match(audit, /Screening only—not verification; results are not persisted/);
+  assert.match(audit, /A saved field UUID, valid centre and field boundary are required/);
+});
