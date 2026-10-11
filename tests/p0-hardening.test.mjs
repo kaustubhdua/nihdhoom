@@ -6,13 +6,13 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (name) => fs.readFileSync(path.join(root, name), 'utf8');
-const migrationPath = 'supabase/migrations/202610130001_nirdhoom_p0_booking_verification_privileges.sql';
+const migrationPath = 'supabase/migrations/202610120005_nirdhoom_p0_booking_verification_privileges.sql';
 
 test('P0 migration is registered in the approved bundle order', () => {
   const manifest = read('supabase/migration-order.txt').trim().split(/\r?\n/);
   const bundle = read('supabase/all-migrations.sql');
-  assert.equal(manifest.filter((name) => name === '202610130001_nirdhoom_p0_booking_verification_privileges.sql').length, 1);
-  assert.ok(bundle.includes('-- >>> 202610130001_nirdhoom_p0_booking_verification_privileges.sql'));
+  assert.equal(manifest.filter((name) => name === '202610120005_nirdhoom_p0_booking_verification_privileges.sql').length, 1);
+  assert.ok(bundle.includes('-- >>> 202610120005_nirdhoom_p0_booking_verification_privileges.sql'));
   assert.ok(bundle.includes('CREATE CONSTRAINT TRIGGER bookings_require_capacity_reservation'));
 });
 
