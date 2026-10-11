@@ -15,6 +15,7 @@ interface Props {
 type BookingRecord = {
   id: string; field_id: string; requested_date: string; status: string;
   quoted_amount: number; created_at: string; cancelled_at: string | null;
+  reservation_state: string; guaranteed_by_date: string | null; machine_id: string | null;
 };
 
 function localDateString(date: Date): string {
@@ -39,6 +40,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
   const [error, setError] = useState('');
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [serverQuote, setServerQuote] = useState<number | null>(null);
+  const [serverReservationState, setServerReservationState] = useState<'RESERVED' | 'UNCONFIRMED' | null>(null);
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [bookingHistoryError, setBookingHistoryError] = useState('');
@@ -62,7 +64,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
     setBookingHistoryError('');
     try {
       const { data, error: queryError } = await supabase.from('bookings')
-        .select('id,field_id,requested_date,status,quoted_amount,created_at,cancelled_at')
+        .select('id,field_id,requested_date,status,quoted_amount,created_at,cancelled_at,reservation_state,guaranteed_by_date,machine_id')
         .in('field_id', dbFieldIds).order('created_at', { ascending: false }).limit(25);
       if (queryError) {
         setBookingHistoryError('Could not load booking history. Please refresh and try again.');
@@ -107,6 +109,13 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
       setError('Please confirm consent before requesting clearance.');
       return;
     }
+    if (!demoMode && bookings.some((booking) =>
+      booking.field_id === (selected.dbId || selected.id)
+      && !['CANCELLED','FAILED','VERIFIED','REJECTED'].includes(booking.status)
+    )) {
+      setError('This field already has an active request. Check Your bookings for its current capacity status.');
+      return;
+    }
     if (date < localDateString(new Date())) {
       setError('Please choose today or a future date.');
       return;
@@ -120,7 +129,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
     try {
       if (demoMode) {
         onBooked(selected.id, estimate);
-        setMessage('Example pickup booked. No real payment was made.');
+        setMessage('Example pickup booked. This is demo data only; no real machine was reserved and no payment was made.');
         return;
       }
       if (!supabase) throw new Error('Live Supabase is not configured.');
@@ -136,13 +145,23 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
         p_requested_date: date,
       });
       if (rpcError) throw new Error(rpcError.message);
-      const quote = Number((data as { quoted_amount?: number } | null)?.quoted_amount || 0);
-      if (!Number.isFinite(quote) || quote <= 0) throw new Error('Booking was created but the server returned no valid quote. Refresh your bookings before retrying.');
+      const booking = data as {
+        quoted_amount?: number; status?: string; reservation_state?: string;
+        guaranteed_by_date?: string | null; machine_id?: string | null;
+      } | null;
+      const quote = Number(booking?.quoted_amount || 0);
+      if (!Number.isFinite(quote) || quote <= 0) throw new Error('The server returned no valid quote. Refresh your bookings before retrying.');
+      const capacityReserved = booking?.reservation_state === 'RESERVED'
+        && Boolean(booking.machine_id)
+        && Boolean(booking.guaranteed_by_date);
       setServerQuote(quote);
-      onBooked(selected.id, quote);
+      setServerReservationState(capacityReserved ? 'RESERVED' : 'UNCONFIRMED');
+      if (capacityReserved) onBooked(selected.id, quote, 'RESERVED');
       await refreshBookings();
       onBookingChanged?.();
-      setMessage(t('Book parali pickup') + ' confirmed by the server.');
+      setMessage(capacityReserved
+        ? 'Machine capacity is reserved for ' + booking!.guaranteed_by_date + '. No service penalty is enabled.'
+        : 'Your request was saved, but machine capacity is not available yet. The date is indicative only—not a guarantee—and no penalty applies.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Booking could not be created.');
     } finally {
@@ -185,7 +204,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
       <section className="ui-split">
         <div className="ui-card">
           <label className="ui-label mb-2 block">{t('Field')}</label>
-          <select value={fieldId} onChange={(e) => { setFieldId(e.target.value); setServerQuote(null); setError(''); setMessage(''); }} className="ui-select">
+          <select value={fieldId} onChange={(e) => { setFieldId(e.target.value); setServerQuote(null); setServerReservationState(null); setError(''); setMessage(''); }} className="ui-select">
             {bookable.length === 0 && <option value="">{t('No bookable fields')}</option>}
             {bookable.map((field) => (
               <option key={field.id} value={field.id}>{field.khasra_no} · {field.village} · {Number(field.acreage).toFixed(2)} ac</option>
@@ -238,9 +257,9 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
             <p>• Payment is not connected in this version.</p>
           </div>
           <div className="mt-6 rounded-2xl border border-[var(--wheat-line)] bg-[var(--surface)] p-4 shadow-sm">
-            <span className="ui-kv-label block">{demoMode ? 'Example estimate' : 'Server quote'}</span>
+            <span className="ui-kv-label block">{demoMode ? 'Example estimate' : serverReservationState === 'RESERVED' ? 'Capacity-reserved quote' : serverReservationState === 'UNCONFIRMED' ? 'Indicative quote' : 'Server quote'}</span>
             <strong className="mt-1 block font-[family-name:var(--font-display)] text-[30px] font-bold leading-tight text-[var(--ink)]">{demoMode ? `₹${estimate.toLocaleString()}` : serverQuote !== null ? `₹${serverQuote.toLocaleString('en-IN')}` : 'Shown after booking'}</strong>
-            <span className="text-[12px] text-[var(--muted)]">{demoMode ? 'Example only · no payment is made' : serverQuote !== null ? 'Server-confirmed quote · no payment has been taken' : 'Authoritative quote comes from the server'}</span>
+            <span className="text-[12px] text-[var(--muted)]">{demoMode ? 'Example only · no payment is made' : serverReservationState === 'RESERVED' ? 'Capacity reserved · no payment or service penalty is enabled' : serverReservationState === 'UNCONFIRMED' ? 'Indicative only · requested date is not guaranteed' : 'Server quote is shown after your request'}</span>
           </div>
         </aside>
       </section>
@@ -250,7 +269,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 id="booking-history-title" className="ui-card-title">{t('Your bookings')}</h2>
-              <p className="text-sm text-[var(--ink-2)]">{t('View confirmed pickup dates, server quotes, and cancel eligible bookings.')}</p>
+              <p className="text-sm text-[var(--ink-2)]">Requests show whether machine capacity is reserved. An indicative date is not a guarantee.</p>
             </div>
             <button type="button" className="ui-btn is-secondary" onClick={() => void refreshBookings()} disabled={bookingsLoading}>
               {bookingsLoading ? t('Loading…') : t('Refresh bookings')}
@@ -258,17 +277,18 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
           </div>
           {bookingHistoryError && <div role="alert" className="ui-note is-ember mt-3">{bookingHistoryError}</div>}
           {bookingsLoading && bookings.length === 0 && <p className="mt-4 text-sm text-[var(--muted)]">{t('Loading your bookings…')}</p>}
-          {!bookingsLoading && bookings.length === 0 && !bookingHistoryError && <p className="mt-4 text-sm text-[var(--muted)]">{t('No bookings yet. Your confirmed pickups will appear here.')}</p>}
+          {!bookingsLoading && bookings.length === 0 && !bookingHistoryError && <p className="mt-4 text-sm text-[var(--muted)]">{t('No booking requests yet. Requests and capacity-reserved pickups will appear here.')}</p>}
           {bookings.length > 0 && <div className="mt-4 space-y-3">
             {bookings.map((booking) => {
               const field = fields.find((item) => (item.dbId || item.id) === booking.field_id);
-              const canCancel = ['BOOKED', 'MACHINE_ASSIGNED'].includes(booking.status);
+              const canCancel = ['REQUESTED', 'BOOKED', 'MACHINE_ASSIGNED'].includes(booking.status);
               return (
                 <article key={booking.id} className="flex flex-col gap-3 rounded-xl border border-[var(--line)] p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <strong className="block text-sm text-[var(--ink)]">{field ? field.khasra_no + ' · ' + field.village : t('Registered field')}</strong>
-                    <p className="mt-1 text-sm text-[var(--ink-2)]">{t('Pickup date')}: {new Date(booking.requested_date + 'T00:00:00').toLocaleDateString('en-IN')}</p>
-                    <p className="mt-1 text-sm text-[var(--ink-2)]">{t('Server quote')}: ₹{Number(booking.quoted_amount).toLocaleString('en-IN')} · {booking.status.replace(/_/g, ' ')}</p>
+                    <p className="mt-1 text-sm text-[var(--ink-2)]">{booking.reservation_state === 'RESERVED' ? 'Capacity-reserved pickup date' : 'Requested date (not guaranteed)'}: {new Date(booking.requested_date + 'T00:00:00').toLocaleDateString('en-IN')}</p>
+                    <p className="mt-1 text-sm text-[var(--ink-2)]">Quote: ₹{Number(booking.quoted_amount).toLocaleString('en-IN')} · {booking.status.replace(/_/g, ' ')}</p>
+                    <p className="mt-1 text-xs text-[var(--muted)]">{booking.reservation_state === 'RESERVED' ? 'Machine capacity is reserved. No service penalty is enabled.' : 'Awaiting capacity. This date is indicative only; no guarantee or penalty applies.'}</p>
                   </div>
                   {canCancel && <button type="button" className="ui-btn is-secondary" onClick={() => void cancelBooking(booking.id)} disabled={cancellingId !== null}>{cancellingId === booking.id ? t('Cancelling…') : t('Cancel booking')}</button>}
                 </article>
