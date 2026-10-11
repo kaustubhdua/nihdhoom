@@ -9,7 +9,6 @@ import {
   Satellite, 
   ShieldCheck, 
   Flame, 
-  CheckCircle2, 
   Award, 
   FileText, 
   Sparkles, 
