@@ -360,7 +360,7 @@ export const INITIAL_BUYERS: Buyer[] = [
     silica_tolerance: 'Low to Medium silica preferred',
     demand_tonnes: 14000,
     margin_tier: 'ULTRA_HIGH',
-    description: 'Requires fresh, golden, low-silica PR-126 straw. Pays 2.1x the CBG fuel rate with net 7-day payment.',
+    description: 'Illustrative demand profile for fresh, low-silica PR-126 straw. Price, payment terms and buyer identity are not verified; obtain a written quote before presenting an offer.',
   },
   {
     id: 'BUYER-02',
@@ -373,7 +373,7 @@ export const INITIAL_BUYERS: Buyer[] = [
     silica_tolerance: 'Standard straw fiber',
     demand_tonnes: 22000,
     margin_tier: 'HIGH',
-    description: 'Converts unburned straw pulp into sustainable packaging trays and tableware. Premium ESG certified offtake.',
+    description: 'Illustrative packaging-fibre use case. Facility, certifications, quality acceptance and offtake terms are unverified.',
   },
   {
     id: 'BUYER-03',
@@ -386,7 +386,7 @@ export const INITIAL_BUYERS: Buyer[] = [
     silica_tolerance: 'High silica accepted',
     demand_tonnes: 18000,
     margin_tier: 'HIGH',
-    description: 'High-density mobile pyrolysis producing soil-amending biochar. Qualifies for secondary soil carbon removal credits.',
+    description: 'Illustrative mobile-pyrolysis use case. Processing capacity, buyer interest and any carbon-credit eligibility require independent validation.',
   },
   {
     id: 'BUYER-04',
@@ -399,7 +399,7 @@ export const INITIAL_BUYERS: Buyer[] = [
     silica_tolerance: 'Basmati or low silica',
     demand_tonnes: 30000,
     margin_tier: 'MEDIUM',
-    description: 'Chemically softened with 4% urea spray to break ligno-cellulosic bond, turning parali into digestible cattle roughage.',
+    description: 'Illustrative fodder pathway only. Any urea-treatment recipe, feed-safety protocol, buyer demand and commercial terms must be validated by qualified agronomists and the actual buyer.',
   },
   {
     id: 'BUYER-05',
@@ -412,7 +412,7 @@ export const INITIAL_BUYERS: Buyer[] = [
     silica_tolerance: 'High silica damages digester impellers',
     demand_tonnes: 100000,
     margin_tier: 'LOW',
-    description: 'Asia largest CBG plant. High volume baseline buyer, but thin operating margins due to 60-day delayed settlement.',
+    description: 'Illustrative CBG demand profile; this record does not confirm facility capacity, buyer participation, pricing or settlement terms.',
   },
 ];
 
