@@ -1,6 +1,6 @@
 -- Keep consent history auditable: authenticated farmers may only set revoked_at
 -- on their own active consent. Acceptance and consent metadata go through guarded RPCs.
-REVOKE UPDATE ON TABLE public.consents FROM authenticated;
+REVOKE INSERT, UPDATE ON TABLE public.consents FROM authenticated;
 REVOKE UPDATE (id, profile_id, consent_type, version, accepted_at, revoked_at, source) ON TABLE public.consents FROM authenticated;
 GRANT UPDATE (revoked_at) ON TABLE public.consents TO authenticated;
 
