@@ -73,7 +73,7 @@ jobs:
       - name: Apply P0 booking, verification and privilege migration in isolation
         env:
           PGDATABASE: nirdhoom_p0_test
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/202610130001_nirdhoom_p0_booking_verification_privileges.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/202610120005_nirdhoom_p0_booking_verification_privileges.sql
       - name: Test concurrent capacity reservation, provenance and privilege boundaries
         env:
           PGDATABASE: nirdhoom_p0_test
