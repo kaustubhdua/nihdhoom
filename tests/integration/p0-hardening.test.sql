@@ -65,6 +65,31 @@ BEGIN
   IF jsonb_array_length(event_row.metadata->'firms_observations_reviewed') <> 1 THEN
     RAISE EXCEPTION 'Reviewed FIRMS observation ID/timestamp provenance was not preserved';
   END IF;
+  IF event_row.metadata->'firms_observations_reviewed'->0->>'temporal_relation' <> 'older_than_90_days_before_completion'
+     OR event_row.metadata->'firms_observations_reviewed'->0->>'acquired_at' IS NULL THEN
+    RAISE EXCEPTION 'Stale observation timestamp/limitation was not preserved';
+  END IF;
+
+  BEGIN
+    PERFORM public.record_verification_review(
+      '00000000-0000-0000-0000-000000000202','REVIEW_REQUIRED',55,
+      jsonb_build_object('firms_observation_ids',jsonb_build_array('00000000-0000-0000-0000-000000000501'))
+    );
+    RAISE EXCEPTION 'Expected mismatched-field FIRMS ID to be rejected';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM = 'Expected mismatched-field FIRMS ID to be rejected' THEN RAISE; END IF;
+  END;
+
+  BEGIN
+    PERFORM public.record_verification_review(
+      b.field_id,'REVIEW_REQUIRED',55,
+      jsonb_build_object('firms_observation_ids',jsonb_build_array('not-a-uuid'))
+    );
+    RAISE EXCEPTION 'Expected malformed FIRMS ID to be rejected';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM = 'Expected malformed FIRMS ID to be rejected' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE '%FIRMS observation IDs must be valid UUIDs%' THEN RAISE; END IF;
+  END;
 
   -- Cancellation must release capacity and clear the guarantee in the same transaction.
   SELECT * INTO b FROM public.bookings WHERE reservation_state='RESERVED' LIMIT 1;
