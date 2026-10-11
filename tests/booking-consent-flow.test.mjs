@@ -29,6 +29,18 @@ test('live booking quote is server-returned and visible after success', () => {
   assert.match(migration, /'server_authoritative',\s*true/);
 });
 
+test('booking history refreshes from Supabase and cancellation uses the protected RPC', () => {
+  assert.match(booking, /from\('bookings'\)/);
+  assert.match(booking, /rpc\('cancel_clearance_booking'/);
+  assert.match(booking, /\['BOOKED', 'MACHINE_ASSIGNED'\]\.includes\(booking\.status\)/);
+  assert.match(booking, /onBookingChanged\?\.\(\)/);
+});
+
+test('live booking only offers fields eligible for a new booking', () => {
+  assert.match(booking, /\['REGISTERED', 'CANCELLED'\]\.includes\(f\.status\)/);
+  assert.match(migration, /f\.status NOT IN \('REGISTERED', 'CANCELLED'\)/);
+});
+
 test('booking RPC remains authenticated-only and server-priced', () => {
   assert.match(migration, /IF auth\.uid\(\) IS NULL THEN RAISE EXCEPTION 'authentication required'/);
   assert.match(migration, /f\.owner_id <> auth\.uid\(\)/);
