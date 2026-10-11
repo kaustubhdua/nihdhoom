@@ -26,7 +26,7 @@ const contracts = [
   ['join_residue_pool', /f\.owner_id=actor/i, /no verified residue lot with sufficient uncommitted quantity/i],
   ['record_farmer_network_consent', /role_name[^;]{0,180}<>\s*'farmer'/is, /authentication required/i],
   ['record_verification_review', /role_name[^;]{0,180}not in \('verifier','dispatcher','admin'\)/is, /authentication required/i],
-  ['reserve_clearance_booking_v2', /f\.owner_id\s*<>\s*auth\.uid\(\)/i, /Active farmer consent is required/i],
+  ['reserve_clearance_booking_v2', /f\.owner_id\s*<>\s*actor/i, /Active farmer consent is required/i],
   ['transition_job', /j\.operator_id=auth\.uid\(\)/i, /Invalid job transition/i],
   ['verify_field_geometry', /role_name[^;]{0,180}not in \('verifier','dispatcher','admin'\)/is, /boundary is required/i],
 ];
