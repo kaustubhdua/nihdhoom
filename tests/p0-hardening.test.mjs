@@ -40,9 +40,11 @@ test('cancellation releases the capacity reservation and clears the guarantee', 
 
 test('verification records only explicitly selected, field-matched FIRMS observations', () => {
   const sql = read(migrationPath);
-  assert.match(sql, /o\.id = ANY\(firms_ids\) AND o\.matched_field_id = p_field_id/i);
+  assert.match(sql, /o\.id = ANY\(firms_ids\)[\s\S]*firms_observation_field_matches/i);
   assert.match(sql, /verification_method := CASE[\s\S]*'reviewer_assessment_only'/i);
   assert.match(sql, /'acquired_at', o\.acquired_at/i);
+  assert.match(sql, /provider_observation_key/i);
+  assert.match(sql, /firms_observation_field_matches/);
   assert.match(sql, /Absence of a matching or selected FIRMS observation is not proof that burning did not occur/i);
 });
 
