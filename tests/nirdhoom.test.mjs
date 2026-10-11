@@ -251,7 +251,7 @@ test('product shell does not expose pitch-only surfaces', () => {
 test('product home routes users to real workflows instead of presentation flows', () => {
   const home = read('src/components/CommandCenter/CommandCenter.tsx');
   assert.match(home, /Book parali pickup/);
-  assert.match(home, /Track today's operation/);
+  assert.match(home, /Track today(?:'|’)s operation/);
   assert.match(home, /home-product-status/);
   assert.match(home, /Open residue market/);
   assert.doesNotMatch(home, /See the 2-minute demo/);
@@ -482,7 +482,7 @@ test('homepage uses curated agriculture photography and product motion', () => {
   assert.match(home, /from '..\/Animated\/Spotlight'/);
   assert.match(home, /home-product-status/);
   assert.match(home, /motion\/react/);
-  assert.match(home, /Track today's operation/);
+  assert.match(home, /Track today(?:'|’)s operation/);
   assert.match(css, /home-status-grid/);
   assert.match(css, /prefers-reduced-motion: reduce/);
 });
