@@ -398,7 +398,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
               <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2.5 py-1 text-[11px] font-black text-amber-800">{DEMO_MODE ? 'SIMULATION' : 'LIVE OTP'}</span>
             </div>
             <p className="text-sm text-emerald-950/65 mt-2 max-w-2xl leading-6">
-              <span className="font-semibold text-emerald-950">{t('Mobile OTP is live.')}</span> {t('Identity, biometric, bank and cadastral steps remain explicit demo/adapter states until their authorized providers are connected.')}
+              <span className="font-semibold text-emerald-950">{t('SMS OTP uses Supabase Phone Auth.')}</span> {t('Phone sign-in and an SMS provider must be enabled in Supabase before a real code can be delivered. Identity, biometric, bank and cadastral steps remain demo/adapter states until their authorized providers are connected.')}
             </p>
           </div>
         </div>
@@ -526,6 +526,11 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                 {!DEMO_MODE && !supabase && (
                   <div className="rounded-lg border border-amber-500/30 bg-amber-950/30 p-3 text-sm text-amber-100" role="alert">
                     {t('Live login is unavailable because this deployment is missing its Supabase URL or publishable key.')}
+                  </div>
+                )}
+                {otpError && (
+                  <div className="rounded-lg border border-red-500/30 bg-red-950/30 p-3 text-sm text-red-200" role="alert" aria-live="assertive">
+                    {otpError}
                   </div>
                 )}
                 <button
