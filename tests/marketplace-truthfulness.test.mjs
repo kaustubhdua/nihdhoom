@@ -23,12 +23,17 @@ test('forecast UI clearly labels static planning scenario and avoids claiming li
   assert.doesNotMatch(forecast, /NDVI curves indicate/i);
 });
 
-test('live booking records explicit consent before the server booking RPC', () => {
+test('live booking persists explicit consent through an authenticated RPC before booking', () => {
   const booking = fs.readFileSync(new URL('../src/components/ClearanceBooking/ClearanceBooking.tsx', import.meta.url), 'utf8');
-  assert.match(booking, /from\('consents'\)/);
-  assert.match(booking, /WEB_CLEARANCE_BOOKING/);
-  assert.match(booking, /Could not record your consent/);
-  assert.ok(booking.indexOf('WEB_CLEARANCE_BOOKING') < booking.indexOf("rpc('reserve_clearance_booking_v2'"));
+  const migration = fs.readFileSync(new URL('../supabase/migrations/202610110003_nirdhoom_booking_consent_and_window.sql', import.meta.url), 'utf8');
+  const consentCall = booking.indexOf("rpc('record_farmer_network_consent')");
+  const bookingCall = booking.indexOf("rpc('reserve_clearance_booking_v2'");
+  assert.ok(consentCall >= 0);
+  assert.ok(bookingCall > consentCall);
+  assert.match(migration, /source\).*web_booking/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.record_farmer_network_consent\(\) FROM PUBLIC, anon/);
+  assert.doesNotMatch(booking, /from\('consents'\)\s*\.insert/);
+  assert.doesNotMatch(booking, /from\('profiles'\)\s*\.update/);
 });
 
 test('booking date validation uses local calendar dates rather than UTC date slices', () => {
