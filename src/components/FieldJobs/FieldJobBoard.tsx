@@ -116,24 +116,31 @@ export function FieldJobBoard({
       setLoading(true);
       setError(null);
       const db = supabase;
-      if (!db) return;
-
-      const [jobsResult, evidenceResult, lotsResult] = await Promise.all([
-        db.from('jobs').select('id,booking_id,machine_id,operator_id,status,slot_start,slot_end,actual_arrived_at,actual_completed_at,failure_reason,last_transition_at,booking:bookings(field_id)').order('updated_at', { ascending: false }).limit(250),
-        db.from('evidence_assets').select('id,field_id,booking_id,kind,captured_at,latitude,longitude,created_at').order('created_at', { ascending: false }).limit(500),
-        db.from('residue_lots').select('id,field_id,quantity_tonnes,status,baled_at,assigned_buyer_id,quality_grade').order('created_at', { ascending: false }).limit(250),
-      ]);
-
-      if (!active) return;
-      const firstError = jobsResult.error || evidenceResult.error || lotsResult.error;
-      if (firstError) {
-        setError(firstError.message);
-      } else {
-        setJobs((jobsResult.data || []) as unknown as JobRecord[]);
-        setProof((evidenceResult.data || []) as ProofRecord[]);
-        setLots((lotsResult.data || []) as LotRecord[]);
+      if (!db) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+      try {
+        const [jobsResult, evidenceResult, lotsResult] = await Promise.all([
+          db.from('jobs').select('id,booking_id,machine_id,operator_id,status,slot_start,slot_end,actual_arrived_at,actual_completed_at,failure_reason,last_transition_at,booking:bookings(field_id)').order('updated_at', { ascending: false }).limit(250),
+          db.from('evidence_assets').select('id,field_id,booking_id,kind,captured_at,latitude,longitude,created_at').order('created_at', { ascending: false }).limit(500),
+          db.from('residue_lots').select('id,field_id,quantity_tonnes,status,baled_at,assigned_buyer_id,quality_grade').order('created_at', { ascending: false }).limit(250),
+        ]);
+
+        if (!active) return;
+        const firstError = jobsResult.error || evidenceResult.error || lotsResult.error;
+        if (firstError) {
+          setError(firstError.message);
+        } else {
+          setJobs((jobsResult.data || []) as unknown as JobRecord[]);
+          setProof((evidenceResult.data || []) as ProofRecord[]);
+          setLots((lotsResult.data || []) as LotRecord[]);
+        }
+      } catch {
+        if (active) setError('Operational jobs, evidence, and residue lots could not be loaded because the server was unreachable. Refresh and try again.');
+      } finally {
+        if (active) setLoading(false);
+      }
     };
 
     void load();
