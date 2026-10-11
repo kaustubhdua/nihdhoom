@@ -3557,7 +3557,7 @@ grant execute on function public.complete_job_with_residue_lot(uuid, numeric, nu
 comment on function public.complete_job_with_residue_lot(uuid, numeric, numeric, integer, jsonb) is
   'Atomically completes an authorized operator job and creates its residue lot; retries return the existing lot.';
 
--- >>> 202610120005_consent_audit_immutability.sql
+-- >>> 20261011210907_nirdhoom_consent_audit_immutability_20261012.sql
 -- Keep consent history auditable: authenticated farmers may only set revoked_at
 -- on their own active consent. Acceptance and consent metadata go through guarded RPCs.
 REVOKE INSERT, UPDATE ON TABLE public.consents FROM authenticated;
