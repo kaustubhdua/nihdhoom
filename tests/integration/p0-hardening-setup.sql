@@ -91,8 +91,3 @@ INSERT INTO public.machine_capacity_windows(id,machine_id,window_start,window_en
 VALUES ('00000000-0000-0000-0000-000000000300','00000000-0000-0000-0000-000000000100',
   ((CURRENT_DATE+2)::timestamp AT TIME ZONE 'Asia/Kolkata'),
   ((CURRENT_DATE+3)::timestamp AT TIME ZONE 'Asia/Kolkata'),1.00,0,'OPEN');
-CREATE OR REPLACE FUNCTION public.test_pause_capacity_insert()
-RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_sleep(0.5); RETURN NEW; END $$;
-CREATE TRIGGER test_pause_capacity_insert
-BEFORE INSERT ON public.booking_capacity_reservations
-FOR EACH ROW EXECUTE FUNCTION public.test_pause_capacity_insert();
