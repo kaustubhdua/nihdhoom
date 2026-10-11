@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $
 $;
 
 CREATE OR REPLACE FUNCTION public.revoke_farmer_network_consent()
-RETURNS void LANGUAGE sql AS 'SELECT';
+RETURNS void LANGUAGE plpgsql AS 'BEGIN RETURN; END;';
 GRANT EXECUTE ON FUNCTION public.revoke_farmer_network_consent() TO anon;
 
 CREATE TABLE public.profiles (id uuid PRIMARY KEY, role text NOT NULL);
