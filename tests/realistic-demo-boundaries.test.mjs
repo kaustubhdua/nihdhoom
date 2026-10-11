@@ -16,7 +16,7 @@ test('demo walkthrough is browser-local and discloses simulation-only behavior',
   const journey = read('../src/components/DemoScenarioJourney/DemoScenarioJourney.tsx');
   assert.match(journey, /SIMULATION ONLY/);
   assert.match(journey, /nirdhoom\.demo\.journey\.v1/);
-  assert.match(journey, /does not create a real booking/);
+  assert.match(journey, /does not create real bookings/);
   assert.doesNotMatch(journey, /supabase|fetch\(/i);
 });
 
