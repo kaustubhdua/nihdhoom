@@ -19,6 +19,7 @@ This document defines how NIRDHOOM demo mode should feel operationally credible 
 3. Yard-map popups identify demo stock and capacity as simulated inventory rather than a live feed.
 4. Residue-lot map popups distinguish illustrative demo records from persisted live records.
 5. Demo buyer descriptions no longer assert unverified price premiums, payment terms, ESG certifications, carbon-credit eligibility, facility scale or settlement delays as facts.
+6. Verification no longer supplies a hard-coded 92% confidence or automatically marks a field non-burning. Demo review notes leave field status unchanged; live UI submissions create a `REVIEW_REQUIRED` event with zero claimed confidence until an authorized evidence-based decision is made.
 
 ## Still simulated / requires a real integration or evidence
 
