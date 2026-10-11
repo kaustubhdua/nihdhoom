@@ -62,6 +62,10 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
       setError('Please choose today or a future date.');
       return;
     }
+    if (date > maxBookingDate) {
+      setError('Please choose a pickup date within the next 90 days.');
+      return;
+    }
 
     setBusy(true);
     try {
@@ -74,35 +78,6 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
       const { data: authData, error: authError } = await supabase.auth.getUser();
       if (authError || !authData.user) {
         throw new Error('Your session has expired. Please verify your phone again.');
-      }
-
-      // The booking checkbox is explicit consent for this service. Persist it
-      // before calling the server RPC, which independently requires active consent.
-      const { data: activeConsent, error: consentLookupError } = await supabase
-        .from('consents')
-        .select('id')
-        .eq('profile_id', authData.user.id)
-        .eq('consent_type', 'farmer_network')
-        .is('revoked_at', null)
-        .order('accepted_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (consentLookupError) throw new Error(`Could not verify your consent: ${consentLookupError.message}`);
-
-      if (!activeConsent) {
-        const { error: consentInsertError } = await supabase.from('consents').insert({
-          profile_id: authData.user.id,
-          consent_type: 'farmer_network',
-          version: '2026-10-11',
-          source: 'WEB_CLEARANCE_BOOKING',
-        });
-        if (consentInsertError) throw new Error(`Could not record your consent: ${consentInsertError.message}`);
-
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ consent_status: 'GRANTED' })
-          .eq('id', authData.user.id);
-        if (profileError) throw new Error(`Consent was recorded but profile status could not be updated: ${profileError.message}`);
       }
 
       const { error: consentError } = await supabase.rpc('record_farmer_network_consent');
@@ -181,7 +156,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
           <label className="ui-label mt-6 mb-2 block">{t('When should the machine come?')}</label>
           <div className="relative">
             <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--brand)]" />
-            <input type="date" value={date} min={localDateString(new Date())} onChange={(e) => setDate(e.target.value)} className="ui-input pl-10" />
+            <input type="date" value={date} min={localDateString(new Date())} max={maxBookingDate} onChange={(e) => { setDate(e.target.value); setServerQuote(null); setError(""); setMessage(""); }} className="ui-input pl-10" />
           </div>
 
           <label className="ui-check mt-5">
