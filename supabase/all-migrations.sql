@@ -3704,7 +3704,7 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'An active capacity reservation cannot be removed from a guaranteed booking';
   END IF;
-  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+  RETURN NULL;
 END;
 $function$;
 
@@ -4054,29 +4054,38 @@ END;
 $function$;
 
 -- The anon key is a public client identifier, not a reason to grant CRUD on
--- operational data. RLS remains enabled; authenticated and service-role workflows
--- retain their existing grants. Do not add anonymous policies as a workaround.
+-- database objects. Production policy inventory showed all row policies target
+-- authenticated users; no public anonymous data policy is required for this app.
+-- Revoke effective table/view/materialized-view privileges from both anon and
+-- PUBLIC, across the entire exposed public schema. This changes grants only; it
+-- does not disable RLS or alter authenticated policies/grants.
 DO $block$
 DECLARE
-  table_name text;
-  sensitive_tables text[] := ARRAY[
-    'profiles','fields','bookings','consents','jobs','evidence_assets',
-    'residue_lots','residue_pools','residue_pool_members','payments',
-    'buyer_offers','buyer_demands','audit_log','verification_events',
-    'machine_capacity_windows','booking_capacity_reservations',
-    'residue_matches','residue_transport_jobs','residue_exceptions',
-    'telegram_link_tokens','telegram_webhook_updates'
-  ];
+  object_name text;
 BEGIN
-  FOREACH table_name IN ARRAY sensitive_tables LOOP
-    IF to_regclass(format('public.%I', table_name)) IS NOT NULL THEN
-      EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM anon', table_name);
-    END IF;
+  FOR object_name IN
+    SELECT c.relname
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relkind IN ('r','p','v','m')
+  LOOP
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM PUBLIC, anon', object_name);
   END LOOP;
 END;
 $block$;
 
-REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM anon;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC, anon;
+-- Prevent future objects created by the standard Supabase migration owner from
+-- inheriting public/anonymous table and sequence grants again.
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  REVOKE ALL ON TABLES FROM PUBLIC, anon;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  REVOKE ALL ON SEQUENCES FROM PUBLIC, anon;
+
+-- Read-only audit found this consent-withdrawal RPC was the sole public-schema
+-- function still executable by anon. Consent withdrawal is a signed-in action.
+REVOKE ALL ON FUNCTION public.revoke_farmer_network_consent() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.revoke_farmer_network_consent() TO authenticated;
 
 REVOKE ALL ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) TO authenticated;
