@@ -80,29 +80,29 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
           </div>
           <div className="ui-intro-copy">
             <div className="ui-eyebrow">
-              <ClipboardCheck className="h-3.5 w-3.5" /> Book parali pickup
+              <ClipboardCheck className="h-3.5 w-3.5" /> {t('Book parali pickup')}
             </div>
-            <h1 className="ui-title">Book parali pickup</h1>
+            <h1 className="ui-title">{t('Book parali pickup')}</h1>
             <p className="ui-lede">
-              {t('Choose your field')} and the day you want the machine to come. In Live mode, the final quote is decided by the server.
+              {t('Choose your field and the day you want the machine to come. In Live mode, the final quote is decided by the server.')}
             </p>
           </div>
         </div>
       </section>
 
-      <section className="farmer-step-strip" aria-label="Booking steps">
-        <div className={stepClass(1)}><span>1</span><strong>Choose your field</strong><small>{t('Select the field where parali needs to be collected')}</small></div>
+      <section className="farmer-step-strip" aria-label={t('Booking steps')}>
+        <div className={stepClass(1)}><span>1</span><strong>{t('Choose your field')}</strong><small>{t('Select the field where parali needs to be collected')}</small></div>
         <i aria-hidden="true" />
         <div className={stepClass(2)}><span>2</span><strong>{t('Choose a date')}</strong><small>{t('Tell us when you want the machine')}</small></div>
         <i aria-hidden="true" />
-        <div className={stepClass(3)}><span>3</span><strong>Confirm</strong><small>{t('Check details and book')}</small></div>
+        <div className={stepClass(3)}><span>3</span><strong>{t('Confirm')}</strong><small>{t('Check details and book')}</small></div>
       </section>
 
       <section className="ui-split">
         <div className="ui-card">
-          <label className="ui-label mb-2 block">Field</label>
+          <label className="ui-label mb-2 block">{t('Field')}</label>
           <select value={fieldId} onChange={(e) => setFieldId(e.target.value)} className="ui-select">
-            {bookable.length === 0 && <option value="">No bookable fields</option>}
+            {bookable.length === 0 && <option value="">{t('No bookable fields')}</option>}
             {bookable.map((field) => (
               <option key={field.id} value={field.id}>{field.khasra_no} · {field.village} · {Number(field.acreage).toFixed(2)} ac</option>
             ))}
@@ -111,21 +111,21 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
           {selected && (
             <div className="ui-kv-grid mt-3 sm:grid-cols-3">
               <div className="ui-kv">
-                <span className="ui-kv-label">Current status</span>
+                <span className="ui-kv-label">{t('Current status')}</span>
                 <strong className="ui-kv-value !text-[var(--brand-ink)]">{selected.status.replace(/_/g, ' ')}</strong>
               </div>
               <div className="ui-kv">
-                <span className="ui-kv-label">Area</span>
+                <span className="ui-kv-label">{t('Area')}</span>
                 <strong className="ui-kv-value">{Number(selected.acreage).toFixed(2)} acres</strong>
               </div>
               <div className="ui-kv">
-                <span className="ui-kv-label">Location</span>
+                <span className="ui-kv-label">{t('Location')}</span>
                 <strong className="ui-kv-value"><MapPin /> {selected.village}</strong>
               </div>
             </div>
           )}
 
-          <label className="ui-label mt-6 mb-2 block">When should the machine come?</label>
+          <label className="ui-label mt-6 mb-2 block">{t('When should the machine come?')}</label>
           <div className="relative">
             <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--brand)]" />
             <input type="date" value={date} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setDate(e.target.value)} className="ui-input pl-10" />
