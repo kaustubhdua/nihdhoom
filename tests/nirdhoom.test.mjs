@@ -619,6 +619,19 @@ test('operator surface distinguishes stale GPS readings', () => {
 });
 
 
+test('live operational timeline never substitutes demo records and loaders recover after network failures', () => {
+  const timeline = read('src/components/ResidueNetwork/FieldEvidenceTimeline.tsx');
+  const board = read('src/components/FieldJobs/FieldJobBoard.tsx');
+  const demoBranch = timeline.indexOf('if (demoMode) {');
+  const missingConfigBranch = timeline.indexOf('if (!supabase) {', demoBranch);
+  assert.ok(demoBranch >= 0 && missingConfigBranch > demoBranch, 'live missing-config state must not enter the demo branch');
+  assert.match(timeline, /Live field evidence is not configured/);
+  assert.match(timeline, /Field evidence timeline could not be loaded because the server was unreachable/);
+  assert.match(timeline, /finally\s*\{\s*if \(active\) setLoading\(false\);/);
+  assert.match(board, /Operational jobs, evidence, and residue lots could not be loaded/);
+  assert.match(board, /finally\s*\{\s*if \(active\) setLoading\(false\);/);
+});
+
 test('residue is a first-class traceable domain object', () => {
   const types = read('src/types/index.ts');
   const migration = read('supabase/migrations/202610080002_nirdhoom_residue_lot_first_class.sql');
