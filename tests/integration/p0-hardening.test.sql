@@ -27,6 +27,12 @@ BEGIN
   IF NOT has_table_privilege('authenticated','public.bookings','SELECT') THEN
     RAISE EXCEPTION 'Authenticated booking read grant was unexpectedly removed';
   END IF;
+  IF has_function_privilege('anon','public.revoke_farmer_network_consent()','EXECUTE') THEN
+    RAISE EXCEPTION 'Anonymous consent-withdrawal RPC execution was not revoked';
+  END IF;
+  IF NOT has_function_privilege('authenticated','public.revoke_farmer_network_consent()','EXECUTE') THEN
+    RAISE EXCEPTION 'Authenticated consent-withdrawal RPC execution was unexpectedly removed';
+  END IF;
 
   -- Verify provenance when no FIRMS IDs were supplied: method must be field-only.
   INSERT INTO public.bookings(id,field_id,requested_date,rate_per_acre,quoted_amount,status,guaranteed_by_date,penalty_amount,quote_metadata,reservation_state)
