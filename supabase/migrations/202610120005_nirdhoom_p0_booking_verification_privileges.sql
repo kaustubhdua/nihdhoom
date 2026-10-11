@@ -11,6 +11,46 @@ BEGIN
 END;
 $preflight$;
 
+-- Persist provider observations idempotently and preserve many-to-many field matches.
+-- Existing direct field matches are migrated into the explicit match table.
+ALTER TABLE public.firms_observations
+  ADD COLUMN IF NOT EXISTS provider_observation_key text;
+
+UPDATE public.firms_observations o
+SET provider_observation_key = CASE
+  WHEN o.acquired_at IS NOT NULL THEN concat_ws('|',
+    o.source, o.sensor, o.latitude::text, o.longitude::text,
+    to_char(o.acquired_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))
+  ELSE concat_ws('|',
+    o.source, o.sensor, o.latitude::text, o.longitude::text, 'undated',
+    COALESCE(o.raw->>'satellite',''), COALESCE(o.frp::text,''), COALESCE(o.confidence,''))
+END
+WHERE o.provider_observation_key IS NULL;
+
+ALTER TABLE public.firms_observations
+  ALTER COLUMN provider_observation_key SET NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS firms_observations_provider_key_uidx
+  ON public.firms_observations(provider_observation_key);
+
+CREATE TABLE IF NOT EXISTS public.firms_observation_field_matches (
+  observation_id uuid NOT NULL REFERENCES public.firms_observations(id) ON DELETE CASCADE,
+  field_id uuid NOT NULL REFERENCES public.fields(id) ON DELETE CASCADE,
+  match_type text NOT NULL CHECK (match_type IN ('point_in_polygon','legacy_existing_field_match')),
+  source text NOT NULL DEFAULT 'NASA FIRMS',
+  matched_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (observation_id, field_id)
+);
+CREATE INDEX IF NOT EXISTS firms_observation_field_matches_field_idx
+  ON public.firms_observation_field_matches(field_id, matched_at DESC);
+ALTER TABLE public.firms_observation_field_matches ENABLE ROW LEVEL SECURITY;
+REVOKE ALL PRIVILEGES ON TABLE public.firms_observation_field_matches FROM PUBLIC, anon, authenticated;
+INSERT INTO public.firms_observation_field_matches(observation_id,field_id,match_type,source)
+SELECT o.id,o.matched_field_id,'legacy_existing_field_match',o.source
+FROM public.firms_observations o
+WHERE o.matched_field_id IS NOT NULL
+ON CONFLICT (observation_id,field_id) DO NOTHING;
+
 ALTER TABLE public.bookings
   ADD COLUMN IF NOT EXISTS reservation_state text NOT NULL DEFAULT 'UNCONFIRMED';
 
@@ -494,7 +534,11 @@ BEGIN
       ) ORDER BY o.acquired_at NULLS LAST), '[]'::jsonb)
     INTO matched_firms_count, firms_details
     FROM public.firms_observations o
-    WHERE o.id = ANY(firms_ids) AND o.matched_field_id = p_field_id;
+    WHERE o.id = ANY(firms_ids)
+      AND EXISTS (
+        SELECT 1 FROM public.firms_observation_field_matches m
+        WHERE m.observation_id = o.id AND m.field_id = p_field_id
+      );
 
     IF matched_firms_count <> requested_firms_count THEN
       RAISE EXCEPTION 'Every supplied FIRMS observation must exist and be matched to this field';
@@ -578,7 +622,9 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
 REVOKE ALL ON FUNCTION public.revoke_farmer_network_consent() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.revoke_farmer_network_consent() TO authenticated;
 
-REVOKE ALL ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) FROM PUBLIC, anon;
+GRANT ALL PRIVILEGES ON TABLE public.firms_observations, public.firms_observation_field_matches TO service_role;
+
+REVOKE ALL ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) FROM PUBLIC, anon;(uuid,date) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) TO authenticated;
 REVOKE ALL ON FUNCTION public.cancel_clearance_booking(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.cancel_clearance_booking(uuid) TO authenticated;
