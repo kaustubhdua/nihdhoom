@@ -45,13 +45,13 @@ export function ResidueControlTower({
               <span className="ui-eyebrow">Residue operations</span>
               <span className="ui-chip">{demoMode ? 'Demo planning records' : 'Live connected records'}</span>
             </div>
-            <h1 id="residue-control-tower-title" className="ui-title">Residue Control Tower</h1>
+            <h1 id="residue-control-tower-title" className="ui-title">{t('Residue Control Tower')}</h1>
             <p className="ui-lede">
               Coordinate field readiness, machine capacity, residue lots, yards and buyer demand. Planning estimates are labelled; verified weights and counterparties remain authoritative.
             </p>
           </div>
           <button type="button" onClick={() => onNavigate('RESIDUE_POOLS')} className="ui-btn is-primary">
-            Open residue network <ArrowRight className="h-4 w-4" />
+            {t('Open residue network')} <ArrowRight className="h-4 w-4" />
           </button>
         </div>
 
@@ -78,7 +78,7 @@ export function ResidueControlTower({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="ui-eyebrow">Dispatcher queue</div>
-              <h2 className="mt-1 font-[family-name:var(--font-display)] text-[22px] font-bold text-[var(--ink)]">What needs attention now?</h2>
+              <h2 className="mt-1 font-[family-name:var(--font-display)] text-[22px] font-bold text-[var(--ink)]">{t('What needs attention now?')}</h2>
             </div>
             <div className="ui-seg">
               {[
@@ -164,7 +164,7 @@ export function ResidueControlTower({
 
         <aside className="space-y-5">
           <div className="ui-card">
-            <div className="ui-card-title"><Warehouse className="!text-[var(--wheat-ink)]" /><h2>Yard capacity</h2></div>
+            <div className="ui-card-title"><Warehouse className="!text-[var(--wheat-ink)]" /><h2>{t('Yard capacity')}</h2></div>
             <div className="mt-4 space-y-3">
               {storageYards.map((yard) => {
                 const ratio = yard.capacity_tonnes ? ((yard.current_load + Number(yard.incoming_tonnes || 0)) / yard.capacity_tonnes) * 100 : 0;
@@ -178,7 +178,7 @@ export function ResidueControlTower({
           </div>
 
           <div className="ui-card is-green">
-            <div className="ui-card-title"><Factory /><h2>48-hour operating rule</h2></div>
+            <div className="ui-card-title"><Factory /><h2>{t('48-hour operating rule')}</h2></div>
             <p className="mt-2 text-sm leading-6 text-emerald-950/75">Prioritize fields with a near deadline, assign compatible available capacity, weigh residue before buyer commitment, and divert incoming loads when a yard approaches 80% capacity.</p>
             <div className="mt-4 flex items-center gap-2 text-xs font-black text-emerald-900"><Clock3 className="h-4 w-4" /> Planning signal — confirm field and machine conditions on site.</div>
           </div>
