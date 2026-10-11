@@ -85,6 +85,8 @@ export function ResiduePooling({ fields, demoMode }: Props) {
         readyFrom: f.expected_harvest_date,
         pickupDeadline: f.clearance_deadline,
         price: null,
+        offerId: null,
+        offerQuantity: null,
       }));
   }, [demoMode, fields, lots, offers]);
 
@@ -266,11 +268,13 @@ export function ResiduePooling({ fields, demoMode }: Props) {
                   <div className="market-row-title">{lot.residue_type} · {Number(lot.available_tonnes).toFixed(2)} t</div>
                   <div className="market-row-meta">{lot.village}, {lot.district} · {lot.quality_grade || t('Quality not verified')}</div>
                   <div className="market-row-meta">{t('Moisture')}: {lot.moisture_pct == null ? t('not verified') : `${lot.moisture_pct}%`}</div>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <label className="text-sm">{t('Offer price (₹/tonne)')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="number" min="1" step="1" value={draft.price} onChange={(event) => setOfferDrafts((prev) => ({ ...prev, [lot.lot_id]: { ...draft, price: event.target.value } }))} /></label>
-                    <label className="text-sm">{t('Quantity (tonnes)')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="number" min="0.1" step="0.1" max={lot.available_tonnes} value={draft.quantity} onChange={(event) => setOfferDrafts((prev) => ({ ...prev, [lot.lot_id]: { ...draft, quantity: event.target.value } }))} /></label>
-                  </div>
-                  <button onClick={() => void createBuyerOffer(lot)} className="market-secondary-action mt-3">{t('Submit buyer offer')}</button>
+                  {currentRole === 'buyer' ? <>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <label className="text-sm">{t('Offer price (₹/tonne)')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="number" min="1" step="1" value={draft.price} onChange={(event) => setOfferDrafts((prev) => ({ ...prev, [lot.lot_id]: { ...draft, price: event.target.value } }))} /></label>
+                      <label className="text-sm">{t('Quantity (tonnes)')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="number" min="0.1" step="0.1" max={lot.available_tonnes} value={draft.quantity} onChange={(event) => setOfferDrafts((prev) => ({ ...prev, [lot.lot_id]: { ...draft, quantity: event.target.value } }))} /></label>
+                    </div>
+                    <button onClick={() => void createBuyerOffer(lot)} className="market-secondary-action mt-3">{t('Submit buyer offer')}</button>
+                  </> : <div className="market-row-meta mt-3">{t('Operations view — only linked buyers can submit offers.')}</div>}
                 </div>;
               })}
             </div>
