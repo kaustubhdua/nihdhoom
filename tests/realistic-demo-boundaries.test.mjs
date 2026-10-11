@@ -62,4 +62,5 @@ test('live FIRMS screening is authenticated, explicit and not presented as verif
   assert.match(api, /Authorization: authorization/);
   assert.match(api, /A valid saved field boundary is required/);
   assert.doesNotMatch(api, /REQUIRE_AUTH_FOR_FIRMS !== 'false'/);
+  assert.match(api, /process\.env\.FIRMS_MAP_KEY \|\| process\.env\.NASA_FIRMS_API/);
 });
