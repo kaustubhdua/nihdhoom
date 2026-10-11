@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppLanguage } from '../../i18n/LanguageContext';
 import { CalendarDays, CheckCircle2, ClipboardCheck, Loader2, MapPin, ShieldCheck, Tractor } from 'lucide-react';
 import { Field } from '../../types';
@@ -8,7 +8,13 @@ interface Props {
   fields: Field[];
   demoMode: boolean;
   onBooked: (fieldId: string, amount?: number) => void;
+  onBookingChanged?: () => void;
 }
+
+type BookingRecord = {
+  id: string; field_id: string; requested_date: string; status: string;
+  quoted_amount: number; created_at: string; cancelled_at: string | null;
+};
 
 function localDateString(date: Date): string {
   const year = date.getFullYear();
@@ -17,11 +23,13 @@ function localDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
+export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged }: Props) {
   const { t } = useAppLanguage();
   const bookable = useMemo(
-    () => fields.filter((f) => !['VERIFIED_NON_BURN'].includes(f.status)),
-    [fields],
+    () => fields.filter((f) => demoMode
+      ? !['VERIFIED_NON_BURN', 'BOOKED', 'MACHINE_ASSIGNED', 'SCHEDULED', 'ON_THE_WAY', 'BALING_IN_PROGRESS', 'CLEARED_PENDING_AUDIT'].includes(f.status)
+      : ['REGISTERED', 'CANCELLED'].includes(f.status)),
+    [fields, demoMode],
   );
   const [fieldId, setFieldId] = useState(bookable[0]?.id || '');
   const [date, setDate] = useState(() => { const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); return localDateString(tomorrow); });
@@ -29,11 +37,46 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [consentAccepted, setConsentAccepted] = useState(false);
+  const [serverQuote, setServerQuote] = useState<number | null>(null);
+  const [bookings, setBookings] = useState<BookingRecord[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingHistoryError, setBookingHistoryError] = useState('');
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const dbFieldIds = useMemo(() => fields.map((field) => field.dbId || field.id).filter(Boolean), [fields]);
+  const maxBookingDate = useMemo(() => { const value = new Date(); value.setDate(value.getDate() + 90); return localDateString(value); }, []);
 
   useEffect(() => {
     if (!fieldId && bookable[0]?.id) setFieldId(bookable[0].id);
     if (fieldId && !bookable.some((field) => field.id === fieldId)) setFieldId(bookable[0]?.id || '');
   }, [bookable, fieldId]);
+
+  const refreshBookings = useCallback(async () => {
+    if (demoMode || !supabase || dbFieldIds.length === 0) {
+      setBookings([]); setBookingHistoryError(''); setBookingsLoading(false); return;
+    }
+    setBookingsLoading(true); setBookingHistoryError('');
+    const { data, error: queryError } = await supabase.from('bookings')
+      .select('id,field_id,requested_date,status,quoted_amount,created_at,cancelled_at')
+      .in('field_id', dbFieldIds).order('created_at', { ascending: false }).limit(25);
+    if (queryError) setBookingHistoryError('Could not load booking history. Please refresh and try again.');
+    else setBookings((data || []) as BookingRecord[]);
+    setBookingsLoading(false);
+  }, [demoMode, dbFieldIds]);
+
+  useEffect(() => { void refreshBookings(); }, [refreshBookings]);
+
+  async function cancelBooking(bookingId: string) {
+    if (!supabase) { setBookingHistoryError('Live Supabase is not configured.'); return; }
+    setCancellingId(bookingId); setBookingHistoryError('');
+    try {
+      const { error: cancelError } = await supabase.rpc('cancel_clearance_booking', { p_booking_id: bookingId });
+      if (cancelError) throw new Error(cancelError.message);
+      await refreshBookings();
+      onBookingChanged?.();
+    } catch (cause) {
+      setBookingHistoryError(cause instanceof Error ? cause.message : 'Booking could not be cancelled.');
+    } finally { setCancellingId(null); }
+  }
 
   const selected = bookable.find((f) => f.id === fieldId);
   const estimate = selected ? Math.round(Math.max(0, Number(selected.acreage || 0)) * 1500) : 0;
@@ -55,6 +98,10 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
       setError('Please choose today or a future date.');
       return;
     }
+    if (date > maxBookingDate) {
+      setError('Please choose a pickup date within the next 90 days.');
+      return;
+    }
 
     setBusy(true);
     try {
@@ -69,42 +116,20 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
         throw new Error('Your session has expired. Please verify your phone again.');
       }
 
-      // The booking checkbox is explicit consent for this service. Persist it
-      // before calling the server RPC, which independently requires active consent.
-      const { data: activeConsent, error: consentLookupError } = await supabase
-        .from('consents')
-        .select('id')
-        .eq('profile_id', authData.user.id)
-        .eq('consent_type', 'farmer_network')
-        .is('revoked_at', null)
-        .order('accepted_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (consentLookupError) throw new Error(`Could not verify your consent: ${consentLookupError.message}`);
-
-      if (!activeConsent) {
-        const { error: consentInsertError } = await supabase.from('consents').insert({
-          profile_id: authData.user.id,
-          consent_type: 'farmer_network',
-          version: '2026-10-11',
-          source: 'WEB_CLEARANCE_BOOKING',
-        });
-        if (consentInsertError) throw new Error(`Could not record your consent: ${consentInsertError.message}`);
-
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ consent_status: 'GRANTED' })
-          .eq('id', authData.user.id);
-        if (profileError) throw new Error(`Consent was recorded but profile status could not be updated: ${profileError.message}`);
-      }
-
+      const { error: consentError } = await supabase.rpc('record_farmer_network_consent');
+      if (consentError) throw new Error(consentError.message);
       const { data, error: rpcError } = await supabase.rpc('reserve_clearance_booking_v2', {
         p_field_id: selected.dbId || selected.id,
         p_requested_date: date,
       });
       if (rpcError) throw new Error(rpcError.message);
-      onBooked(selected.id, Number((data as { quoted_amount?: number } | null)?.quoted_amount || 0));
-      setMessage(`${t('Book parali pickup')} confirmed by the server. The authoritative quote is shown in your field record.`);
+      const quote = Number((data as { quoted_amount?: number } | null)?.quoted_amount || 0);
+      if (!Number.isFinite(quote) || quote <= 0) throw new Error('Booking was created but the server returned no valid quote. Refresh your bookings before retrying.');
+      setServerQuote(quote);
+      onBooked(selected.id, quote);
+      await refreshBookings();
+      onBookingChanged?.();
+      setMessage(t('Book parali pickup') + ' confirmed by the server.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Booking could not be created.');
     } finally {
@@ -142,7 +167,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
       <section className="ui-split">
         <div className="ui-card">
           <label className="ui-label mb-2 block">{t('Field')}</label>
-          <select value={fieldId} onChange={(e) => setFieldId(e.target.value)} className="ui-select">
+          <select value={fieldId} onChange={(e) => { setFieldId(e.target.value); setServerQuote(null); setError(''); setMessage(''); }} className="ui-select">
             {bookable.length === 0 && <option value="">{t('No bookable fields')}</option>}
             {bookable.map((field) => (
               <option key={field.id} value={field.id}>{field.khasra_no} · {field.village} · {Number(field.acreage).toFixed(2)} ac</option>
@@ -169,7 +194,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
           <label className="ui-label mt-6 mb-2 block">{t('When should the machine come?')}</label>
           <div className="relative">
             <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--brand)]" />
-            <input type="date" value={date} min={localDateString(new Date())} onChange={(e) => setDate(e.target.value)} className="ui-input pl-10" />
+            <input type="date" value={date} min={localDateString(new Date())} max={maxBookingDate} onChange={(e) => { setDate(e.target.value); setServerQuote(null); setError(''); setMessage(''); }} className="ui-input pl-10" />
           </div>
 
           <label className="ui-check mt-5">
@@ -196,11 +221,44 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
           </div>
           <div className="mt-6 rounded-2xl border border-[var(--wheat-line)] bg-[var(--surface)] p-4 shadow-sm">
             <span className="ui-kv-label block">{demoMode ? 'Example estimate' : 'Server quote'}</span>
-            <strong className="mt-1 block font-[family-name:var(--font-display)] text-[30px] font-bold leading-tight text-[var(--ink)]">{demoMode ? `₹${estimate.toLocaleString()}` : 'Shown after booking'}</strong>
-            <span className="text-[12px] text-[var(--muted)]">{demoMode ? 'Example only · no payment is made' : 'Authoritative quote comes from the server'}</span>
+            <strong className="mt-1 block font-[family-name:var(--font-display)] text-[30px] font-bold leading-tight text-[var(--ink)]">{demoMode ? `₹${estimate.toLocaleString()}` : serverQuote !== null ? `₹${serverQuote.toLocaleString('en-IN')}` : 'Shown after booking'}</strong>
+            <span className="text-[12px] text-[var(--muted)]">{demoMode ? 'Example only · no payment is made' : serverQuote !== null ? 'Server-confirmed quote · no payment has been taken' : 'Authoritative quote comes from the server'}</span>
           </div>
         </aside>
       </section>
+
+      {!demoMode && (
+        <section className="ui-card mt-4" aria-labelledby="booking-history-title">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 id="booking-history-title" className="ui-card-title">{t('Your bookings')}</h2>
+              <p className="text-sm text-[var(--ink-2)]">{t('View confirmed pickup dates, server quotes, and cancel eligible bookings.')}</p>
+            </div>
+            <button type="button" className="ui-btn is-secondary" onClick={() => void refreshBookings()} disabled={bookingsLoading}>
+              {bookingsLoading ? t('Loading…') : t('Refresh bookings')}
+            </button>
+          </div>
+          {bookingHistoryError && <div role="alert" className="ui-note is-ember mt-3">{bookingHistoryError}</div>}
+          {bookingsLoading && bookings.length === 0 && <p className="mt-4 text-sm text-[var(--muted)]">{t('Loading your bookings…')}</p>}
+          {!bookingsLoading && bookings.length === 0 && !bookingHistoryError && <p className="mt-4 text-sm text-[var(--muted)]">{t('No bookings yet. Your confirmed pickups will appear here.')}</p>}
+          {bookings.length > 0 && <div className="mt-4 space-y-3">
+            {bookings.map((booking) => {
+              const field = fields.find((item) => (item.dbId || item.id) === booking.field_id);
+              const canCancel = ['BOOKED', 'MACHINE_ASSIGNED'].includes(booking.status);
+              return (
+                <article key={booking.id} className="flex flex-col gap-3 rounded-xl border border-[var(--line)] p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <strong className="block text-sm text-[var(--ink)]">{field ? field.khasra_no + ' · ' + field.village : t('Registered field')}</strong>
+                    <p className="mt-1 text-sm text-[var(--ink-2)]">{t('Pickup date')}: {new Date(booking.requested_date + 'T00:00:00').toLocaleDateString('en-IN')}</p>
+                    <p className="mt-1 text-sm text-[var(--ink-2)]">{t('Server quote')}: ₹{Number(booking.quoted_amount).toLocaleString('en-IN')} · {booking.status.replace(/_/g, ' ')}</p>
+                  </div>
+                  {canCancel && <button type="button" className="ui-btn is-secondary" onClick={() => void cancelBooking(booking.id)} disabled={cancellingId !== null}>{cancellingId === booking.id ? t('Cancelling…') : t('Cancel booking')}</button>}
+                </article>
+              );
+            })}
+          </div>}
+        </section>
+      )}
     </div>
   );
 }
