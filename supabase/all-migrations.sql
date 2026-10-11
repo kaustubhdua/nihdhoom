@@ -3222,6 +3222,14 @@ BEGIN
     AND l.assigned_buyer_id IS NULL
     AND l.verified_quantity_tonnes > 0
     AND (l.pickup_deadline IS NULL OR l.pickup_deadline >= now())
+    AND EXISTS (
+      SELECT 1 FROM public.buyer_demands d
+      WHERE d.buyer_id = auth.uid()
+        AND d.status = 'OPEN'
+        AND (lower(trim(d.residue_type)) = lower(trim(l.residue_type)) OR lower(trim(d.residue_type)) IN ('any','all'))
+        AND (d.max_moisture_pct IS NULL OR l.moisture_pct IS NULL OR l.moisture_pct <= d.max_moisture_pct)
+        AND (l.pickup_deadline IS NULL OR l.pickup_deadline::date <= d.pickup_deadline)
+    )
   ORDER BY l.pickup_deadline NULLS LAST, l.created_at DESC;
 END;
 $function$;
