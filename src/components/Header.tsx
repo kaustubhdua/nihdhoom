@@ -181,7 +181,7 @@ export function Header({ activeTab, setActiveTab, demoMode }: HeaderProps) {
             </button>
             <button
               type="button"
-              onClick={() => setFarmerLanguage((value) => value === 'en' ? 'hi' : 'en')}
+              onClick={() => setLanguage(farmerLanguage === 'en' ? 'hi' : 'en')}
               className="icon-button lg:hidden"
               aria-label={farmerLabels.language}
             >
