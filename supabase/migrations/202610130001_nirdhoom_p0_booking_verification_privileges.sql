@@ -68,6 +68,70 @@ ALTER TABLE public.bookings
 CREATE INDEX IF NOT EXISTS booking_capacity_reservations_window_status_idx
   ON public.booking_capacity_reservations(capacity_window_id, status);
 
+-- Deferred cross-table assertions make it impossible to commit a guarantee without
+-- an active reservation for the same machine/window. Deferral allows the booking
+-- and reservation rows to be created in one transaction in either order.
+CREATE OR REPLACE FUNCTION public.assert_booking_has_capacity_reservation()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO ''
+AS $function$
+BEGIN
+  IF NEW.reservation_state = 'RESERVED' AND NOT EXISTS (
+    SELECT 1
+    FROM public.booking_capacity_reservations r
+    JOIN public.machine_capacity_windows w ON w.id = r.capacity_window_id
+    WHERE r.booking_id = NEW.id
+      AND r.status = 'ACTIVE'
+      AND r.reserved_acres > 0
+      AND w.machine_id = NEW.machine_id
+      AND w.reserved_acres >= r.reserved_acres
+  ) THEN
+    RAISE EXCEPTION 'A guaranteed booking requires an active matching machine-capacity reservation';
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+CREATE CONSTRAINT TRIGGER bookings_require_capacity_reservation
+AFTER INSERT OR UPDATE ON public.bookings
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION public.assert_booking_has_capacity_reservation();
+
+CREATE OR REPLACE FUNCTION public.assert_capacity_reservation_has_booking()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO ''
+AS $function$
+DECLARE
+  target_booking_id uuid;
+BEGIN
+  target_booking_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.booking_id ELSE NEW.booking_id END;
+  IF EXISTS (
+    SELECT 1 FROM public.bookings b
+    WHERE b.id = target_booking_id AND b.reservation_state = 'RESERVED'
+  ) AND NOT EXISTS (
+    SELECT 1
+    FROM public.booking_capacity_reservations r
+    JOIN public.bookings b ON b.id = r.booking_id
+    JOIN public.machine_capacity_windows w ON w.id = r.capacity_window_id
+    WHERE r.booking_id = target_booking_id
+      AND r.status = 'ACTIVE'
+      AND r.reserved_acres > 0
+      AND b.machine_id = w.machine_id
+      AND w.reserved_acres >= r.reserved_acres
+  ) THEN
+    RAISE EXCEPTION 'An active capacity reservation cannot be removed from a guaranteed booking';
+  END IF;
+  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+END;
+$function$;
+
+CREATE CONSTRAINT TRIGGER capacity_reservation_requires_booking
+AFTER INSERT OR UPDATE OR DELETE ON public.booking_capacity_reservations
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION public.assert_capacity_reservation_has_booking();
+
 CREATE OR REPLACE FUNCTION public.reserve_clearance_booking_v2(
   p_field_id uuid,
   p_requested_date date
