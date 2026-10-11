@@ -135,11 +135,22 @@ export function useAppController() {
       return;
     }
 
-    const [{ data: lotRows }, { data: demandRows }, { data: yardRows }] = await Promise.all([
+    const [lotsResult, demandsResult, yardsResult] = await Promise.all([
       client.from('residue_lots').select('id,field_id,farmer_id,crop,residue_type,estimated_quantity_tonnes,quantity_tonnes,verified_quantity_tonnes,moisture_pct,quality_grade,quality_notes,bale_type,harvest_date,ready_from,pickup_deadline,machine_id,status,geometry_provenance,verification_source,verified_at,assigned_buyer_id,qr_code,baled_at,created_at'),
       client.from('buyer_demands').select('id,buyer_id,buyer_name,residue_type,target_tonnes,pickup_deadline,status'),
       client.from('storage_yards').select('id,external_id,name,latitude,longitude,capacity_tonnes,current_load_tonnes,incoming_tonnes,status,source'),
     ]);
+    const { data: lotRows, error: lotError } = lotsResult;
+    const { data: demandRows, error: demandError } = demandsResult;
+    const { data: yardRows, error: yardError } = yardsResult;
+    const secondaryErrors = [
+      lotError && `residue lots: ${lotError.message}`,
+      demandError && `buyer demand: ${demandError.message}`,
+      yardError && `storage yards: ${yardError.message}`,
+    ].filter(Boolean);
+    if (secondaryErrors.length) {
+      setLiveDataError(`Some live operational records could not be loaded (${secondaryErrors.join('; ')}). Available field and machine records remain visible; missing data is not treated as zero or verified.`);
+    }
 
     const rows = fieldRows || [];
     const normalizedFields: Field[] = rows.map(normalizeField).map((f) => ({
