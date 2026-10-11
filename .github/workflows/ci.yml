@@ -58,6 +58,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/202610120004_atomic_job_residue_completion.sql
       - name: Exercise authorization, evidence, measurements, rollback and retry behavior
         run: psql -v ON_ERROR_STOP=1 -f tests/integration/atomic-job-residue-completion.test.sql
+      - name: Apply consent audit migration to isolated database
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/202610120005_consent_audit_immutability.sql
+      - name: Exercise consent audit privileges and revocation policy
+        run: psql -v ON_ERROR_STOP=1 -f tests/integration/consent-audit-immutability.test.sql
       - run: npm run build
       - name: Install dispatch service dependencies
         run: python -m pip install -r services/dispatch-ortools/requirements.txt
