@@ -4203,6 +4203,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
 REVOKE ALL ON FUNCTION public.revoke_farmer_network_consent() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.revoke_farmer_network_consent() TO authenticated;
 
+REVOKE ALL PRIVILEGES ON TABLE public.firms_observations, public.firms_observation_field_matches FROM PUBLIC, anon, authenticated;
 GRANT ALL PRIVILEGES ON TABLE public.firms_observations, public.firms_observation_field_matches TO service_role;
 
 REVOKE ALL ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) FROM PUBLIC, anon;
