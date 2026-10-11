@@ -82,7 +82,7 @@ export function CommandCenter({
         <div className="home-hero-content">
           <div className="home-eyebrow"><Leaf className="h-4 w-4" /> {t('FIELD OPERATIONS • NIRDHOOM')}</div>
           <h1>{t('Clear the field.')}<br /><span>{t('Keep the chain visible.')}</span></h1>
-          <p>NIRDHOOM connects a farmer request to machine capacity, field evidence and the next residue pathway without turning uncertain information into a promise.</p>
+          <p>{t('NIRDHOOM connects a farmer request to machine capacity, field evidence and the next residue pathway without turning uncertain information into a promise.')}</p>
           <div className="home-actions">
             <button onClick={() => onNavigate('FARMER_ONBOARDING')} className="home-primary">{t('Book parali pickup')} <ArrowRight className="h-4 w-4" /></button>
             <button onClick={() => onNavigate('OPS_CONSOLE')} className="home-secondary"><Map className="h-4 w-4" /> {t('Track today’s operation')}</button>
@@ -98,9 +98,9 @@ export function CommandCenter({
 
       <section className="home-product-status" aria-label="Operational status">
         <div>
-          <span className="home-section-kicker">Today</span>
-          <strong>Start with the next field action.</strong>
-          <small>These numbers are derived from the records currently loaded in NIRDHOOM.</small>
+          <span className="home-section-kicker">{t('Today')}</span>
+          <strong>{t('Start with the next field action.')}</strong>
+          <small>{t('These numbers are derived from the records currently loaded in NIRDHOOM.')}</small>
         </div>
         <div className="home-status-grid">
           {[
@@ -127,10 +127,10 @@ export function CommandCenter({
 
       <section className="home-intro">
         <div>
-          <div className="home-section-kicker">One connected journey</div>
+          <div className="home-section-kicker">{t('One connected journey')}</div>
           <h2>{t('From field request to residue movement.')}</h2>
         </div>
-        <p>Keep the operational chain readable: who requested clearance, which machine is assigned, what evidence was captured, what residue was verified, and where it can go next.</p>
+        <p>{t('Keep the operational chain readable: who requested clearance, which machine is assigned, what evidence was captured, what residue was verified, and where it can go next.')}</p>
       </section>
 
       <section className="home-workflow" aria-label="NIRDHOOM workflow">
@@ -145,9 +145,9 @@ export function CommandCenter({
               </div>
               <div className="home-workflow-body">
                 <Icon className="home-card-icon" />
-                <h3>{step.title}</h3>
-                <p>{step.text}</p>
-                <span className="home-card-link">{step.tab} <ChevronRight /></span>
+                <h3>{t(step.title)}</h3>
+                <p>{t(step.text)}</p>
+                <span className="home-card-link">{t(step.tab)} <ChevronRight /></span>
               </div>
             </button>
           );
@@ -157,10 +157,10 @@ export function CommandCenter({
       <section className="home-field-stories" aria-labelledby="field-stories-title">
         <div className="home-field-stories-heading">
           <div>
-            <div className="home-section-kicker">Field context</div>
+            <div className="home-section-kicker">{t('Field context')}</div>
             <h2>{t('Ground the product in the places it serves.')}</h2>
           </div>
-          <p>Curated public-domain and Creative Commons photography keeps the product grounded in real agricultural landscapes. Each image is credited and linked to its source.</p>
+          <p>{t('Curated public-domain and Creative Commons photography keeps the product grounded in real agricultural landscapes. Each image is credited and linked to its source.')}</p>
         </div>
         <div className="home-field-stories-grid">
           <figure>
@@ -188,7 +188,7 @@ export function CommandCenter({
 
       <section className="home-product-layer">
         <div className="home-layer-copy">
-          <div className="home-section-kicker">Operational layer</div>
+          <div className="home-section-kicker">{t('Operational layer')}</div>
           <h2>{t('See the field, machine and evidence together.')}</h2>
           <p>The map is one layer of the workflow. It brings field geometry, machine state, residue and supporting observations into the same operational context.</p>
           <div className="home-mini-grid">
