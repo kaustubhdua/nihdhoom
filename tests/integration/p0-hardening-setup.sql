@@ -5,9 +5,8 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role NOLOGIN BYPASSRLS; END IF;
 END $$;
 CREATE SCHEMA IF NOT EXISTS auth;
-CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $
-  SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid
-$;
+CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE
+AS 'SELECT NULLIF(current_setting(''request.jwt.claim.sub'', true), '''')::uuid';
 
 CREATE OR REPLACE FUNCTION public.revoke_farmer_network_consent()
 RETURNS void LANGUAGE plpgsql AS 'BEGIN RETURN; END;';
