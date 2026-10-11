@@ -143,3 +143,23 @@ test('React Bits CodeSlots is wired for accessible six-digit OTP entry and motio
   assert.ok(pkg.dependencies['@hugeicons/react'], '@hugeicons/react must be installed');
   assert.ok(pkg.dependencies['@hugeicons/core-free-icons'], '@hugeicons/core-free-icons must be installed');
 });
+
+
+test('operations map escapes database text in Leaflet HTML and preserves responsive accessible controls', () => {
+  const map = read('src/components/OpsConsole/OpsMap.tsx');
+  const css = read('src/styles/map.css');
+  const readme = read('README.md');
+  has(map, 'const escapeHtml = (value: unknown): string');
+  has(map, ".replace(/&/g, '&amp;')");
+  has(map, 'escapeHtml(field.farmer_name)');
+  has(map, 'escapeHtml(machine.operator_name)');
+  has(map, 'escapeHtml(buyer.name)');
+  has(map, 'escapeHtml(yard.name)');
+  has(css, ':focus-visible');
+  has(css, 'prefers-reduced-motion: reduce');
+  has(css, 'env(safe-area-inset-bottom)');
+  has(css, '.map-legend');
+  has(readme, '## Operations map');
+  has(readme, 'NASA FIRMS detections');
+  has(readme, 'Map troubleshooting');
+});
