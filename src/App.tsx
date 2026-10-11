@@ -297,7 +297,7 @@ export function App() {
         )}
 
         {activeTab === 'FARMER_ONBOARDING' && (
-          <ClearanceBooking fields={fields} demoMode={demoMode} onBooked={(fieldId, amount) => handleUpdateFieldStatus(fieldId, 'BOOKED', amount)} onBookingChanged={() => { void refreshLiveData(); }} />
+          <ClearanceBooking fields={fields} demoMode={demoMode} onBooked={(fieldId, amount, state) => handleUpdateFieldStatus(fieldId, state === 'RESERVED' ? 'MACHINE_ASSIGNED' : 'BOOKED', amount)} onBookingChanged={() => { void refreshLiveData(); }} />
         )}
 
         {activeTab === 'FARMER_KYC' && (
