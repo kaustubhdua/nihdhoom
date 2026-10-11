@@ -38,7 +38,7 @@ export function ResiduePooling({ fields, demoMode }: Props) {
   const [poolQuantities, setPoolQuantities] = useState<Record<string, string>>({});
   const [currentRole, setCurrentRole] = useState('');
   const [currentBuyerName, setCurrentBuyerName] = useState('');
-  const [demandDraft, setDemandDraft] = useState({ residueType: 'Paddy straw', targetTonnes: '50', pickupDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), radiusKm: '25', maxMoisturePct: '20' });
+  const [demandDraft, setDemandDraft] = useState({ residueType: 'Paddy straw', targetTonnes: '50', pickupDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), radiusKm: '25', maxMoisturePct: '20', facilityLat: '', facilityLng: '' });
   const [matchableLots, setMatchableLots] = useState<MatchableLot[]>([]);
   const [offerDrafts, setOfferDrafts] = useState<Record<string, { price: string; quantity: string }>>({});
   const [transportJobs, setTransportJobs] = useState<TransportJob[]>([]);
@@ -166,7 +166,7 @@ export function ResiduePooling({ fields, demoMode }: Props) {
     }
     if (!demandDraft.residueType.trim() || !Number.isFinite(targetTonnes) || targetTonnes <= 0 ||
         !demandDraft.pickupDeadline || demandDraft.pickupDeadline < new Date().toISOString().slice(0, 10) ||
-        !Number.isFinite(radiusKm) || radiusKm <= 0 || !Number.isFinite(maxMoisturePct) || maxMoisturePct < 0 || maxMoisturePct > 100) {
+        !Number.isFinite(radiusKm) || radiusKm <= 0 || !Number.isFinite(maxMoisturePct) || maxMoisturePct < 0 || maxMoisturePct > 100 || !Number.isFinite(Number(demandDraft.facilityLat)) || Number(demandDraft.facilityLat) < -90 || Number(demandDraft.facilityLat) > 90 || !Number.isFinite(Number(demandDraft.facilityLng)) || Number(demandDraft.facilityLng) < -180 || Number(demandDraft.facilityLng) > 180) {
       setNotice('Check residue type, positive target quantity, future pickup deadline, radius and moisture limit.');
       return;
     }
@@ -176,7 +176,7 @@ export function ResiduePooling({ fields, demoMode }: Props) {
     const { error } = await (supabase as any).from('buyer_demands').insert({
       buyer_id: userId, buyer_name: currentBuyerName, residue_type: demandDraft.residueType.trim(),
       target_tonnes: targetTonnes, pickup_deadline: demandDraft.pickupDeadline, radius_km: radiusKm,
-      max_moisture_pct: maxMoisturePct, status: 'OPEN',
+      max_moisture_pct: maxMoisturePct, location_lat: Number(demandDraft.facilityLat), location_lng: Number(demandDraft.facilityLng), status: 'OPEN',
     });
     setNotice(error ? error.message : 'Buyer demand published. Matching lots will use residue type, moisture and pickup window.');
     if (!error) await load();
@@ -299,8 +299,11 @@ export function ResiduePooling({ fields, demoMode }: Props) {
             <label className="text-sm">{t('Pickup deadline')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="date" min={new Date().toISOString().slice(0, 10)} value={demandDraft.pickupDeadline} onChange={(event) => setDemandDraft((prev) => ({ ...prev, pickupDeadline: event.target.value }))} /></label>
             <label className="text-sm">{t('Maximum radius (km)')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="number" min="1" step="1" value={demandDraft.radiusKm} onChange={(event) => setDemandDraft((prev) => ({ ...prev, radiusKm: event.target.value }))} /></label>
             <label className="text-sm">{t('Maximum moisture (%)')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="number" min="0" max="100" step="1" value={demandDraft.maxMoisturePct} onChange={(event) => setDemandDraft((prev) => ({ ...prev, maxMoisturePct: event.target.value }))} /></label>
+            <label className="text-sm">{t('Facility latitude')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="number" min="-90" max="90" step="0.000001" value={demandDraft.facilityLat} onChange={(event) => setDemandDraft((prev) => ({ ...prev, facilityLat: event.target.value }))} /></label>
+            <label className="text-sm">{t('Facility longitude')}<input className="mt-1 w-full rounded-lg border px-3 py-2 text-base" type="number" min="-180" max="180" step="0.000001" value={demandDraft.facilityLng} onChange={(event) => setDemandDraft((prev) => ({ ...prev, facilityLng: event.target.value }))} /></label>
           </div>
           <button onClick={() => void createBuyerDemand()} className="market-primary-action mt-3">{t('Publish buyer demand')}</button>
+          <p className="market-row-meta mt-2">{t('Radius matching uses the facility coordinates you enter. Check them carefully; coordinates are not independently verified.')}</p>
           {!currentBuyerName && <p className="market-row-meta mt-2">{t('Buyer profile linking is required before publishing demand or offers.')}</p>}
         </section>
       )}
