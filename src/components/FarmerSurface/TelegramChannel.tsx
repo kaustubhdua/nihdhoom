@@ -166,7 +166,7 @@ export function TelegramChannel() {
                 className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-emerald-900/12 bg-white px-4 py-3 text-sm font-black text-emerald-950 transition hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-60"
               >
                 <Link2 className="h-4 w-4 text-emerald-700" />
-                {linking ? 'Creating secure link…' : '{t('Connect my NIRDHOOM account')}'}
+                {linking ? t('Creating secure link…') : t('Connect my NIRDHOOM account')}
               </button>
             </div>
 
