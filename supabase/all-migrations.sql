@@ -3500,6 +3500,7 @@ BEGIN
   SELECT * INTO f FROM public.fields WHERE id = p_field_id FOR UPDATE;
   IF NOT FOUND OR f.owner_id <> auth.uid() THEN RAISE EXCEPTION 'Field is not owned by the current farmer'; END IF;
   IF f.status = 'VERIFIED_NON_BURN' THEN RAISE EXCEPTION 'This field is already verified as cleared and cannot be booked again'; END IF;
+  IF f.status NOT IN ('REGISTERED', 'CANCELLED') THEN RAISE EXCEPTION 'This field already has an active or completed clearance workflow'; END IF;
   IF NOT EXISTS (SELECT 1 FROM public.consents c WHERE c.profile_id = auth.uid() AND c.consent_type = 'farmer_network' AND c.revoked_at IS NULL) THEN
     RAISE EXCEPTION 'Active farmer consent is required before booking';
   END IF;
@@ -3518,7 +3519,7 @@ BEGIN
   VALUES (p_field_id, p_requested_date, v_rate, v_amount, v_guaranteed, v_penalty, v_band,
     jsonb_build_object('engine','nirdhoom-pricing-v1','server_authoritative',true,'days_to_harvest',v_days), 'BOOKED', now())
   RETURNING * INTO b;
-  UPDATE public.fields SET status = 'BOOKED', clearance_deadline = (v_guaranteed::text || 'T18:00:00+05:30')::timestamptz, updated_at = now() WHERE id = p_field_id;
+  UPDATE public.fields SET status = 'SCHEDULED', clearance_deadline = (v_guaranteed::text || 'T18:00:00+05:30')::timestamptz, updated_at = now() WHERE id = p_field_id;
   RETURN b;
 EXCEPTION WHEN unique_violation THEN RAISE EXCEPTION 'This field already has an active booking for that date';
 END;
