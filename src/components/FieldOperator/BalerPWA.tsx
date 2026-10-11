@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import { 
   CheckCircle2, 
   MapPin, 
@@ -32,6 +33,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
   demoMode,
   onJobCompleted,
 }) => {
+  const { t } = useAppLanguage();
   const [selectedFieldId, setSelectedFieldId] = useState<string>(fields[0]?.id || 'FIELD-101');
   const [moistureValue, setMoistureValue] = useState<number>(14.2);
   const [balesCount, setBalesCount] = useState<number>(38);
@@ -292,7 +294,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
   if (!currentField) {
     return (
       <section className="tone-adapt field-empty mx-auto max-w-3xl" aria-live="polite">
-        <h2>No field is assigned to this operator session.</h2>
+        <h2>{t('No field is assigned to this operator session.')}</h2>
         <p>Live operator actions appear only after a field and job are assigned by the connected dispatch workflow.</p>
       </section>
     );
@@ -306,7 +308,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
           <div className="mb-2 flex items-center gap-3">
             <Sparkles className="h-6 w-6 shrink-0 text-[var(--brand)]" />
             <h3 className="ui-title !mt-0">
-              Field operator workspace
+              {t('{t('Field operator workspace')}')}
             </h3>
           </div>
           <p className="ui-lede">
@@ -367,7 +369,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
                 🚜
               </div>
               <div>
-                <h4 className="font-bold text-sm text-white">Nirdhoom Field Dispatch</h4>
+                <h4 className="font-bold text-sm text-white">{t('Nirdhoom Field Dispatch')}</h4>
                 <span className="text-[10px] text-emerald-400 font-mono">
                   GPS status: {gpsState ? 'Location available' : 'Waiting for device location'}
                 </span>
@@ -376,7 +378,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
 
             <div className="flex items-center gap-1.5 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30 text-[10px] text-emerald-300 font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-              <span>Sync Active</span>
+              <span>{t('Sync Active')}</span>
             </div>
           </div>
 
