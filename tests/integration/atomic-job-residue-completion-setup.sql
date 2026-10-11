@@ -6,6 +6,18 @@ create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
 $$;
 create table public.profiles (id uuid primary key, role text not null);
+create table public.consents (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid not null,
+  consent_type text not null,
+  version text not null,
+  accepted_at timestamptz not null default now(),
+  revoked_at timestamptz,
+  source text
+);
+ALTER TABLE public.consents ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON TABLE public.consents TO authenticated;
+GRANT UPDATE ON TABLE public.consents TO authenticated;
 create table public.fields (
   id uuid primary key, owner_id uuid not null, crop text not null default 'Paddy',
   expected_harvest_date date, clearance_deadline timestamptz, boundary_source text,
@@ -37,6 +49,8 @@ insert into public.profiles(id, role) values
  ('00000000-0000-0000-0000-000000000001','operator'),
  ('00000000-0000-0000-0000-000000000002','farmer'),
  ('00000000-0000-0000-0000-000000000003','dispatcher');
+insert into public.consents(profile_id, consent_type, version, accepted_at, source) values
+ ('00000000-0000-0000-0000-000000000002','farmer_network','ci-v1',now(),'ci');
 insert into public.fields(id, owner_id, crop, boundary_source) values
  ('10000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002','Paddy','GPS'),
  ('10000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-000000000002','Paddy','GPS'),
