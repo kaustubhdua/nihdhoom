@@ -799,6 +799,7 @@ export type Database = {
           latitude: number
           longitude: number
           matched_field_id: string | null
+          provider_observation_key: string
           raw: Json
           sensor: string
           source: string
@@ -812,6 +813,7 @@ export type Database = {
           latitude: number
           longitude: number
           matched_field_id?: string | null
+          provider_observation_key: string
           raw?: Json
           sensor: string
           source: string
@@ -825,6 +827,7 @@ export type Database = {
           latitude?: number
           longitude?: number
           matched_field_id?: string | null
+          provider_observation_key?: string
           raw?: Json
           sensor?: string
           source?: string
@@ -835,6 +838,48 @@ export type Database = {
             columns: ["matched_field_id"]
             isOneToOne: false
             referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      firms_observation_field_matches: {
+        Row: {
+          created_at: string
+          field_id: string
+          match_type: string
+          matched_at: string
+          observation_id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          field_id: string
+          match_type: string
+          matched_at?: string
+          observation_id: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          field_id?: string
+          match_type?: string
+          matched_at?: string
+          observation_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "firms_observation_field_matches_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "firms_observation_field_matches_observation_id_fkey"
+            columns: ["observation_id"]
+            isOneToOne: false
+            referencedRelation: "firms_observations"
             referencedColumns: ["id"]
           },
         ]
