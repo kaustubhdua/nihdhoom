@@ -3,6 +3,7 @@ import { useAppLanguage } from '../../i18n/LanguageContext';
 import { CalendarDays, CheckCircle2, ClipboardCheck, Loader2, MapPin, ShieldCheck, Tractor } from 'lucide-react';
 import { Field } from '../../types';
 import { supabase } from '../../lib/supabase';
+import LatticeLoader from '../LatticeLoader/LatticeLoader';
 
 interface Props {
   fields: Field[];
@@ -156,6 +157,11 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
         </div>
       </section>
 
+      {(busy || bookingsLoading || Boolean(cancellingId)) && (
+        <div className="ui-card flex justify-center border border-amber-200 bg-amber-50 text-amber-950" role="status" aria-live="polite">
+          <LatticeLoader label={cancellingId ? 'Cancelling booking' : bookingsLoading ? 'Loading booking history' : 'Confirming pickup'} color="#92400e" cellSize={7} gap={2} fontSize={13} step={80} />
+        </div>
+      )}
       <section className="farmer-step-strip" aria-label={t('Booking steps')}>
         <div className={stepClass(1)}><span>1</span><strong>{t('Choose your field')}</strong><small>{t('Select the field where parali needs to be collected')}</small></div>
         <i aria-hidden="true" />
