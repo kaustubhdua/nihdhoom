@@ -8,7 +8,7 @@ import LatticeLoader from '../LatticeLoader/LatticeLoader';
 interface Props {
   fields: Field[];
   demoMode: boolean;
-  onBooked: (fieldId: string, amount?: number) => void;
+  onBooked: (fieldId: string, amount?: number, state?: 'RESERVED' | 'DEMO') => void;
   onBookingChanged?: () => void;
 }
 
@@ -231,7 +231,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked, onBookingChanged 
           <label className="ui-label mt-6 mb-2 block">{t('When should the machine come?')}</label>
           <div className="relative">
             <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--brand)]" />
-            <input type="date" value={date} min={localDateString(new Date())} max={maxBookingDate} onChange={(e) => { setDate(e.target.value); setServerQuote(null); setError(''); setMessage(''); }} className="ui-input pl-10" />
+            <input type="date" value={date} min={localDateString(new Date())} max={maxBookingDate} onChange={(e) => { setDate(e.target.value); setServerQuote(null); setServerReservationState(null); setError(''); setMessage(''); }} className="ui-input pl-10" />
           </div>
 
           <label className="ui-check mt-5">
