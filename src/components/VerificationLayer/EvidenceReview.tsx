@@ -34,6 +34,7 @@ type ReviewPhoto = {
 
 type CheckState = 'pass' | 'warn' | 'fail';
 type Check = { id: string; label: string; detail: string; state: CheckState; anchor: string };
+type ReviewAction = 'approved' | 'more-evidence' | 'rejected';
 type Decision = { action: 'review-submitted' | 'more-evidence' | 'rejected'; note: string; at: number };
 
 const AREA_OK = 0.10;
@@ -273,7 +274,7 @@ export function EvidenceReview({ fields, fireEvents, demoMode, focusFieldId, foc
     setPhotos((current) => ({ ...current, [field.id]: (current[field.id] ?? []).filter((p) => p.id !== photo.id) }));
   }
 
-  async function decide(action: Decision['action']) {
+  async function decide(action: ReviewAction) {
     if (!field) return;
     if (action === 'approved') await onApprove(field);
     setDecisions((current) => ({
