@@ -19,12 +19,13 @@ test('P0 migration is registered in the approved bundle order', () => {
 test('booking only guarantees a date after locking and reserving a matching capacity window', () => {
   const sql = read(migrationPath);
   assert.match(sql, /FOR UPDATE OF cw, m SKIP LOCKED/i);
+  assert.match(sql, /existing reserved acres lack auditable reservation rows/i);
   assert.match(sql, /capacity_window_matches_reservations/i);
   assert.match(sql, /active_w\.window_start < cw\.window_end/i);
   assert.match(sql, /A machine cannot have active reservations in overlapping capacity windows/i);
   assert.match(sql, /cw\.reserved_acres \+ f\.acreage <= cw\.capacity_acres/i);
   assert.match(sql, /INSERT INTO public\.booking_capacity_reservations/i);
-  assert.match(sql, /v_booking_status := 'REQUESTED'/i);
+  assert.match(sql, /v_booking_status text := 'REQUESTED'/i);
   assert.match(sql, /v_guaranteed := p_requested_date/i);
   assert.match(sql, /penalty_status','disabled_until_contract_approval/i);
   assert.match(sql, /A guaranteed booking requires an active matching machine-capacity reservation/i);
