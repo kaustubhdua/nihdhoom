@@ -133,6 +133,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
 
     if (!navigator.onLine) {
       await queueEvidence({
+        ownerUserId: user.id,
         fieldId: currentField.dbId || currentField.id,
         fileName: file.name,
         fileType: file.type,
@@ -152,6 +153,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
     const upload = await client.storage.from('evidence').upload(path, file, { contentType: file.type, upsert: false });
     if (upload.error) {
       await queueEvidence({
+        ownerUserId: user.id,
         fieldId: currentField.dbId || currentField.id,
         fileName: file.name,
         fileType: file.type,
