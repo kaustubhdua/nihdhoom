@@ -333,6 +333,7 @@ const translations: Record<string, string> = {
   'Residue committed to the pool.': 'पराली समूह में जोड़ दी गई।',
   'Create a pool': 'समूह बनाएँ',
   // Workspace headers and navigation: keep every top-level route readable in Hindi.
+  'NIRDHOOM journey': 'NIRDHOOM की प्रक्रिया',
   'FIELD OPERATIONS': 'खेत संचालन',
   'My Fields & Clearance Jobs': 'मेरे खेत और पराली उठान के काम',
   'See every registered field, its current state, evidence, machine assignment and next action in one readable workspace.': 'सभी पंजीकृत खेत, उनकी स्थिति, प्रमाण, मशीन असाइनमेंट और अगला कदम एक ही जगह देखें।',
