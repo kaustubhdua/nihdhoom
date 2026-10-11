@@ -120,3 +120,26 @@ test('farmer login asks only for name and phone before OTP; field location stays
   has(onboarding, 'Phone sign-in and an SMS provider must be enabled in Supabase');
   has(onboarding, 'finally {');
 });
+
+
+test('React Bits CodeSlots is wired for accessible six-digit OTP entry and motion dependencies', () => {
+  const slots = read('src/components/FarmerOnboarding/CodeSlots.tsx');
+  const css = read('src/components/FarmerOnboarding/CodeSlots.css');
+  const onboarding = read('src/components/FarmerOnboarding/FarmerOnboarding.tsx');
+  const pkg = JSON.parse(read('package.json'));
+  has(slots, "from 'motion/react'");
+  has(slots, "from '@hugeicons/react'");
+  has(slots, "from '@hugeicons/core-free-icons'");
+  has(slots, "autoComplete=\"one-time-code\"");
+  has(slots, 'aria-invalid={status === \'error\'}');
+  has(slots, "if (!isFull(prev) && isFull(next)) onComplete?.(code)");
+  has(slots, "if (status !== 'error') return");
+  has(css, '@media (prefers-reduced-motion: reduce)');
+  has(onboarding, "import CodeSlots from './CodeSlots'");
+  has(onboarding, 'onComplete={verifyLiveOtp}');
+  has(onboarding, 'otpVerificationInFlight.current = true');
+  has(onboarding, 'otpVerificationInFlight.current = false');
+  assert.ok(pkg.dependencies.motion, 'motion must be installed');
+  assert.ok(pkg.dependencies['@hugeicons/react'], '@hugeicons/react must be installed');
+  assert.ok(pkg.dependencies['@hugeicons/core-free-icons'], '@hugeicons/core-free-icons must be installed');
+});
