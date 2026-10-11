@@ -641,10 +641,11 @@ test('machine capability claims carry source metadata', () => {
 test('farmer navigation has bilingual core labels', () => {
   const labels = read('src/i18n/farmerLabels.ts');
   const header = read('src/components/Header.tsx');
+  const language = read('src/i18n/LanguageContext.tsx');
   assert.match(labels, /मेरे खेत/);
   assert.match(labels, /पराली उठवाएँ/);
   assert.match(labels, /मशीन ट्रैक करें/);
-  assert.match(header, /nirdhoom\.farmer\.language/);
+  assert.match(language, /nirdhoom\.farmer\.language/);
   assert.match(header, /हिंदी/);
 });
 
