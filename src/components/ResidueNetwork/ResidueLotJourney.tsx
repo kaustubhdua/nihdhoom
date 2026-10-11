@@ -44,6 +44,7 @@ function provenanceLabel(source?: string) {
 }
 
 export function ResidueLotJourney({ field, machine, demoMode }: Props) {
+  const { t } = useAppLanguage();
   const provenance = field.provenance;
   const steps: Step[] = [
     {
