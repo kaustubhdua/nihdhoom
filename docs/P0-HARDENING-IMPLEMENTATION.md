@@ -12,7 +12,7 @@
 - Deferred constraint triggers check both directions at transaction commit: a reserved booking must have an active reservation on the assigned machine, an active reservation cannot be removed from a still-reserved booking, and each window's `reserved_acres` must equal the sum of its active reservation rows. Machine and window eligibility rows are locked together.
 - Cancellation releases reserved acres and the reservation in one transaction. A booking with a created job cannot be cancelled by the farmer; operations must resolve that workflow.
 - Service penalties remain disabled pending approved contractual terms.
-- Existing booking rows without reservation evidence are downgraded from unsupported guarantees to unconfirmed/non-penalty state. Historical quote values are retained.
+- Existing booking rows without reservation evidence are downgraded from unsupported guarantees to unconfirmed/non-penalty state. Historical quote values are retained. The migration aborts if it finds pre-existing reserved acres without auditable reservation rows, so legacy capacity must be reconciled manually rather than silently reset.
 
 ## P0-B — Truthful verification provenance
 
