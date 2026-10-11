@@ -270,7 +270,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
   // Normalize a 10-digit Indian mobile number to E.164. The input strips
   // punctuation, so this also protects against a pasted country code.
   const phoneDigits = phone.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '');
-  const normalizedPhone = phoneDigits ? \`+91\${phoneDigits}\` : '';
+  const normalizedPhone = phoneDigits ? `+91${phoneDigits}` : '';
 
   const sendLiveOtp = async () => {
     if (loading) return;
@@ -313,7 +313,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
       setCurrentStep('OTP');
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
-      setOtpError(t('OTP request failed before Supabase returned a response. Check your connection and try again.') + \` (\${detail.slice(0, 180)})\`);
+      setOtpError(t('OTP request failed before Supabase returned a response. Check your connection and try again.') + ` (${detail.slice(0, 180)})`);
       setOtpStatus('error');
     } finally {
       setLoading(false);
@@ -367,7 +367,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
       window.setTimeout(() => setCurrentStep(hasConsent ? 'LAND_RECORDS' : 'CONSENT'), 650);
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
-      setOtpError(t('OTP verification request failed. Check your connection and try again.') + \` (\${detail.slice(0, 180)})\`);
+      setOtpError(t('OTP verification request failed. Check your connection and try again.') + ` (${detail.slice(0, 180)})`);
       setOtpStatus('error');
     } finally {
       setLoading(false);
