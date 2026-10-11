@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Field } from '../../types';
 import { useAppLanguage } from '../../i18n/LanguageContext';
 import { 
   Calendar, 
@@ -69,10 +70,62 @@ const BLOCK_DATA: BlockForecast[] = [
   },
 ];
 
-export const HarvestForecast: React.FC = () => {
+interface HarvestForecastProps { fields: Field[]; demoMode: boolean; }
+
+export const HarvestForecast: React.FC<HarvestForecastProps> = ({ fields, demoMode }) => {
   const { t } = useAppLanguage();
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(14); // Mid-October
   const [selectedBlock, setSelectedBlock] = useState<string>('Sangrur Central');
+
+  if (!demoMode) {
+    const datedFields = fields
+      .filter((field) => Boolean(field.expected_harvest_date))
+      .slice()
+      .sort((a, b) => a.expected_harvest_date.localeCompare(b.expected_harvest_date));
+    const totalAcres = fields.reduce((sum, field) => sum + Math.max(0, Number(field.acreage) || 0), 0);
+    return (
+      <section className="ui-stack" aria-labelledby="live-harvest-title">
+        <div className="ui-card">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h3 id="live-harvest-title" className="text-xl font-bold text-[var(--ink)]">{t('Harvest readiness from registered fields')}</h3>
+              <p className="ui-card-sub mt-1">{t('This view summarizes dates and acreage stored on connected field records. It is not a crop-maturity forecast and does not imply an external harvest-data provider is connected.')}</p>
+            </div>
+            <span className="badge">{t('LIVE FIELD RECORDS')}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <div className="ui-stat"><div className="ui-stat-label">{t('Registered fields')}</div><div className="ui-stat-value">{fields.length}</div></div>
+            <div className="ui-stat"><div className="ui-stat-label">{t('Declared area')}</div><div className="ui-stat-value">{totalAcres.toLocaleString()} <span className="text-sm">ac</span></div></div>
+          </div>
+        </div>
+        {datedFields.length === 0 ? (
+          <div className="ui-card" role="status">
+            <h4 className="font-semibold text-[var(--ink)]">{t('No harvest dates recorded')}</h4>
+            <p className="ui-card-sub mt-1">{t('Add expected harvest dates to field records before using this view for scheduling. No sample block statistics or projected baler counts are shown in live mode.')}</p>
+          </div>
+        ) : (
+          <div className="ui-card">
+            <h4 className="font-bold text-[var(--ink)]">{t('Declared harvest dates')}</h4>
+            <div className="mt-3 divide-y divide-[var(--line)]">
+              {datedFields.map((field) => (
+                <div key={field.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="font-semibold text-[var(--ink)]">{field.khasra_no || field.id}</div>
+                    <div className="text-sm text-[var(--muted)]">{field.village}, {field.district}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold text-[var(--ink)]">{new Date(field.expected_harvest_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                    <div className="text-sm text-[var(--muted)]">{Number(field.acreage || 0).toLocaleString()} ac · {field.status.replace(/_/g, ' ')}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        <p className="text-xs text-[var(--muted)]">{t('Dates and acreage are declarations from field records, not independently verified crop maturity. Machine recommendations remain unavailable until validated availability and capacity data are connected.')}</p>
+      </section>
+    );
+  }
 
   const currentBlock = BLOCK_DATA.find((b) => b.name === selectedBlock) || BLOCK_DATA[0];
 
