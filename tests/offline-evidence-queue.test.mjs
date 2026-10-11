@@ -8,7 +8,11 @@ test('offline evidence is bound to the user who captured it', () => {
   const queue = read('../src/lib/offlineEvidenceQueue.ts');
   const baler = read('../src/components/FieldOperator/BalerPWA.tsx');
   assert.match(queue, /ownerUserId: string/);
-  assert.equal((baler.match(/ownerUserId: user\.id/g) || []).length, 2);
+  assert.match(baler, /ownerUserId: user\.id/);
+  assert.match(baler, /ownerUserId,\s*fieldId:/);
+  assert.match(baler, /Evidence upload was interrupted; the file was queued safely for replay/);
+  assert.match(baler, /Evidence upload status could not be confirmed/);
+  assert.match(baler, /metadataWriteStarted/);
 });
 
 test('offline replay refuses cross-account and legacy unbound queue records', () => {
