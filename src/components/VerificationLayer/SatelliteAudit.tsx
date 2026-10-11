@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import { supabase } from '../../lib/supabase';
 import { Field, BurnEvent } from '../../types';
 import { executeFirmsAudit, generateNonBurnCertificate } from '../../utils/spatialVerification';
@@ -30,6 +31,7 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
   fireEvents,
   onVerified,
 }) => {
+  const { t } = useAppLanguage();
   const auditReport = executeFirmsAudit(fields, fireEvents);
   const [selectedFieldForCert, setSelectedFieldForCert] = useState<Field | null>(null);
   const [reviewingFieldId, setReviewingFieldId] = useState<string | null>(null);
@@ -81,7 +83,7 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-[family-name:var(--font-display)] text-[24px] font-bold leading-tight text-[var(--ink)]">
-                  Check field proof
+                  {t('Check field proof')}
                 </h3>
                 <span className="ui-chip is-green">
                   {demoMode ? 'Synthetic observation demo' : auditReport.dataAvailability === 'NO_OBSERVATIONS' ? 'Awaiting observations' : 'Observation review'}
@@ -95,7 +97,7 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
 
           <div className="flex shrink-0 items-center gap-4 rounded-2xl border border-[var(--brand-line)] bg-[var(--brand-soft)] px-5 py-4">
             <div>
-              <span className="ui-kv-label block">Fields checked</span>
+              <span className="ui-kv-label block">{t('Fields checked')}</span>
               <div className="font-[family-name:var(--font-display)] text-[34px] font-bold leading-none text-[var(--brand-ink)]">
                 {auditReport.complianceRate}%
               </div>
@@ -115,7 +117,7 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
           <div className="absolute bottom-4 left-5 right-5 flex items-end justify-between gap-4">
             <div>
               <span className="rounded-md border border-white/20 bg-white/10 px-2 py-1 font-mono text-[11px] font-semibold text-amber-200 backdrop-blur">
-                FIRMS / VIIRS thermal observations
+                {t('FIRMS / VIIRS thermal observations')}
               </span>
               <p className="mt-2 text-[15px] font-semibold text-white">
                 {auditReport.dataAvailability === 'NO_OBSERVATIONS' ? 'No remote-sensing observations are currently available for field screening' : `Matched ${auditReport.cleanFieldsCount} field(s) without a detected fire point in the supplied observations`}
@@ -123,15 +125,15 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
             </div>
             <div className="text-right hidden sm:block">
               <span className="block font-mono text-xs font-bold text-amber-200">{demoMode ? 'Synthetic demo only' : auditReport.dataAvailability === 'NO_OBSERVATIONS' ? 'No observations available' : 'Supporting evidence only'}</span>
-              <span className="text-[11px] text-white/70">No registry issuance or retirement</span>
+              <span className="text-[11px] text-white/70">{t('No registry issuance or retirement')}</span>
             </div>
           </div>
         </div>
       </div>
 
       <section className="evidence-language" aria-label="Evidence language">
-        <div><b>Observed</b><span>What the system actually saw</span></div>
-        <div><b>Verified</b><span>What an authorized review confirmed</span></div>
+        <div><b>Observed</b><span>{t('What the system actually saw')}</span></div>
+        <div><b>Verified</b><span>{t('What an authorized review confirmed')}</span></div>
         <div><b>Calculated</b><span>Derived from recorded inputs</span></div>
         <div><b>Estimated</b><span>Planning value, not a measured outcome</span></div>
       </section>
