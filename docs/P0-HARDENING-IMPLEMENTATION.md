@@ -49,6 +49,15 @@ The repository also runs dependency audit, TypeScript syntax/build checks, exist
 
 **Hard stop:** do not run `supabase db push`, apply this migration to production, merge it, or promote a deployment until the staging organization/cost is approved, schema and ledger drift are reconciled, and all CI checks are green.
 
+## Additional P1/P2 implementation added on the release branch
+
+- Operator evidence capture now catches validation/session/storage/hash/metadata exceptions, queues files when upload cannot start, and avoids blind retries when metadata persistence may have succeeded but the response was lost. Queue entries remain bound to the capturing user. This is source-level and automated regression coverage, not proof from a real Android device.
+- FIRMS ingestion now requires authenticated access to a saved field plus the server-only `SUPABASE_SERVICE_ROLE_KEY`. It parses provider acquisition timestamps, persists provider observations with deterministic idempotency keys, records many-to-many field matches, returns persisted IDs, and lets a verifier explicitly select matched observation IDs. Missing server credentials fail closed. Observation records and match records are RLS-enabled and server-role-only.
+- Verification RPC validation now checks the persisted many-to-many field-match table rather than trusting the legacy single `matched_field_id` column. Existing direct matches are migrated as explicit legacy matches.
+- Added source-contract tests for authenticated field resolution, idempotent provider upsert, match persistence, and no-detection interpretation.
+
+These changes are present on `fix/p0-booking-verification-privileges`. They must not be treated as production-enabled until the migration is staged and reconciled, the provider secret is configured securely, and the real provider flow is smoke-tested.
+
 ## P1 acceptance still requiring controlled access
 
 - Farmer: OTP/auth, consent acceptance/withdrawal, field registration, request-vs-reservation messaging, cancellation, and session expiry.
