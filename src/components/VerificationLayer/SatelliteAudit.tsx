@@ -108,7 +108,7 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
                 {auditReport.totalFieldsAudited}
               </div>
             </div>
-            <ShieldCheck className="w-8 h-8 text-[var(--brand)]" />
+            <Satellite className="w-8 h-8 text-[var(--brand)]" />
           </div>
         </div>
 
@@ -255,7 +255,7 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-1.5 font-semibold text-[var(--brand-ink)] whitespace-nowrap">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        {auditReport.dataAvailability === 'NO_OBSERVATIONS' ? <AlertCircle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                         <span>{auditReport.dataAvailability === 'NO_OBSERVATIONS' ? 'Not assessed' : `${auditReport.auditResults.find((result) => result.fieldId === field.id)?.firesInsideCount ?? 0} fire point(s)`}</span>
                       </div>
                     </td>
