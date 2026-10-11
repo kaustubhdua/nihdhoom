@@ -85,6 +85,7 @@ BEGIN
       AND r.status = 'ACTIVE'
       AND r.reserved_acres > 0
       AND w.machine_id = NEW.machine_id
+      AND w.status IN ('OPEN','FULL')
       AND w.reserved_acres >= r.reserved_acres
   ) THEN
     RAISE EXCEPTION 'A guaranteed booking requires an active matching machine-capacity reservation';
@@ -131,6 +132,32 @@ CREATE CONSTRAINT TRIGGER capacity_reservation_requires_booking
 AFTER INSERT OR UPDATE OR DELETE ON public.booking_capacity_reservations
 DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW EXECUTE FUNCTION public.assert_capacity_reservation_has_booking();
+
+CREATE OR REPLACE FUNCTION public.assert_capacity_window_matches_reservations()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO ''
+AS $function$
+DECLARE
+  active_acres numeric;
+BEGIN
+  SELECT COALESCE(sum(r.reserved_acres), 0) INTO active_acres
+  FROM public.booking_capacity_reservations r
+  WHERE r.capacity_window_id = NEW.id AND r.status = 'ACTIVE';
+  IF NEW.reserved_acres <> active_acres THEN
+    RAISE EXCEPTION 'Capacity window reserved_acres must equal active booking reservations';
+  END IF;
+  IF NEW.status = 'CANCELLED' AND active_acres > 0 THEN
+    RAISE EXCEPTION 'A capacity window with active reservations cannot be cancelled';
+  END IF;
+  RETURN NULL;
+END;
+$function$;
+
+CREATE CONSTRAINT TRIGGER capacity_window_matches_reservations
+AFTER INSERT OR UPDATE ON public.machine_capacity_windows
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION public.assert_capacity_window_matches_reservations();
 
 CREATE OR REPLACE FUNCTION public.reserve_clearance_booking_v2(
   p_field_id uuid,
@@ -225,7 +252,7 @@ BEGIN
     AND cw.reserved_acres + f.acreage <= cw.capacity_acres
   ORDER BY cw.window_start, cw.created_at, cw.id
   LIMIT 1
-  FOR UPDATE OF cw SKIP LOCKED;
+  FOR UPDATE OF cw, m SKIP LOCKED;
 
   IF FOUND THEN
     UPDATE public.machine_capacity_windows
