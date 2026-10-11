@@ -25,7 +25,7 @@ This document is the consolidated implementation checklist for taking the curren
 - [x] The obsolete monolithic HTML bundle and committed ZIP archive were removed.
 
 ### 2. Database and access control
-- [x] Apply the repository migrations to the dedicated NIRDHOOM Supabase project (`igqgtlmnwssjaoxkkzbm`); the repository contains 20 migrations; confirm the two Telegram migrations are applied in the connected project before pilot use.
+- [x] The current 35-entry repository migration manifest is applied to the dedicated NIRDHOOM Supabase project (`igqgtlmnwssjaoxkkzbm`) according to the observed live ledger; do not run `supabase db push` until the source-to-ledger mapping and clean-install schema diff are reviewed. See `docs/DATABASE-RELEASE-LEDGER.md`.
 - [ ] Repeat migration testing against a disposable fresh project/branch before introducing pilot data.
 - [ ] Verify every foreign key, trigger, index, constraint and RPC executes as intended.
 - [ ] Test row-level security using separate farmer, operator, dispatcher, verifier and admin accounts.
@@ -102,6 +102,7 @@ This document is the consolidated implementation checklist for taking the curren
 - [ ] Test denied GPS permission, poor accuracy, backgrounding, refresh and device restart.
 - [ ] Persist queued actions safely and show pending/syncing/synced/failed states.
 - [ ] Make retries safe and prevent duplicate job completion.
+- [ ] Make job completion and residue-lot creation one database transaction, or provide an idempotent recovery workflow; current UI can complete a job before the lot insert succeeds.
 - [ ] Provide an operator-reported breakdown/delay path.
 - [ ] Test offline evidence capture and later upload with real file sizes.
 
