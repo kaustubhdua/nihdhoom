@@ -110,9 +110,11 @@ export async function flushEvidenceQueue() {
 
     const upload = await supabase.storage.from('evidence').upload(path, item.blob, {
       contentType: item.fileType,
-      upsert: true,
+      upsert: false,
     });
-    if (upload.error) continue;
+    // A 409 means this deterministic per-queue-item object was uploaded by a
+    // previous attempt. Continue to metadata insertion; other errors are retryable.
+    if (upload.error && upload.error.statusCode !== '409') continue;
 
     const { error } = await supabase.from('evidence_assets').insert({
       field_id: item.fieldId,
