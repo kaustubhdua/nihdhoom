@@ -4,6 +4,7 @@ import { Field, Machine, BurnEvent, StorageYard, Buyer, LatLng } from '../../typ
 import { supabase } from '../../lib/supabase';
 import { Layers, Flame, MapPin, PackageCheck, Route, CloudSun, Building2, ChevronDown, Minus, Plus, LocateFixed, ListFilter, Search, X } from 'lucide-react';
 import { FIELD_STAGES, STAGE_META, fieldRing, fieldStage, type FieldStage } from '../../lib/fieldStatus';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 
 // Popups pan clear of the floating map controls (GPS badge, layers, zoom, legend).
 L.Popup.mergeOptions({
@@ -114,9 +115,11 @@ export const OpsMap: React.FC<OpsMapProps> = ({
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [mapError, setMapError] = useState<string | null>(null);
   const [animatedPositions, setAnimatedPositions] = useState<Record<string, { lat: number; lng: number }>>(
-    () => Object.fromEntries(machines.map(m => [m.id, m.current_location]))
+    () => demoMode ? Object.fromEntries(machines.map(m => [m.id, m.current_location])) : {}
   );
-  const animFrameRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [locationTimestamps, setLocationTimestamps] = useState<Record<string, string>>({});
+  const [locationLoadError, setLocationLoadError] = useState('');
+  const { t } = useAppLanguage();
 
   // Initialize Leaflet map
   useEffect(() => {
@@ -148,32 +151,61 @@ export const OpsMap: React.FC<OpsMapProps> = ({
     };
   }, []);
 
-  // Live fleet tracking animation: machines drift toward assigned fields every 5s
+  // In live mode, machine markers come only from persisted device GPS records.
+  // Never animate a vehicle toward a field: that would present fabricated positions as live telemetry.
   useEffect(() => {
-    const tick = () => {
-      setAnimatedPositions((prev) => {
-        const next = { ...prev };
-        machines.forEach((machine, idx) => {
-          const assignedField = fields[idx % fields.length];
-          if (!assignedField) return;
-          const target = assignedField.center;
-          const cur = prev[machine.id] || machine.current_location;
-          // Lerp 8% toward target to simulate GPS drift
-          next[machine.id] = {
-            lat: cur.lat + (target.lat - cur.lat) * 0.08,
-            lng: cur.lng + (target.lng - cur.lng) * 0.08,
-          };
-        });
-        return next;
-      });
-      setLastRefresh(new Date());
+    if (demoMode || !supabase) {
+      setAnimatedPositions(Object.fromEntries(machines.map((machine) => [machine.id, machine.current_location])));
+      setLocationTimestamps({});
+      setLocationLoadError('');
+      return;
+    }
+    let active = true;
+    const refreshLocations = async () => {
+      try {
+        const { data: sessionResult } = await supabase.auth.getSession();
+        const token = sessionResult.session?.access_token;
+        if (!token) {
+          if (active) {
+            setAnimatedPositions({});
+            setLocationTimestamps({});
+            setLocationLoadError('Sign in with an authorized account to view live machine GPS.');
+          }
+          return;
+        }
+        const { data, error } = await supabase
+          .from('machine_locations')
+          .select('machine_id,latitude,longitude,recorded_at')
+          .order('recorded_at', { ascending: false })
+          .limit(500);
+        if (error) throw error;
+        if (!active) return;
+        const now = Date.now();
+        const positions: Record<string, { lat: number; lng: number }> = {};
+        const timestamps: Record<string, string> = {};
+        for (const row of data || []) {
+          if (timestamps[row.machine_id]) continue;
+          const lat = Number(row.latitude);
+          const lng = Number(row.longitude);
+          const recordedAt = Date.parse(row.recorded_at);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) continue;
+          if (!Number.isFinite(recordedAt) || now - recordedAt > 30 * 60 * 1000 || recordedAt > now + 60_000) continue;
+          positions[row.machine_id] = { lat, lng };
+          timestamps[row.machine_id] = row.recorded_at;
+        }
+        setAnimatedPositions(positions);
+        setLocationTimestamps(timestamps);
+        setLocationLoadError('');
+        setLastRefresh(new Date());
+      } catch (error) {
+        if (!active) return;
+        setLocationLoadError(error instanceof Error ? error.message : 'Live GPS could not be refreshed.');
+      }
     };
-
-    animFrameRef.current = setInterval(tick, 4500);
-    return () => {
-      if (animFrameRef.current) clearInterval(animFrameRef.current);
-    };
-  }, [machines, fields]);
+    void refreshLocations();
+    const interval = window.setInterval(() => void refreshLocations(), 15_000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, [demoMode, machines]);
 
     // Weather is an operational planning layer, sourced through the authenticated weather adapter.
   useEffect(() => {
@@ -297,8 +329,8 @@ export const OpsMap: React.FC<OpsMapProps> = ({
           iconAnchor: [17, 17],
         });
 
-        const pos = animatedPositions[machine.id] || machine.current_location;
-        if (!Number.isFinite(Number(pos?.lat)) || !Number.isFinite(Number(pos?.lng))) return;
+        const pos = demoMode ? (animatedPositions[machine.id] || machine.current_location) : animatedPositions[machine.id];
+        if (!pos || !Number.isFinite(Number(pos.lat)) || !Number.isFinite(Number(pos.lng))) return;
         const marker = L.marker([Number(pos.lat), Number(pos.lng)], {
           icon: customIcon,
         });
@@ -316,6 +348,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
             </div>
             <div class="map-pop-note">Capability source: ${machine.capability_source || "Not established"}${machine.capability_source_date ? " · " + machine.capability_source_date : ""}</div>
             <div class="map-pop-status"><strong>Status:</strong> <span class="map-pop-chip is-green">${machine.status}</span></div>
+            <div class="map-pop-note">${demoMode ? 'Demo position — not live GPS' : `Last device GPS: ${locationTimestamps[machine.id] ? new Date(locationTimestamps[machine.id]).toLocaleString('en-IN') : 'Unavailable'}`}</div>
           </div>
         `);
 
@@ -479,6 +512,8 @@ export const OpsMap: React.FC<OpsMapProps> = ({
     showWeather,
     weatherPoint,
     animatedPositions,
+    locationTimestamps,
+    demoMode,
   ]);
 
   // Open framed on the fields instead of a fixed district-wide zoom.
