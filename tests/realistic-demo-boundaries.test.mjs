@@ -27,3 +27,20 @@ test('demo map labels synthetic fire, buyer and inventory records', () => {
   assert.match(map, /SIMULATED BUYER/);
   assert.match(map, /SIMULATED CAPACITY \/ STOCK/);
 });
+
+
+test('audit summary labels field count honestly', () => {
+  const audit = read('../src/components/VerificationLayer/SatelliteAudit.tsx');
+  assert.match(audit, /Fields in this review/);
+  assert.match(audit, /auditReport\\.totalFieldsAudited/);
+  assert.doesNotMatch(audit, /Fields checked/);
+});
+
+test('demo journey validates ordered history and never labels review as verified', () => {
+  const journey = read('../src/components/DemoScenarioJourney/DemoScenarioJourney.tsx');
+  assert.match(journey, /const expected = STEPS\\[valid.length\\]/);
+  assert.match(journey, /Number\\.isFinite\\(Date\\.parse\\(event\\.at\\)\\)/);
+  assert.match(journey, /REVIEW_SUBMITTED/);
+  assert.doesNotMatch(journey, /Approve sample review/);
+  assert.match(journey, /not a trusted server timestamp/);
+});
