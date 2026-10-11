@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import { HindiTextConverter } from './HindiTextConverter';
 import {
   Bell, CalendarCheck, Camera, CheckCircle2, ExternalLink, Link2, MapPin,
@@ -164,7 +165,7 @@ export function TelegramChannel() {
                 className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-emerald-900/12 bg-white px-4 py-3 text-sm font-black text-emerald-950 transition hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-60"
               >
                 <Link2 className="h-4 w-4 text-emerald-700" />
-                {linking ? 'Creating secure link…' : 'Connect my NIRDHOOM account'}
+                {linking ? 'Creating secure link…' : '{t('Connect my NIRDHOOM account')}'}
               </button>
             </div>
 
@@ -219,7 +220,7 @@ export function TelegramChannel() {
         <div className="ui-card">
           <div className="ui-card-head">
             <div>
-              <div className="ui-card-title"><Send className="!text-[#229ED9]" /><h3>Try it in Telegram</h3></div>
+              <div className="ui-card-title"><Send className="!text-[#229ED9]" /><h3>{t('Try it in Telegram')}</h3></div>
               <p className="ui-card-sub">Commands and plain words both work, in Punjabi, Hindi or English.</p>
             </div>
             {botUrl && <a href={botUrl} target="_blank" rel="noreferrer" className="ui-btn is-primary"><Send /> {copy.cta}</a>}
@@ -239,7 +240,7 @@ export function TelegramChannel() {
         </div>
       ) : botReady === false ? (
         <div className="ui-card is-sky">
-          <div className="ui-card-title"><Bell className="!text-[var(--sky)]" /><h3>Switch on the bot</h3></div>
+          <div className="ui-card-title"><Bell className="!text-[var(--sky)]" /><h3>{t('Switch on the bot')}</h3></div>
           <p className="ui-card-sub">Three steps, about five minutes. The code is ready; it only needs your bot token.</p>
           <ol className="bot-setup">
             <li><b>Create the bot.</b> In Telegram, message <code>@BotFather</code>, send <code>/newbot</code> and copy the token.</li>
