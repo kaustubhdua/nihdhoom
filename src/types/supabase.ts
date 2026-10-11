@@ -1617,6 +1617,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      record_farmer_network_consent: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          accepted_at: string
+          consent_type: string
+          id: string
+          profile_id: string
+          revoked_at: string | null
+          source: string
+          version: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "consents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       accept_buyer_offer: {
         Args: { p_offer_id: string }
         Returns: {
