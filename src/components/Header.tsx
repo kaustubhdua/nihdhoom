@@ -88,7 +88,7 @@ export function Header({ activeTab, setActiveTab, demoMode }: HeaderProps) {
           <button
             onClick={() => navigate('OVERVIEW')} onMouseEnter={() => prefetchWorkspace('OVERVIEW')}
             className="group flex min-w-0 shrink-0 items-center gap-3 rounded-xl py-1.5 text-left"
-            aria-label="Go to NIRDHOOM Home"
+            aria-label={t('Go to NIRDHOOM Home')}
           >
             <span className="brand-mark" aria-hidden="true">नि</span>
             <span className="hidden min-w-0 sm:block">
@@ -104,7 +104,7 @@ export function Header({ activeTab, setActiveTab, demoMode }: HeaderProps) {
 
           <div className="hidden h-7 w-px bg-[var(--line)] xl:block" />
 
-          <nav className="hidden min-w-0 flex-1 items-center gap-0.5 lg:flex" aria-label="Primary navigation">
+          <nav className="hidden min-w-0 flex-1 items-center gap-0.5 lg:flex" aria-label={t('Primary navigation')}>
             {primaryNav.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.id;
@@ -126,11 +126,11 @@ export function Header({ activeTab, setActiveTab, demoMode }: HeaderProps) {
                 <>
                   <button
                     type="button"
-                    aria-label="Close More menu"
+                    aria-label={t('Close More menu')}
                     className="field-more-backdrop"
                     onClick={() => setMoreOpen(false)}
                   />
-                  <div className="field-more-menu" role="menu" aria-label="More navigation">
+                  <div className="field-more-menu" role="menu" aria-label={t('More navigation')}>
                     <div className="flex items-start justify-between gap-4 px-4 pb-3 pt-1">
                       <div>
                         <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">{t('Explore NIRDHOOM')}</div>
@@ -187,7 +187,7 @@ export function Header({ activeTab, setActiveTab, demoMode }: HeaderProps) {
             >
               {farmerLanguage === 'en' ? 'हिंदी' : 'EN'}
             </button>
-            <button onClick={() => setMobileOpen((value) => !value)} className="field-menu-button icon-button lg:hidden" aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={mobileOpen}>
+            <button onClick={() => setMobileOpen((value) => !value)} className="field-menu-button icon-button lg:hidden" aria-label={mobileOpen ? t('Close navigation') : t('Open navigation')} aria-expanded={mobileOpen}>
               {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
           </div>
@@ -197,11 +197,11 @@ export function Header({ activeTab, setActiveTab, demoMode }: HeaderProps) {
 
         {mobileOpen && (
           <div className="field-mobile-panel lg:hidden">
-            <div className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">All NIRDHOOM surfaces</div>
+            <div className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">{t('All NIRDHOOM surfaces')}</div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {secondaryNav.map((item) => {
                 const Icon = item.icon;
-                return <button key={item.id} onClick={() => navigate(item.id)} className={`field-mobile-item ${activeTab === item.id ? 'is-active' : ''}`}><Icon className="h-4 w-4" />{item.label}</button>;
+                return <button key={item.id} onClick={() => navigate(item.id)} className={`field-mobile-item ${activeTab === item.id ? 'is-active' : ''}`}><Icon className="h-4 w-4" />{t(item.label)}</button>;
               })}
             </div>
           </div>
@@ -209,7 +209,7 @@ export function Header({ activeTab, setActiveTab, demoMode }: HeaderProps) {
       </div>
       </header>
 
-      <nav className="field-mobile-bottom-nav lg:hidden" aria-label="Farmer quick navigation">
+      <nav className="field-mobile-bottom-nav lg:hidden" aria-label={t('Farmer quick navigation')}>
       {[
         ['OVERVIEW', farmerLabels.home, Activity],
         ['FIELD_JOBS', farmerLabels.fields, ClipboardList],
