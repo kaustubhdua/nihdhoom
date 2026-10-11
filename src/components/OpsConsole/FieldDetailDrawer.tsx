@@ -130,13 +130,20 @@ export const FieldDetailDrawer: React.FC<FieldDetailDrawerProps> = ({
 
       {/* Action Buttons */}
       <div className="flex flex-wrap items-center justify-end gap-2.5">
-        <button
-          onClick={() => onViewCertificate(field)}
-          className="ui-btn"
-        >
-          <ShieldCheck className="text-[var(--brand)]" />
-          <span>{demoMode ? 'View demo verification record' : 'View verification record'}</span>
-        </button>
+        {demoMode ? (
+          <button
+            onClick={() => onViewCertificate(field)}
+            className="ui-btn"
+          >
+            <ShieldCheck className="text-[var(--brand)]" />
+            <span>View illustrative demo record</span>
+          </button>
+        ) : (
+          <div className="ui-note is-sky !py-2" role="status">
+            <ShieldCheck />
+            <span>Production verification record unavailable until an authorized review issues one.</span>
+          </div>
+        )}
 
         {!isCleared && demoMode ? (
           <button
