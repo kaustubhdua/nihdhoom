@@ -14,6 +14,20 @@ This checklist is the release contract for the next NIRDHOOM field pilot. It del
 - Real OTP delivery, Telegram delivery, and dispatch service: require environment-specific smoke tests.
 - Payments and carbon issuance: intentionally out of scope and must remain non-live.
 
+
+## Observed external-service state (read-only, 2026-10-12)
+
+These are observations, not release sign-off:
+
+- **Vercel:** the current production-target deployment is READY and aliases `nihdhoom-9qiu.vercel.app`, but it was built from commit `7e8322f00eadc0b50de38ed0882cde5737d841a3`, which predates the latest release-gate and Telegram retry commits. The current GitHub commit has a Vercel check failure pointing to the team's build-rate limit. No deployment promotion or rollback has been performed as part of this audit.
+- **Production environment:** the Vercel environment listing reports `VITE_NIRDHOOM_DEMO_MODE=false` and production-target Supabase URL/publishable-key variables. The project configuration explicitly limits those Supabase frontend variables to Production pending isolated Preview Supabase configuration. Do not use Preview to run live-data tests against Production.
+- **Supabase:** read-only migration/function inspection found `public.complete_job_with_residue_lot(uuid,numeric,numeric,integer,jsonb)` absent from the production database. The atomic completion SQL has passed isolated PostgreSQL CI tests, but the production migration remains unapplied by design.
+- **Runtime observations:** the Vercel runtime-error query returned no grouped errors for the selected 24-hour window. This does not establish that user journeys work.
+- **Security advisor:** the current read-only report flags two RLS-enabled tables with no policies (`telegram_link_tokens`, `telegram_webhook_updates`), which is consistent with their intended server-only access but should be verified against service-role-only use. It also flags nine authenticated-callable SECURITY DEFINER workflow functions; their explicit actor/role/ownership checks and grants must remain covered by SQL tests. Do not blanket-revoke these workflow RPCs merely to silence the advisor.
+- **Provider setup:** repository/Vercel inspection does not prove that Supabase SMS delivery, Telegram webhook registration, Telegram outbound delivery, or the dispatch endpoint work with real provider credentials. These still require controlled smoke tests with dedicated test accounts.
+
+**Release decision as of this observation:** not approved for a production field pilot until the production deployment is reconciled with `main`, Vercel can build the intended commit, the database migration history/schema diff is reviewed and staged, and the real provider/auth/operator smoke tests pass.
+
 ## Gate A — Release identity and rollback (P0)
 
 - [ ] Record the intended `main` commit SHA.
