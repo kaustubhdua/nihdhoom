@@ -1,4 +1,5 @@
 import { CircleHelp, MapPinned, UserCheck } from 'lucide-react';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import { Field, FieldProvenance, ProvenanceSource } from '../../types';
 
 interface Props { fields: Field[]; demoMode: boolean; }
@@ -32,6 +33,7 @@ function resolveProvenance(field: Field): FieldProvenance {
 }
 
 export function FieldProvenancePanel({ fields, demoMode }: Props) {
+  const { t } = useAppLanguage();
   const mapped = fields.filter(f => resolveProvenance(f).status !== 'DECLARED').length;
   const verified = fields.filter(f => resolveProvenance(f).status === 'FIELD_VERIFIED').length;
   const unknown = fields.filter(f => Object.values(resolveProvenance(f)).includes('UNKNOWN')).length;
@@ -42,7 +44,7 @@ export function FieldProvenancePanel({ fields, demoMode }: Props) {
         <div className="ui-intro-copy">
           <div className="flex items-center gap-3">
             <MapPinned className="h-6 w-6 text-[var(--brand)]" />
-            <h2 className="ui-title !mt-0">Field provenance & verification</h2>
+            <h2 className="ui-title !mt-0">{t('Field provenance & verification')}</h2>
           </div>
           <p className="ui-lede">Every operational field value should have a source before it is treated as authoritative.</p>
         </div>
