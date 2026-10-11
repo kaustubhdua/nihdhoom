@@ -12,7 +12,7 @@ The dedicated NIRDHOOM Supabase project is connected to the application. This do
 
 ## Migration source of truth and production safety
 
-The canonical fresh-install order is maintained in `supabase/migration-order.txt` (35 migrations at the 2026-10-12 repository review). `supabase/all-migrations.sql` is a generated bundle and CI validates that it matches the manifest. Do not maintain a second hand-written list here; it became stale as new migrations were added.
+The canonical fresh-install order is maintained in `supabase/migration-order.txt` (36 migrations after adding atomic job/residue-lot completion). `supabase/all-migrations.sql` is a generated bundle and CI validates that it matches the manifest. Do not maintain a second hand-written list here; it became stale as new migrations were added.
 
 **Do not run `supabase db push` against production yet.** The live project's migration ledger uses server-assigned versions and historical split/combined records that do not directly match the repository filenames. The source SQL and production ledger must be reconciled before automated CLI pushes are safe. See `docs/DATABASE-RELEASE-LEDGER.md` for the observed ledger and the required schema-only comparison. The generated bundle is for clean installs only, not a production repair script.
 
