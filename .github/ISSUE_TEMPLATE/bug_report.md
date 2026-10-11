@@ -1,14 +1,18 @@
 ---
 name: Bug report
-about: Report a reproducible product or workflow problem
-title: "[Bug] "
+about: Report a reproducible NIRDHOOM defect
+title: "[Bug]: "
 labels: bug
 assignees: ""
 ---
 
 ## What happened?
 
-## Expected behavior
+Describe the observed behavior.
+
+## What did you expect?
+
+Describe the expected behavior.
 
 ## Steps to reproduce
 
@@ -16,12 +20,18 @@ assignees: ""
 2.
 3.
 
-## Device / browser
+## Context
 
-- Device:
-- Browser:
-- Mobile or desktop:
+- Screen / workflow:
+- Device and browser:
+- Language (English / Hindi / Punjabi):
+- Demo mode or live mode:
+- Approximate time and timezone:
 
 ## Evidence
 
-Add screenshots, logs or a minimal reproduction. Never include secrets or real farmer personal data.
+Add a screenshot or redacted error message. Remove phone numbers, farmer identifiers, access tokens, precise private field coordinates, and other personal data.
+
+## Impact
+
+Who is blocked, and is there a safe workaround?
