@@ -1,4 +1,5 @@
 import type { Field, Machine } from '../../types';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 
 type Props = {
   field: Field;
