@@ -19,10 +19,10 @@ It reads `.env.local` (copy `.env.example` to `.env.local` and fill in the two S
 
 1. supabase.com > New project. Pick a region close to Punjab (Mumbai, `ap-south-1`).
 2. **Project Settings > API**: copy the **Project URL** and the **anon / publishable key**. You will also see a **service_role** key. That one is a secret and is only ever used on the server.
-3. **SQL Editor > New query**. Open `supabase/all-migrations.sql` from this repo (GitHub: the file page > Copy raw file), paste it all, press **Run** once. It either applies everything or nothing.
+3. **SQL Editor > New query**. Open `supabase/all-migrations.sql` from this repo (GitHub: the file page > Copy raw file), paste it all, press **Run** once. This bundle is for a brand-new project only. Do not paste it into production or run `supabase db push` against the existing project until `docs/DATABASE-RELEASE-LEDGER.md` says the CLI baseline is reconciled.
    - It must run on a project where it has not run before. Running it twice stops with "already exists" errors, which is harmless but means it was already done.
    - If it fails, the line starting `-- >>> ` just above the error names the migration. Fix the cause, then run only the files from that one onward from `supabase/migrations/`.
-4. Regenerate the file after any migration change: `npm run db:bundle`.
+4. Regenerate the file after any approved migration change: `npm run db:bundle`. The explicit order is in `supabase/migration-order.txt`. The buyer-offer/transport workflow is a staging-only proposal and is intentionally excluded until its authorization matrix passes.
 
 ## 2. Turn on phone login (Supabase)
 

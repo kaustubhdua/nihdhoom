@@ -8,7 +8,7 @@ const main = read('../src/main.jsx');
 const header = read('../src/components/Header.tsx');
 const map = read('../src/components/OpsConsole/OpsMap.tsx');
 const marketplace = read('../src/components/ResiduePooling/ResiduePooling.tsx');
-const workflow = read('../supabase/migrations/202610110002_nirdhoom_marketplace_transaction_workflow.sql');
+const workflow = read('../supabase/proposals/202610110002_nirdhoom_marketplace_transaction_workflow.sql');
 const bundle = read('../supabase/all-migrations.sql');
 
 test('Hindi language is shared across the app and persisted', () => {
@@ -51,9 +51,10 @@ test('accepted offers create a transport job and transport transitions enforce r
   assert.match(workflow, /GRANT EXECUTE ON FUNCTION public\.transition_residue_transport_job/i);
 });
 
-test('fresh-install migration bundle contains the workflow migration', () => {
-  assert.match(bundle, /-- >>> 202610110002_nirdhoom_marketplace_transaction_workflow\.sql/);
-  assert.ok(bundle.includes(workflow.trim()));
+test('marketplace transaction workflow stays out of the fresh-install bundle until staging authorization passes', () => {
+  assert.match(workflow, /intentionally PR-only until its authorization matrix passes against staging/i);
+  assert.doesNotMatch(bundle, /202610110002_nirdhoom_marketplace_transaction_workflow\.sql/);
+  assert.ok(!bundle.includes(workflow.trim()));
 });
 
 test('marketplace UI connects offer, acceptance, and delivery RPCs', () => {
