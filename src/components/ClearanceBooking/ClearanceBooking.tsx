@@ -63,7 +63,7 @@ export function ClearanceBooking({ fields, demoMode, onBooked }: Props) {
       });
       if (rpcError) throw new Error(rpcError.message);
       onBooked(selected.id, Number((data as { quoted_amount?: number } | null)?.quoted_amount || 0));
-      setMessage('{t('Book parali pickup')} confirmed by the server. The authoritative quote is shown in your field record.');
+      setMessage(`${t('Book parali pickup')} confirmed by the server. The authoritative quote is shown in your field record.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Booking could not be created.');
     } finally {
