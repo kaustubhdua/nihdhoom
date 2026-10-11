@@ -2,7 +2,7 @@
 -- Paste into Supabase > SQL Editor and press Run ONCE on a fresh project.
 -- If it stops with an error, note the "-- >>> file" line above it, fix the cause,
 -- then run only the files from that one onward (see docs/GO-LIVE.md).
--- Generated 2026-10-11 from 32 files.
+-- Generated 2026-10-11 from 34 files.
 
 -- >>> 202609270001_nirdhoom_core.sql
 -- NIRDHOOM core schema. Run in Supabase SQL Editor or as a migration.
@@ -3456,7 +3456,6 @@ GRANT EXECUTE ON FUNCTION public.create_buyer_offer(uuid,numeric,numeric,timesta
 GRANT EXECUTE ON FUNCTION public.accept_buyer_offer(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.transition_residue_transport_job(uuid,text,uuid) TO authenticated;
 
-
 -- >>> 202610110003_nirdhoom_booking_consent_and_window.sql
 -- Persist the booking consent checkbox as an auditable, revocable consent.
 CREATE OR REPLACE FUNCTION public.record_farmer_network_consent()
@@ -3526,7 +3525,6 @@ END;
 $function$;
 REVOKE ALL ON FUNCTION public.reserve_clearance_booking_v2(uuid, date) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.reserve_clearance_booking_v2(uuid, date) TO authenticated;
-
 
 -- >>> 202610120001_nirdhoom_booking_field_status_consistency.sql
 -- NIRDHOOM: keep the field lifecycle status inside its declared constraint.
@@ -3638,4 +3636,3 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) TO authenticated;
-
