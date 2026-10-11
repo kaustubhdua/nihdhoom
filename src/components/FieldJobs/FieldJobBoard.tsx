@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import {
   Activity,
   AlertTriangle,
@@ -234,7 +235,7 @@ export function FieldJobBoard({
             <div className="ui-eyebrow">
               <Activity className="h-4 w-4" /> My fields & pickup status
             </div>
-            <h1 className="ui-title">Your fields, pickup and parali status</h1>
+            <h1 className="ui-title">{t('Your fields, pickup and parali status')}</h1>
             <p className="ui-lede">
               See what is happening to each field, what has been done, and what needs to happen next.
               This view surfaces the next operational action instead of only reporting totals.
@@ -242,13 +243,13 @@ export function FieldJobBoard({
           </div>
           <div className="ui-actions">
             <button onClick={onOpenDispatch} className="ui-btn is-primary">
-              <Route className="h-3.5 w-3.5" /> Find machine
+              <Route className="h-3.5 w-3.5" /> {t('Find machine')}
             </button>
             <button onClick={onOpenResidue} className="ui-btn is-wheat">
               <PackageCheck className="h-3.5 w-3.5" /> Parali
             </button>
             <button onClick={onOpenImpact} className="ui-btn is-ghost">
-              <ShieldCheck className="h-3.5 w-3.5" /> Why it matters
+              <ShieldCheck className="h-3.5 w-3.5" /> {t('Why it matters')}
             </button>
           </div>
         </>
@@ -404,7 +405,7 @@ export function FieldJobBoard({
                       {row.action && <span className="ui-chip is-wheat">Next step</span>}
                       {row.ready && <span className="ui-chip is-green"><CheckCircle2 /> Ready for buyer</span>}
                       <button onClick={() => onSelectField(row.field)} className="ui-btn is-sm">
-                        See field
+                        {t('See field')}
                       </button>
                     </div>
                   </div>
