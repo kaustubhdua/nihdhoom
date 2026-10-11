@@ -112,7 +112,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
     else if (map && field.center) map.flyTo([field.center.lat, field.center.lng], 15, { duration: 0.9 });
   };
   const [weatherPoint, setWeatherPoint] = useState<{ temperature: number; precipitationProbability: number; precipitationMm: number; windGustKmh: number } | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [animatedPositions, setAnimatedPositions] = useState<Record<string, { lat: number; lng: number }>>(
     () => demoMode ? Object.fromEntries(machines.map(m => [m.id, m.current_location])) : {}
@@ -561,8 +561,8 @@ export const OpsMap: React.FC<OpsMapProps> = ({
       {mapError ? (
         <div className="map-error">
           <div className="max-w-md">
-            <div className="map-error-title">Operational map unavailable</div>
-            <p>Check your network/map tile access and reload.</p>
+            <div className="map-error-title">{t('Operational map unavailable')}</div>
+            <p>{t('Check your network/map tile access and reload.')}</p>
             <p className="map-error-detail">{mapError}</p>
           </div>
         </div>
@@ -573,11 +573,17 @@ export const OpsMap: React.FC<OpsMapProps> = ({
       {/* GPS Live Ticker Top-Left */}
       <div className="map-gps">
         <span className="map-gps-dot" />
-        <span className="map-gps-mode">{demoMode ? 'GPS DEMO' : 'GPS LIVE'}</span>
+        <span className="map-gps-mode">{demoMode ? t('GPS DEMO') : t('GPS LIVE')}</span>
         <span className="map-gps-sep">·</span>
-        <span className="map-gps-count">{machines.length} balers {demoMode ? 'simulated' : 'tracked'}</span>
-        <span className="map-gps-time">Updated {lastRefresh.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+        <span className="map-gps-count">{demoMode ? machines.length : Object.keys(animatedPositions).length} {t('balers')} {demoMode ? t('simulated') : t('with fresh GPS')}</span>
+        <span className="map-gps-time">{lastRefresh ? `${t('Updated')} ${lastRefresh.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}` : t('Waiting for device GPS')}</span>
       </div>
+
+      {!demoMode && locationLoadError && (
+        <div role="status" className="absolute left-3 top-14 z-[500] max-w-[min(92vw,420px)] rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-950 shadow-lg">
+          {t('Live GPS unavailable')}: {locationLoadError}
+        </div>
+      )}
 
       {/* Field finder Top-Left */}
       <div className="map-finder">
@@ -588,7 +594,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
           aria-expanded={fieldListOpen}
         >
           <ListFilter className="h-4 w-4" />
-          <span>Find a field</span>
+          <span>{t('Find a field')}</span>
           <span className="map-layers-count">{visibleFields.length}</span>
         </button>
         {fieldListOpen && (
@@ -598,15 +604,15 @@ export const OpsMap: React.FC<OpsMapProps> = ({
               <input
                 value={fieldQuery}
                 onChange={(event) => setFieldQuery(event.target.value)}
-                placeholder="Khasra, village or farmer"
-                aria-label="Search fields on the map"
+                placeholder={t('Khasra, village or farmer')}
+                aria-label={t('Search fields on the map')}
                 type="search"
               />
               {fieldQuery && <button type="button" aria-label="Clear search" onClick={() => setFieldQuery('')}><X className="h-3.5 w-3.5" /></button>}
             </div>
             <ul className="map-finder-list">
               {listedFields.length === 0 ? (
-                <li className="map-finder-empty">No fields match. Clear the search or turn a status back on below.</li>
+                <li className="map-finder-empty">{t('No fields match. Clear the search or turn a status back on below.')}</li>
               ) : listedFields.map((field) => {
                 const meta = STAGE_META[fieldStage(field.status)];
                 const selected = selectedField?.id === field.id;
@@ -637,7 +643,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
           aria-expanded={layersOpen}
         >
           <Layers className="h-4 w-4" />
-          <span>Satellite field map</span>
+          <span>{t('Satellite field map')}</span>
           <span className="map-layers-count">{activeLayerCount}</span>
           <ChevronDown className="h-4 w-4 map-layers-chevron" />
         </button>
@@ -645,7 +651,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
           <div className="map-layers-panel">
             <div className="map-layers-heading">
               <Layers className="h-3.5 w-3.5" />
-              <span>GIS map layers</span>
+              <span>{t('GIS map layers')}</span>
             </div>
             {layerToggles.map((layer) => (
               <label key={layer.key} className={`map-layer-row ${layer.tone || ''}`}>
