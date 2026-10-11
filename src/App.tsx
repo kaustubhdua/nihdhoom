@@ -454,7 +454,7 @@ export function App() {
         {activeTab === 'OFFTAKE_AUCTION' && (
           <div className="workspace-stack">
             <MultiOfftakeAuction buyers={liveBuyers} demoMode={demoMode} />
-            <HarvestForecast />
+            <HarvestForecast fields={fields} demoMode={demoMode} />
           </div>
         )}
         </Suspense>
