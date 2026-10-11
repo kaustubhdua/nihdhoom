@@ -165,3 +165,15 @@ test('operations map escapes database text in Leaflet HTML and preserves respons
   has(readme, 'NASA FIRMS detections');
   has(readme, 'Map troubleshooting');
 });
+
+test('booking history always clears loading state after network exceptions', () => {
+  const booking = read('src/components/ClearanceBooking/ClearanceBooking.tsx');
+  const start = booking.indexOf('const refreshBookings = useCallback(async () =>');
+  const end = booking.indexOf('useEffect(() => { void refreshBookings();', start);
+  assert.ok(start >= 0 && end > start, 'booking history loader should be present');
+  const loader = booking.slice(start, end);
+  assert.match(loader, /try\s*\{/);
+  assert.match(loader, /catch\s*\{/);
+  assert.match(loader, /finally\s*\{\s*setBookingsLoading\(false\);/);
+  assert.match(loader, /server was unreachable/);
+});
