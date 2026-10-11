@@ -40,21 +40,54 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // FIRMS field queries contain farm-location data; require a verified session by default.
-  if (process.env.REQUIRE_AUTH_FOR_FIRMS !== 'false') {
-    const user = await verifyUser(req);
-    if (!user?.id) return res.status(401).json({ error: 'Authentication required' });
-  }
+  // Always authenticate and resolve the field from the caller's session. Never
+  // accept coordinates or a polygon supplied by the browser for a private farm query.
+  const user = await verifyUser(req);
+  if (!user?.id) return res.status(401).json({ error: 'Authentication required' });
 
   const key = process.env.FIRMS_MAP_KEY;
   if (!key) return res.status(503).json({ error: 'FIRMS_MAP_KEY is not configured' });
 
   res.setHeader?.('Cache-Control', 'no-store');
-  const body = req.body;
-  const field = body?.field;
-  if (!field || typeof field !== 'object' || !validPoint(field)) {
-    return res.status(400).json({ error: 'field requires valid latitude and longitude' });
+  const body = req.body || {};
+  const fieldId = String(body.field_id || '');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(fieldId)) {
+    return res.status(400).json({ error: 'field_id must be a valid UUID' });
   }
+
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const authorization = String(req.headers?.authorization || '');
+  const fieldResponse = await fetch(
+    `${supabaseUrl}/rest/v1/fields?id=eq.${encodeURIComponent(fieldId)}&select=id,center_lat,center_lng,boundary_geojson,geometry`,
+    {
+      headers: { apikey: publishableKey!, Authorization: authorization },
+      signal: AbortSignal.timeout(8000),
+    },
+  ).catch(() => null);
+  if (!fieldResponse) return res.status(502).json({ error: 'Unable to resolve field boundary from Supabase' });
+  if (!fieldResponse.ok) return res.status(502).json({ error: 'Unable to resolve field boundary from Supabase' });
+  const fieldRows = await fieldResponse.json().catch(() => []);
+  const savedField = Array.isArray(fieldRows) ? fieldRows[0] : null;
+  if (!savedField) return res.status(404).json({ error: 'Field not found or not accessible to this account' });
+
+  const field = { lat: Number(savedField.center_lat), lng: Number(savedField.center_lng) };
+  if (!validPoint(field)) return res.status(409).json({ error: 'Saved field centre is missing or invalid' });
+
+  const rawBoundary = savedField.boundary_geojson;
+  const geoObject = typeof rawBoundary === 'string' ? (() => { try { return JSON.parse(rawBoundary); } catch { return null; } })() : rawBoundary;
+  const geoGeometry = geoObject?.type === 'Feature' ? geoObject.geometry : geoObject;
+  const geoCoordinates = geoGeometry?.type === 'Polygon' ? geoGeometry.coordinates?.[0] : null;
+  let polygon: Coordinate[] = Array.isArray(geoCoordinates)
+    ? geoCoordinates.map((point: unknown) => Array.isArray(point) ? ({ lng: Number(point[0]), lat: Number(point[1]) }) : null).filter((point: Coordinate | null): point is Coordinate => point !== null && validPoint(point))
+    : [];
+  if (polygon.length < 3 && Array.isArray(savedField.geometry)) {
+    polygon = savedField.geometry.filter(validPoint).map((point: Coordinate) => ({ lat: Number(point.lat), lng: Number(point.lng) }));
+  }
+  if (polygon.length < 3 || polygon.length > 500 || polygon.some((point) => !validPoint(point))) {
+    return res.status(409).json({ error: 'A valid saved field boundary is required for spatial screening' });
+  }
+
   const radius = body?.radius_km === undefined ? 12 : Number(body.radius_km);
   if (!Number.isFinite(radius) || radius < 1 || radius > 50) {
     return res.status(400).json({ error: 'radius_km must be between 1 and 50' });
