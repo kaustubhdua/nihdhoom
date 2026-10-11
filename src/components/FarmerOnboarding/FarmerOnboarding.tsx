@@ -393,12 +393,12 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-extrabold text-lg text-emerald-950 font-['DM_Sans']">
-                {t('Farmer KYC & Onboarding Flow')}
+                {t('Create your farmer account')}
               </h3>
               <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2.5 py-1 text-[11px] font-black text-amber-800">{DEMO_MODE ? 'SIMULATION' : 'LIVE OTP'}</span>
             </div>
-            <p className="text-sm text-emerald-950/65 mt-2 max-w-2xl leading-6">
-              <span className="font-semibold text-emerald-950">{t('SMS OTP uses Supabase Phone Auth.')}</span> {t('Phone sign-in and an SMS provider must be enabled in Supabase before a real code can be delivered. Identity, biometric, bank and cadastral steps remain demo/adapter states until their authorized providers are connected.')}
+            <p className="text-sm text-emerald-950/70 mt-2 max-w-2xl leading-6">
+              Verify your mobile number first. We’ll ask for consent and field details only when you need those services. SMS delivery depends on the configured Supabase phone provider.
             </p>
           </div>
         </div>
