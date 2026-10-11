@@ -130,15 +130,14 @@ if (url && key) {
     else if (missingTables.length) bad(`Some tables are missing: ${missingTables.join(', ')}.`, 'Re-run `npm run db:bundle` and apply the newest migrations from the one that failed.');
     else ok('All core tables exist.');
 
-    const fns = ['reserve_clearance_booking_v2', 'record_verification_review'];
-    const missingFns = [];
-    for (const fn of fns) {
-      const res = await http(`${url}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: '{}' });
-      const code = res.body && typeof res.body === 'object' ? res.body.code : '';
-      if (res.status === 404 || code === 'PGRST202') missingFns.push(fn);
-    }
-    if (missingFns.length) bad(`Booking functions are missing: ${missingFns.join(', ')}.`, 'Apply the booking migrations (202610010005 onward).');
-    else if (missingTables.length < tables.length) ok('Booking and verification functions exist.');
+    // Protected RPCs intentionally grant EXECUTE only to authenticated users.
+    // An anon-key probe with empty arguments returns PGRST202 both when a
+    // function is absent and when PostgREST hides it from the anon role, so it
+    // cannot safely diagnose migration state. Do not report a false blocker.
+    warn(
+      'Protected booking and verification RPCs cannot be verified with a signed-out public key.',
+      'Confirm the RPCs and grants using the Supabase SQL Editor and an authenticated test session; do not grant anon execution just to satisfy this check.',
+    );
 
     // Signed-out visitors cannot read fields by design.
     const fieldsRes = await http(`${url}/rest/v1/fields?select=id&limit=1`, { headers });
