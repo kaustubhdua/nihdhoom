@@ -399,7 +399,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
       });
     }
 
-    // 3. Render NASA FIRMS Active Fire Anomalies (Red Pulsing Beacons)
+    // 3. Render fire observations. Demo events are synthetic and must never be attributed to NASA FIRMS.
     if (showFires && highlightFirmsFire) {
       fireEvents.forEach((fire) => {
         const fireHtml = `
@@ -423,14 +423,15 @@ export const OpsMap: React.FC<OpsMapProps> = ({
 
         marker.bindPopup(`
           <div class="map-pop">
-            <div class="map-pop-title is-ember">🔥 NASA FIRMS VIIRS Active Fire</div>
+            <div class="map-pop-title is-ember">🔥 ${demoMode ? 'SIMULATED FIRE OBSERVATION — NOT NASA DATA' : 'NASA FIRMS VIIRS Active Fire'}</div>
             <div class="map-pop-rows">
             <div>Location: ${escapeHtml(fire.nearest_village)}</div>
+            <div>Source: ${demoMode ? 'Synthetic scenario record' : 'Provider observation'}</div>
             <div>Satellite: ${escapeHtml(fire.satellite)}</div>
             <div>Confidence: ${escapeHtml(fire.confidence)}% | Temp: ${escapeHtml(fire.brightness_temp_kelvin)} K</div>
             </div>
             <div class="map-pop-chip is-ember">
-              ⚠️ UNREGISTERED FIELD (NO NIRDHOOM CONTRACT)
+              ${demoMode ? 'TRAINING SCENARIO ONLY — NOT A REAL FIRE ALERT' : 'UNREGISTERED FIELD (NO NIRDHOOM CONTRACT)'}
             </div>
           </div>
         `);
@@ -453,12 +454,12 @@ export const OpsMap: React.FC<OpsMapProps> = ({
             iconAnchor: [13, 13],
           });
           L.marker([Number(pos.lat), Number(pos.lng)], { icon })
-            .bindPopup(`<div class="map-pop"><div class="map-pop-title">Residue lot</div><div class="map-pop-rows"><div>Field: ${escapeHtml(field.khasra_no)}</div><div>Status: ${escapeHtml(field.status.replaceAll('_',' '))}</div><div>Source: field record</div></div></div>`)
+            .bindPopup(`<div class="map-pop"><div class="map-pop-title">Residue lot</div><div class="map-pop-rows"><div>Field: ${escapeHtml(field.khasra_no)}</div><div>Status: ${escapeHtml(field.status.replaceAll('_',' '))}</div><div>Source: ${demoMode ? 'Illustrative demo field record' : 'Persisted field record'}</div></div></div>`)
             .addTo(layerGroup);
         });
     }
 
-    // 5. Render buyer demand only where a real/explicit buyer coordinate exists.
+    // 5. Render buyer demand only where a coordinate is present; demo coordinates are illustrative pins, not verified facilities.
     if (showBuyers) {
       buyers.forEach((buyer) => {
         const pos = buyer.location;
@@ -470,7 +471,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
           iconAnchor: [13.5, 13.5],
         });
         L.marker([Number(pos.lat), Number(pos.lng)], { icon })
-          .bindPopup(`<div class="map-pop"><div class="map-pop-title is-wheat">${escapeHtml(buyer.name)}</div><div class="map-pop-sub">${escapeHtml(buyer.location_name)}</div><div class="map-pop-rows"><div>Demand: ${buyer.demand_tonnes.toLocaleString('en-IN')} t</div><div>Price: ₹${buyer.price_per_tonne.toLocaleString('en-IN')}/t</div></div><div class="map-pop-note">Buyer coordinates are explicit demo/reference data when present.</div></div>`)
+          .bindPopup(`<div class="map-pop"><div class="map-pop-title is-wheat">${escapeHtml(buyer.name)}</div><div class="map-pop-sub">${escapeHtml(buyer.location_name)}</div><div class="map-pop-rows"><div>Demand: ${buyer.demand_tonnes.toLocaleString('en-IN')} t</div><div>Price: ₹${buyer.price_per_tonne.toLocaleString('en-IN')}/t</div></div><div class="map-pop-note">${demoMode ? 'SIMULATED BUYER • indicative price and demand only; no real offer or contract' : 'Buyer location and commercial terms require independent confirmation.'}</div></div>`)
           .addTo(layerGroup);
       });
     }
@@ -515,6 +516,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
             <div class="map-pop-rows">
             <div>Capacity: ${escapeHtml(yard.capacity_tonnes)} tonnes</div>
             <div>Current Stock: ${escapeHtml(yard.current_load)} tonnes</div>
+            <div class="map-pop-note">${demoMode ? 'SIMULATED CAPACITY / STOCK — NOT A LIVE INVENTORY FEED' : 'Inventory freshness must be confirmed with the yard operator.'}</div>
             </div>
           </div>
         `);
