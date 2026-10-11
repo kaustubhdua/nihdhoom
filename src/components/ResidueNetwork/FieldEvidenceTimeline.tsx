@@ -158,7 +158,7 @@ export function FieldEvidenceTimeline({ field, machine, demoMode }: Props) {
               ? `${evidenceItem.latitude.toFixed(5)}, ${evidenceItem.longitude.toFixed(5)}`
               : 'Location coordinates are not available.'
             : isSatellite
-              ? '{t('Remote sensing')} is supporting evidence only; absence of a detection does not prove no burning.'
+              ? `${t('Remote sensing')} is supporting evidence only; absence of a detection does not prove no burning.`
               : 'Evidence asset linked to the field record.',
           source: sourceLabel(evidenceItem.source || (isSatellite ? 'NASA_FIRMS' : 'OPERATOR_EVIDENCE')),
           icon: isGps ? MapPin : isSatellite ? Satellite : FileCheck2,
