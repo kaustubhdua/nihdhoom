@@ -21,6 +21,7 @@ test('completion RPC locks the job, authorizes the actor, and commits lot plus j
   assert.match(sql, /from public\.jobs where id = p_job_id for update/i);
   assert.match(sql, /role_name = 'operator' and j\.operator_id = auth\.uid\(\)/i);
   assert.match(sql, /from public\.evidence_assets e/i);
+  assert.ok(sql.includes('e.created_at >= j.created_at'));
   assert.match(sql, /insert into public\.residue_lots/i);
   assert.match(sql, /update public\.jobs\s+set status = 'COMPLETED'/i);
   assert.match(sql, /update public\.bookings\s+set status = 'CLEARED_PENDING_AUDIT'/i);
