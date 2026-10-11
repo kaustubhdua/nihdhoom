@@ -148,12 +148,12 @@ export const HarvestForecast: React.FC = () => {
                 Automated Fleet Pre-Positioning Advisory ({formattedDate})
               </div>
               <p className="text-emerald-950/65 mt-0.5 leading-relaxed">
-                NDVI curves indicate <strong>{currentBlock.name}</strong> will see an influx of{' '}
+                In this illustrative scenario, <strong>{currentBlock.name}</strong> is assigned a planning volume of{' '}
                 <strong className="text-emerald-800">
                   {Math.round(currentBlock.totalAcres * (selectedDayIndex < 15 ? 0.04 : 0.08))} acres/day
                 </strong>{' '}
-                over the next 72 hours. Recommended to pre-position{' '}
-                <strong className="text-emerald-800">{currentBlock.recommendedBalerCount} Balers</strong> from nearby CHCs to avoid delay penalties.
+                over the next 72 hours. The model suggests reviewing capacity for up to{' '}
+                <strong className="text-emerald-800">{currentBlock.recommendedBalerCount} balers</strong>, but this is a static scenario—not a live NDVI signal, measured harvest forecast, or verified machine recommendation.
               </p>
             </div>
           </div>
