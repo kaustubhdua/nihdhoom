@@ -1,9 +1,11 @@
 import { BarChart3, BookOpen, CheckCircle2, Database, Leaf, ShieldCheck, MapPin, FlaskConical, Clock } from 'lucide-react';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import { Field } from '../../types';
 
 interface Props { fields: Field[]; demoMode: boolean; }
 
 export function ImpactResearch({ fields, demoMode }: Props) {
+  const { t } = useAppLanguage();
   const verified = fields.filter(f => f.status === 'VERIFIED_NON_BURN' || f.is_verified_non_burn);
   const acres = verified.reduce((s, f) => s + Number(f.acreage || 0), 0);
   const planningResidue = verified.reduce((s, f) => s + Number(f.acreage || 0) * 1.8, 0);
@@ -21,8 +23,8 @@ export function ImpactResearch({ fields, demoMode }: Props) {
 
   return <div className="tone-adapt farmer-surface farmer-impact impact-research-surface ui-stack">
     <section className="ui-intro"><div className="ui-intro-copy">
-      <div className="ui-eyebrow"><BarChart3 className="h-4 w-4" /> Impact + Research</div>
-      <h1 className="ui-title">Evidence-derived impact, not invented impact</h1>
+      <div className="ui-eyebrow"><BarChart3 className="h-4 w-4" /> {t('Impact + Research')}</div>
+      <h1 className="ui-title">{t('Evidence-derived impact, not invented impact')}</h1>
       <p className="ui-lede">This workspace traces research-ready metrics back to field records. Planning coefficients remain separate from measured residue, verified outcomes and carbon claims.</p>
     </div></section>
 
@@ -33,11 +35,11 @@ export function ImpactResearch({ fields, demoMode }: Props) {
     <section className="ui-split">
       <div className="ui-card">
         <div className="ui-card-head">
-          <div><div className="ui-card-title"><MapPin /><h2>Field-to-impact ledger</h2></div><p className="ui-card-sub">Operational stage and research readiness for each field record.</p></div>
+          <div><div className="ui-card-title"><MapPin /><h2>{t('Field-to-impact ledger')}</h2></div><p className="ui-card-sub">{t('Operational stage and research readiness for each field record.')}</p></div>
           <span className="ui-chip">{fields.length} record(s)</span>
         </div>
         <div className="space-y-2.5">
-          {fields.length === 0 ? <div className="ui-empty">No field records are available for traceability.</div> : fields.slice(0, 12).map(field => {
+          {fields.length === 0 ? <div className="ui-empty">{t('No field records are available for traceability.')}</div> : fields.slice(0, 12).map(field => {
             const stageOrder: Field['status'][] = ['REGISTERED','SCHEDULED','BALING_IN_PROGRESS','CLEARED_PENDING_AUDIT','VERIFIED_NON_BURN'];
             const idx = stageOrder.indexOf(field.status);
             const verifiedField = field.status === 'VERIFIED_NON_BURN' || field.is_verified_non_burn;
@@ -62,7 +64,7 @@ export function ImpactResearch({ fields, demoMode }: Props) {
       </div>
 
       <div className="ui-card lg:sticky lg:top-24">
-        <div className="ui-card-title"><FlaskConical className="!text-[var(--sky)]" /><h2>Research readiness</h2></div>
+        <div className="ui-card-title"><FlaskConical className="!text-[var(--sky)]" /><h2>{t('Research readiness')}</h2></div>
         <div className="mt-4 space-y-3">
           {[
             ['Geometry linked', withGeometry, fields.length],
@@ -77,7 +79,7 @@ export function ImpactResearch({ fields, demoMode }: Props) {
 
     <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <div className="ui-card">
-        <div className="ui-card-title"><Leaf /><h2>Impact chain</h2></div>
+        <div className="ui-card-title"><Leaf /><h2>{t('Impact chain')}</h2></div>
         <div className="impact-chain mt-5">
           {['Field registered','Residue planning estimate','Machine job completed','Evidence captured','Verification review','Residue offtaken','Impact calculated'].map((x, i) => {
             const available = [fields.length > 0, fields.length > 0, fields.some(f => ['BALING_IN_PROGRESS','CLEARED_PENDING_AUDIT','VERIFIED_NON_BURN'].includes(f.status)), false, verified.length > 0, false, false][i];
@@ -87,7 +89,7 @@ export function ImpactResearch({ fields, demoMode }: Props) {
       </div>
 
       <div className="ui-card is-sky">
-        <div className="ui-card-title"><BookOpen className="!text-[var(--sky)]" /><h2>Methodology registry</h2></div>
+        <div className="ui-card-title"><BookOpen className="!text-[var(--sky)]" /><h2>{t('Methodology registry')}</h2></div>
         <div className="mt-5 space-y-3">
           <div className="method-entry"><div className="method-entry-title">Residue planning coefficient</div><p>Current UI planning factor: <span className="font-semibold text-[var(--ink)]">1.8 t/acre</span>. This is a prototype assumption, not a measured recovery factor or carbon accounting methodology.</p></div>
           <div className="method-entry"><div className="method-entry-title">Publication gate</div><p>Require source citation, version, effective date and calculation provenance before turning any coefficient into an institutional impact claim.</p></div>
