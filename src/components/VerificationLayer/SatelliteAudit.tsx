@@ -279,12 +279,18 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
                             {reviewingFieldId === field.id ? 'Reviewing…' : 'Review field record'}
                           </button>
                         )}
-                        <button
-                          onClick={() => handleOpenRecord(field.id)}
-                          className="ui-btn is-sm"
-                        >
-                          See record
-                        </button>
+                        {demoMode ? (
+                          <button
+                            onClick={() => handleOpenRecord(field.id)}
+                            className="ui-btn is-sm"
+                          >
+                            View illustrative record
+                          </button>
+                        ) : (
+                          <span className="text-xs text-[var(--muted)]" title="A production certificate is unavailable until an authorized verifier signs a validated evidence record.">
+                            Certificate unavailable
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>
