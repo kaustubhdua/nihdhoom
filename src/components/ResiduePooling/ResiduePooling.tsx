@@ -298,7 +298,7 @@ export function ResiduePooling({ fields, demoMode }: Props) {
                   {t('Quantity to commit (tonnes)')}
                   <input id={`pool-quantity-${p.id}`} className="mt-1 w-full rounded-lg border border-emerald-900/20 bg-white px-3 py-2 text-base text-slate-900" type="number" inputMode="decimal" min="0.1" max={remaining} step="0.1" disabled={remaining <= 0} value={quantity} onChange={(event) => setPoolQuantities((previous) => ({ ...previous, [p.id]: event.target.value }))} />
                 </label>
-                <button disabled={remaining <= 0} onClick={() => void joinPool(p.id, Number(quantity))} className="market-secondary-action market-full-action disabled:cursor-not-allowed disabled:opacity-50"><CheckCircle2 className="h-3.5 w-3.5" /> {remaining <= 0 ? '{t('Pool full')}' : '{t('Join pool')}'}</button>
+                <button disabled={remaining <= 0} onClick={() => void joinPool(p.id, Number(quantity))} className="market-secondary-action market-full-action disabled:cursor-not-allowed disabled:opacity-50"><CheckCircle2 className="h-3.5 w-3.5" /> {remaining <= 0 ? t('Pool full') : t('Join pool')}</button>
               </div>
             </div>;
           })}
