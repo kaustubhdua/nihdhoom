@@ -42,3 +42,10 @@ test('FIRMS observations and match records remain server-only under RLS', () => 
   assert.match(sql, /REVOKE ALL PRIVILEGES ON TABLE public\.firms_observation_field_matches FROM PUBLIC, anon, authenticated/i);
   assert.match(sql, /GRANT ALL PRIVILEGES ON TABLE public\.firms_observations, public\.firms_observation_field_matches TO service_role/i);
 });
+
+test('live Sathi answers never trust a client-supplied field record', () => {
+  const api = read('api/assistant.ts');
+  assert.match(api, /else if \(!demoMode\)[\s\S]*?A saved field ID is required for live field-specific answers/);
+  assert.match(api, /if \(!liveField\) return res\.status\(404\)\.json\(\{error:'Saved field not found or not accessible to this account'\}\)/);
+  assert.match(api, /const source=liveField\|\|\(demoMode\?\(field\|\|\{\}\):\{\}\)/);
+});
