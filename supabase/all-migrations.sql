@@ -3404,7 +3404,7 @@ BEGIN
   SET status = p_next_status,
       assigned_machine_id = CASE WHEN p_next_status = 'ASSIGNED' THEN p_machine_id ELSE assigned_machine_id END,
       actual_departure = CASE WHEN p_next_status = 'EN_ROUTE' THEN now() ELSE actual_departure END,
-      actual_arrival = CASE WHEN p_next_status IN ('ARRIVED','DELIVERED') THEN now() ELSE actual_arrival END,
+      actual_arrival = CASE WHEN p_next_status = 'ARRIVED' THEN now() ELSE actual_arrival END,
       updated_at = now()
   WHERE id = p_job_id RETURNING * INTO job_row;
 
