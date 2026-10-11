@@ -18,7 +18,7 @@ test('P0 migration is registered in the approved bundle order', () => {
 
 test('booking only guarantees a date after locking and reserving a matching capacity window', () => {
   const sql = read(migrationPath);
-  assert.match(sql, /FOR UPDATE OF cw SKIP LOCKED/i);
+  assert.match(sql, /FOR UPDATE OF cw, m SKIP LOCKED/i);
   assert.match(sql, /cw\.reserved_acres \+ f\.acreage <= cw\.capacity_acres/i);
   assert.match(sql, /INSERT INTO public\.booking_capacity_reservations/i);
   assert.match(sql, /v_booking_status := 'REQUESTED'/i);
