@@ -20,6 +20,8 @@ test('booking only guarantees a date after locking and reserving a matching capa
   const sql = read(migrationPath);
   assert.match(sql, /FOR UPDATE OF cw, m SKIP LOCKED/i);
   assert.match(sql, /capacity_window_matches_reservations/i);
+  assert.match(sql, /active_w\.window_start < cw\.window_end/i);
+  assert.match(sql, /A machine cannot have active reservations in overlapping capacity windows/i);
   assert.match(sql, /cw\.reserved_acres \+ f\.acreage <= cw\.capacity_acres/i);
   assert.match(sql, /INSERT INTO public\.booking_capacity_reservations/i);
   assert.match(sql, /v_booking_status := 'REQUESTED'/i);
@@ -38,9 +40,9 @@ test('cancellation releases the capacity reservation and clears the guarantee', 
 test('verification records only explicitly selected, field-matched FIRMS observations', () => {
   const sql = read(migrationPath);
   assert.match(sql, /o\.id = ANY\(firms_ids\) AND o\.matched_field_id = p_field_id/i);
-  assert.match(sql, /'field_evidence_plus_firms' ELSE 'field_evidence_only'/i);
+  assert.match(sql, /verification_method := CASE[\s\S]*'reviewer_assessment_only'/i);
   assert.match(sql, /'acquired_at', o\.acquired_at/i);
-  assert.match(sql, /No matching or selected FIRMS observation is not proof that burning did not occur/i);
+  assert.match(sql, /Absence of a matching or selected FIRMS observation is not proof that burning did not occur/i);
 });
 
 test('anonymous access is revoked without revoking authenticated application table reads', () => {
