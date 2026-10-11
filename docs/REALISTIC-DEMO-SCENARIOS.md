@@ -13,6 +13,7 @@ This document defines how NIRDHOOM demo mode should feel operationally credible 
 
 ## Improvements applied in this branch
 
+0. Added an interactive, resumable overview walkthrough covering booking, operator assignment, dispatch, arrival, sample evidence, review, residue-lot creation and a non-binding buyer lead. It persists only a browser-local scenario log and explicitly states that it does not create backend records or payments.
 1. Fire-map popups now distinguish synthetic demo observations from provider-returned NASA FIRMS observations and explicitly say demo fire points are not real alerts.
 2. Buyer-map popups in demo mode identify simulated buyers, indicative prices and demand as non-contractual.
 3. Yard-map popups identify demo stock and capacity as simulated inventory rather than a live feed.
