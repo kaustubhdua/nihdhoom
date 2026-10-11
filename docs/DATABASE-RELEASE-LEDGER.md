@@ -8,7 +8,7 @@ This document records the observed production history and the approved fresh-ins
 
 ## Observed production migration ledger
 
-Read from Supabase `list_migrations` on 2026-10-11. Versions below are the actual server ledger versions; do not replace them with repository filename prefixes.
+Read from Supabase `list_migrations` on 2026-10-12. Versions below are the actual server ledger versions; do not replace them with repository filename prefixes.
 
 | Production version | Recorded migration name |
 |---|---|
@@ -47,6 +47,7 @@ Read from Supabase `list_migrations` on 2026-10-11. Versions below are the actua
 | 20261011092039 | nirdhoom_booking_active_field_guard_20261012 |
 | 20261011102009 | nirdhoom_fk_indexes_20261012 |
 | 20261011102156 | nirdhoom_storage_yard_policy_consolidation_20261012 |
+| 20261011210907 | nirdhoom_consent_audit_immutability_20261012 |
 
 ## Fresh-install ordering
 
@@ -76,5 +77,6 @@ Never reorder or rename historical migrations casually. Add a new, reviewed migr
 
 - The core operational tables `profiles`, `fields`, `bookings`, `jobs`, `consents`, `evidence_assets`, `telegram_identities`, `residue_lots`, `residue_pools`, and `residue_matches` each had zero rows at the last check.
 - `fields.status` allows `SCHEDULED`; booking status remains `BOOKED`. The booking RPC is executable by `authenticated`, not `anon`.
+- On 2026-10-12, the consent audit privilege migration was applied and verified: `authenticated` no longer has table INSERT/UPDATE or `accepted_at` UPDATE on `public.consents`, but retains column UPDATE for `revoked_at` and EXECUTE on the guarded accept/withdraw RPCs. The atomic job-completion RPC remains absent from production.
 - Evidence bucket policies require authenticated users and restrict reads to the owner's folder or authorized operations roles.
 - The production database had `accept_buyer_offer`, but did not have `matchable_residue_lots`, `create_buyer_offer`, or `transition_residue_transport_job` at the last function inventory. Do not describe the full marketplace offer/transport flow as live until the reviewed migration is applied.
