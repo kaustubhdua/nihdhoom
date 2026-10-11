@@ -468,7 +468,7 @@ export function EvidenceReview({ fields, fireEvents, demoMode, focusFieldId, foc
               onClick={() => void decide('approved')}
               title={blocking.length ? 'Resolve the failed checks first' : undefined}
             >
-              <CheckCircle2 /> {alreadyVerified ? 'Already verified' : reviewingFieldId === field.id ? 'Recording…' : 'Approve as verified'}
+              <CheckCircle2 /> {alreadyVerified ? 'Already verified' : reviewingFieldId === field.id ? 'Recording…' : demoMode ? 'Record demo review note' : 'Submit for manual review'}
             </button>
             <button type="button" className="ui-btn is-wheat" onClick={() => void decide('more-evidence')} disabled={alreadyVerified}>
               <MessageSquareWarning /> Request more evidence
