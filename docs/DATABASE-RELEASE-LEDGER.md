@@ -34,7 +34,8 @@ Migrations are applied in filename order:
 26. `202610080003_nirdhoom_machine_capability_provenance.sql` — machine capability requirements and external-source metadata.
 27. `202610080004_nirdhoom_residue_control_tower.sql` — machine capacity windows, storage yards, residue demand matches, transport jobs and operational exceptions.
 
-27. `202610120001_nirdhoom_booking_field_status_consistency.sql` — aligns the reservation RPC's field lifecycle update with the `fields_status_check` constraint and rejects booking fields already in an active/completed workflow.
+27. `202610120001_nirdhoom_booking_field_status_consistency.sql` — aligns the reservation RPC's field lifecycle update with the `fields_status_check` constraint.
+28. `202610120002_nirdhoom_booking_active_field_guard.sql` — prevents duplicate active clearance workflows for one field across different requested dates.
 
 ## Release rules
 - Never reorder or rename an already-applied migration.
