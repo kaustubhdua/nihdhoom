@@ -6,6 +6,14 @@ import { Layers, Flame, MapPin, PackageCheck, Route, CloudSun, Building2, Chevro
 import { FIELD_STAGES, STAGE_META, fieldRing, fieldStage, type FieldStage } from '../../lib/fieldStatus';
 import { useAppLanguage } from '../../i18n/LanguageContext';
 
+// Leaflet popup content is HTML, so database/user-controlled strings must be escaped.
+const escapeHtml = (value: unknown): string => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
 // Popups pan clear of the floating map controls (GPS badge, layers, zoom, legend).
 L.Popup.mergeOptions({
   autoPanPaddingTopLeft: L.point(24, 72),
@@ -321,7 +329,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
         });
 
         polygon.bindTooltip(
-          `<div class="map-pop-title">${field.khasra_no}</div><div class="map-pop-sub">${field.farmer_name} · ${field.village}</div><div><span class="map-pop-stage" style="--stage:${stage.fill}">${stage.label}</span> ${field.acreage} ac (${field.paddy_variety})</div><div class="map-pop-note">Click to open field details</div>`,
+          `<div class="map-pop-title">${escapeHtml(field.khasra_no)}</div><div class="map-pop-sub">${escapeHtml(field.farmer_name)} · ${escapeHtml(field.village)}</div><div><span class="map-pop-stage" style="--stage:${escapeHtml(stage.fill)}">${escapeHtml(stage.label)}</span> ${escapeHtml(field.acreage)} ac (${escapeHtml(field.paddy_variety)})</div><div class="map-pop-note">Click to open field details</div>`,
           { direction: 'top', className: 'leaflet-custom-tooltip', sticky: true }
         );
 
@@ -331,7 +339,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
 
         // A pin at the field centre keeps small fields findable when zoomed out.
         const pinIcon = L.divIcon({
-          html: `<div class="map-field-pin${isSelected ? ' is-selected' : ''}" style="--stage:${stage.fill}"><span></span><b>${field.khasra_no || ''}</b></div>`,
+          html: `<div class="map-field-pin${isSelected ? ' is-selected' : ''}" style="--stage:${stage.fill}"><span></span><b>${escapeHtml(field.khasra_no || '')}</b></div>`,
           className: 'map-field-pin-wrap',
           iconSize: [18, 18],
           iconAnchor: [9, 9],
@@ -353,7 +361,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
         const iconHtml = `
           <div class="map-machine">
             <div class="map-machine-dot"><span>🚜</span></div>
-            <div class="map-machine-label">${machine.name.split(' ')[0]} #${machine.id.slice(-2)}</div>
+            <div class="map-machine-label">${escapeHtml(machine.name.split(' ')[0])} #${escapeHtml(machine.id.slice(-2))}</div>
           </div>
         `;
 
@@ -372,17 +380,17 @@ export const OpsMap: React.FC<OpsMapProps> = ({
 
         marker.bindPopup(`
           <div class="map-pop">
-            <div class="map-pop-title">${machine.name}</div>
-            <div class="map-pop-sub">${machine.home_chc}</div>
+            <div class="map-pop-title">${escapeHtml(machine.name)}</div>
+            <div class="map-pop-sub">${escapeHtml(machine.home_chc)}</div>
             <div class="map-pop-rows">
-            <div><strong>Type:</strong> ${machine.type}</div>
-            <div><strong>Capacity:</strong> ${machine.capacity_acres_day} acres/day</div>
-            <div><strong>Tractor:</strong> ${machine.tractor_hp_required ? machine.tractor_hp_required + " HP" : "Not sourced"}</div>
-            <div><strong>Residue:</strong> ${(machine.residue_types || ["Not established"]).join(", ")}</div>
-            <div><strong>Operator:</strong> ${machine.operator_name} (${machine.operator_phone})</div>
+            <div><strong>Type:</strong> ${escapeHtml(machine.type)}</div>
+            <div><strong>Capacity:</strong> ${escapeHtml(machine.capacity_acres_day)} acres/day</div>
+            <div><strong>Tractor:</strong> ${escapeHtml(machine.tractor_hp_required ? machine.tractor_hp_required + " HP" : "Not sourced")}</div>
+            <div><strong>Residue:</strong> ${escapeHtml((machine.residue_types || ["Not established"]).join(", "))}</div>
+            <div><strong>Operator:</strong> ${escapeHtml(machine.operator_name)} (${escapeHtml(machine.operator_phone)})</div>
             </div>
-            <div class="map-pop-note">Capability source: ${machine.capability_source || "Not established"}${machine.capability_source_date ? " · " + machine.capability_source_date : ""}</div>
-            <div class="map-pop-status"><strong>Status:</strong> <span class="map-pop-chip is-green">${machine.status}</span></div>
+            <div class="map-pop-note">Capability source: ${escapeHtml(machine.capability_source || "Not established")}${machine.capability_source_date ? " · " + escapeHtml(machine.capability_source_date) : ""}</div>
+            <div class="map-pop-status"><strong>Status:</strong> <span class="map-pop-chip is-green">${escapeHtml(machine.status)}</span></div>
             <div class="map-pop-note">${demoMode ? 'Demo position — not live GPS' : 'Last device GPS: ' + (locationTimestamps[machine.id] ? new Date(locationTimestamps[machine.id]).toLocaleString('en-IN') : 'Unavailable')}</div>
           </div>
         `);
@@ -417,9 +425,9 @@ export const OpsMap: React.FC<OpsMapProps> = ({
           <div class="map-pop">
             <div class="map-pop-title is-ember">🔥 NASA FIRMS VIIRS Active Fire</div>
             <div class="map-pop-rows">
-            <div>Location: ${fire.nearest_village}</div>
-            <div>Satellite: ${fire.satellite}</div>
-            <div>Confidence: ${fire.confidence}% | Temp: ${fire.brightness_temp_kelvin} K</div>
+            <div>Location: ${escapeHtml(fire.nearest_village)}</div>
+            <div>Satellite: ${escapeHtml(fire.satellite)}</div>
+            <div>Confidence: ${escapeHtml(fire.confidence)}% | Temp: ${escapeHtml(fire.brightness_temp_kelvin)} K</div>
             </div>
             <div class="map-pop-chip is-ember">
               ⚠️ UNREGISTERED FIELD (NO NIRDHOOM CONTRACT)
@@ -445,7 +453,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
             iconAnchor: [13, 13],
           });
           L.marker([Number(pos.lat), Number(pos.lng)], { icon })
-            .bindPopup(`<div class="map-pop"><div class="map-pop-title">Residue lot</div><div class="map-pop-rows"><div>Field: ${field.khasra_no}</div><div>Status: ${field.status.replaceAll('_',' ')}</div><div>Source: field record</div></div></div>`)
+            .bindPopup(`<div class="map-pop"><div class="map-pop-title">Residue lot</div><div class="map-pop-rows"><div>Field: ${escapeHtml(field.khasra_no)}</div><div>Status: ${escapeHtml(field.status.replaceAll('_',' '))}</div><div>Source: field record</div></div></div>`)
             .addTo(layerGroup);
         });
     }
@@ -462,7 +470,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
           iconAnchor: [13.5, 13.5],
         });
         L.marker([Number(pos.lat), Number(pos.lng)], { icon })
-          .bindPopup(`<div class="map-pop"><div class="map-pop-title is-wheat">${buyer.name}</div><div class="map-pop-sub">${buyer.location_name}</div><div class="map-pop-rows"><div>Demand: ${buyer.demand_tonnes.toLocaleString('en-IN')} t</div><div>Price: ₹${buyer.price_per_tonne.toLocaleString('en-IN')}/t</div></div><div class="map-pop-note">Buyer coordinates are explicit demo/reference data when present.</div></div>`)
+          .bindPopup(`<div class="map-pop"><div class="map-pop-title is-wheat">${escapeHtml(buyer.name)}</div><div class="map-pop-sub">${escapeHtml(buyer.location_name)}</div><div class="map-pop-rows"><div>Demand: ${buyer.demand_tonnes.toLocaleString('en-IN')} t</div><div>Price: ₹${buyer.price_per_tonne.toLocaleString('en-IN')}/t</div></div><div class="map-pop-note">Buyer coordinates are explicit demo/reference data when present.</div></div>`)
           .addTo(layerGroup);
       });
     }
@@ -503,10 +511,10 @@ export const OpsMap: React.FC<OpsMapProps> = ({
 
         marker.bindPopup(`
           <div class="map-pop">
-            <div class="map-pop-title is-sky">${yard.name}</div>
+            <div class="map-pop-title is-sky">${escapeHtml(yard.name)}</div>
             <div class="map-pop-rows">
-            <div>Capacity: ${yard.capacity_tonnes} tonnes</div>
-            <div>Current Stock: ${yard.current_load} tonnes</div>
+            <div>Capacity: ${escapeHtml(yard.capacity_tonnes)} tonnes</div>
+            <div>Current Stock: ${escapeHtml(yard.current_load)} tonnes</div>
             </div>
           </div>
         `);
