@@ -697,7 +697,8 @@ test('live-mode setup: error classification, bundle and farmer flow are wired', 
 
   // The one-file SQL bundle must be exactly the migrations, in ledger order.
   const { migrationOrder } = await import(`${root}/scripts/db-bundle.mjs`);
-  const names = migrationOrder(fs.readdirSync(`${root}/supabase/migrations`));
+  const manifest = read('supabase/migration-order.txt').split(/\r?\n/).map((name) => name.trim()).filter(Boolean);
+  const names = migrationOrder(fs.readdirSync(`${root}/supabase/migrations`), manifest);
   const bundle = read('supabase/all-migrations.sql');
   const headers = [...bundle.matchAll(/^-- >>> (.+)$/gm)].map((m) => m[1]);
   assert.deepEqual(headers, names, 'run `npm run db:bundle` to refresh supabase/all-migrations.sql');

@@ -16,6 +16,7 @@ const manifest = path.join(root, 'supabase', 'migration-order.txt');
 const outFile = path.join(root, 'supabase', 'all-migrations.sql');
 
 export function migrationOrder(names, manifestNames) {
+  if (!Array.isArray(manifestNames)) throw new Error('Pass the explicit supabase/migration-order.txt manifest');
   const actual = names.filter((name) => name.endsWith('.sql')).sort();
   const ordered = manifestNames.filter(Boolean);
   if (new Set(ordered).size !== ordered.length) {
