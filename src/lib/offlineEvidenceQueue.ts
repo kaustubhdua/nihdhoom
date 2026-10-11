@@ -6,6 +6,8 @@ const VERSION = 1;
 
 export interface QueuedEvidence {
   id: string;
+  /** Authenticated actor who captured the evidence; prevents cross-account replay. */
+  ownerUserId: string;
   fieldId: string;
   fileName: string;
   fileType: string;
@@ -87,6 +89,9 @@ export async function flushEvidenceQueue() {
 
   let flushed = 0;
   for (const item of await listQueued()) {
+    // Never upload evidence under whichever account happens to be signed in now.
+    // Legacy queue rows without ownerUserId are intentionally held for manual recovery.
+    if (!item.ownerUserId || item.ownerUserId !== user.id) continue;
     const path = `${user.id}/${item.fieldId}/${item.id}-${item.fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
     const upload = await supabase.storage.from('evidence').upload(path, item.blob, {
       contentType: item.fileType,
