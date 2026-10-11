@@ -149,6 +149,7 @@ export type Database = {
           guaranteed_by_date: string | null
           id: string
           machine_id: string | null
+          reservation_state: string
           penalty_amount: number
           pricing_band: string | null
           quote_metadata: Json
@@ -167,6 +168,7 @@ export type Database = {
           guaranteed_by_date?: string | null
           id?: string
           machine_id?: string | null
+          reservation_state?: string
           penalty_amount?: number
           pricing_band?: string | null
           quote_metadata?: Json
@@ -185,6 +187,7 @@ export type Database = {
           guaranteed_by_date?: string | null
           id?: string
           machine_id?: string | null
+          reservation_state?: string
           penalty_amount?: number
           pricing_band?: string | null
           quote_metadata?: Json
@@ -1665,6 +1668,7 @@ export type Database = {
           guaranteed_by_date: string | null
           id: string
           machine_id: string | null
+          reservation_state: string
           penalty_amount: number
           pricing_band: string | null
           quote_metadata: Json
@@ -1768,6 +1772,7 @@ export type Database = {
           guaranteed_by_date: string | null
           id: string
           machine_id: string | null
+          reservation_state: string
           penalty_amount: number
           pricing_band: string | null
           quote_metadata: Json
@@ -1795,6 +1800,7 @@ export type Database = {
           guaranteed_by_date: string | null
           id: string
           machine_id: string | null
+          reservation_state: string
           penalty_amount: number
           pricing_band: string | null
           quote_metadata: Json
