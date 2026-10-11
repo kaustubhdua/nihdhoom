@@ -104,6 +104,8 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
           count: 0,
           matchedCount: 0,
           queriedAt: new Date().toISOString(),
+          observations: [],
+          selectedObservationIds: [],
           error: error instanceof Error ? error.message : 'FIRMS screening failed.',
         },
       }));
