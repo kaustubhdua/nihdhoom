@@ -36,6 +36,16 @@ BEGIN
   IF NOT has_table_privilege('authenticated','public.bookings','SELECT') THEN
     RAISE EXCEPTION 'Authenticated booking read grant was unexpectedly removed';
   END IF;
+  IF has_table_privilege('anon','public.firms_observations','SELECT')
+     OR has_table_privilege('authenticated','public.firms_observations','SELECT')
+     OR has_table_privilege('anon','public.firms_observation_field_matches','SELECT')
+     OR has_table_privilege('authenticated','public.firms_observation_field_matches','SELECT') THEN
+    RAISE EXCEPTION 'FIRMS observations and field matches must remain server-role-only';
+  END IF;
+  IF NOT has_table_privilege('service_role','public.firms_observations','INSERT')
+     OR NOT has_table_privilege('service_role','public.firms_observation_field_matches','INSERT') THEN
+    RAISE EXCEPTION 'Service role must retain FIRMS ingestion privileges';
+  END IF;
   IF has_function_privilege('anon','public.revoke_farmer_network_consent()','EXECUTE') THEN
     RAISE EXCEPTION 'Anonymous consent-withdrawal RPC execution was not revoked';
   END IF;
