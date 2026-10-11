@@ -230,70 +230,77 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
   const advanceLiveJob = async () => {
     const client = supabase;
     if (demoMode || !client || !currentField || jobBusy) return;
-    const nextByStatus: Record<string, string> = { ASSIGNED: 'ARRIVED', ARRIVED: 'BALING', BALING: 'PROOF_PENDING', PROOF_PENDING: 'COMPLETED' };
+    const nextByStatus: Record<string, string> = {
+      ASSIGNED: 'ARRIVED',
+      ARRIVED: 'BALING',
+      BALING: 'PROOF_PENDING',
+      PROOF_PENDING: 'COMPLETED',
+    };
     const next = jobStatus ? nextByStatus[jobStatus] : undefined;
-    if (!next) { setJobMessage('No active server job is assigned to this field yet.'); return; }
+    if (!next) {
+      setJobMessage('No active server job is assigned to this field yet.');
+      return;
+    }
+    if (next === 'COMPLETED' && Number(residueTonnes) <= 0) {
+      setJobMessage('Enter the measured residue quantity in tonnes before completing this job.');
+      return;
+    }
+
     setJobBusy(true);
     setJobMessage('');
     try {
-      const lookup = await client.from('jobs').select('id,status,booking_id,machine_id').eq('field_id', currentField.dbId || currentField.id)
-        .eq('status', jobStatus).order('created_at', { ascending: false }).limit(1).maybeSingle();
-      if (lookup.error || !lookup.data?.id) throw new Error(lookup.error?.message || 'Active job not found.');
-      const { error } = await client.rpc('transition_job', {
-        p_job_id: lookup.data.id, p_next_status: next,
-        p_metadata: { source: 'operator-pwa', field_id: currentField.dbId || currentField.id },
-      });
-      if (error) throw new Error(error.message);
-      setJobStatus(next);
+      const lookup = await client
+        .from('jobs')
+        .select('id,status,booking_id,machine_id')
+        .eq('field_id', currentField.dbId || currentField.id)
+        .eq('status', jobStatus)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (lookup.error || !lookup.data?.id) {
+        throw new Error(lookup.error?.message || 'Active job not found.');
+      }
+
+      const metadata = {
+        source: 'operator-pwa',
+        field_id: currentField.dbId || currentField.id,
+        gps_available: Boolean(gpsState),
+        bales_count: Number(balesCount),
+      };
+
       if (next === 'COMPLETED') {
-        const quantity = Number(residueTonnes);
-        const { data: existingLot } = await client
-          .from('residue_lots')
-          .select('id')
-          .eq('job_id', lookup.data.id)
-          .maybeSingle();
-        if (!existingLot && quantity > 0) {
-          const { error: lotError } = await client.from('residue_lots').insert({
-            field_id: currentField.dbId || currentField.id,
-            booking_id: lookup.data.booking_id,
-            job_id: lookup.data.id,
-            farmer_id: currentField.farmer_id,
-            crop: currentField.crop,
-            residue_type: 'PADDY_STRAW',
-            estimated_quantity_tonnes: quantity,
-            quantity_tonnes: quantity,
-            harvest_date: currentField.expected_harvest_date || null,
-            ready_from: new Date().toISOString(),
-            pickup_deadline: currentField.clearance_deadline || null,
-            machine_id: lookup.data.machine_id || currentField.assigned_machine_id || null,
-            geometry_provenance: {
-              source: currentField.provenance?.geometry || 'UNKNOWN',
-              field_id: currentField.dbId || currentField.id,
-            },
-            moisture_pct: Number(moistureValue),
-            quality_notes: `Operator-recorded completion • ${balesCount} bales • GPS ${gpsState ? 'available' : 'not available'}`,
-            quality_grade: moistureValue <= 16 ? 'DRY' : moistureValue <= 20 ? 'STANDARD' : 'HIGH_MOISTURE',
-            status: 'AVAILABLE',
-            baled_at: new Date().toISOString(),
-            qr_code: `NIR-${lookup.data.id.slice(0, 12).toUpperCase()}`,
-          });
-          if (lotError) {
-            setJobMessage(`Job completed, but the residue lot could not be recorded: ${lotError.message}`);
-          } else {
-            setJobMessage('Job completed and the measured residue lot was recorded. Verification and buyer matching remain separate steps.');
-          }
-        } else if (existingLot) {
-          setJobMessage('Job completed. The residue lot for this job already exists.');
-        } else {
-          setJobMessage('Job completed, but no measured residue quantity was entered; create the lot after weighment.');
+        const { data, error } = await client.rpc('complete_job_with_residue_lot', {
+          p_job_id: lookup.data.id,
+          p_quantity_tonnes: Number(residueTonnes),
+          p_moisture_pct: Number(moistureValue),
+          p_bales_count: Number(balesCount),
+          p_metadata: metadata,
+        });
+        if (error) throw new Error(error.message);
+        if (!data?.lot_id || data?.job_status !== 'COMPLETED') {
+          throw new Error('The server did not confirm job and residue-lot completion.');
         }
+        setJobStatus('COMPLETED');
+        setJobMessage(data.replayed
+          ? 'Job was already completed; its existing residue lot was confirmed.'
+          : 'Job completed and its measured residue lot was recorded atomically. Verification and buyer matching remain separate steps.');
         onJobCompleted(currentField.id, Number(currentField.payout_amount || 0));
       } else {
+        const { error } = await client.rpc('transition_job', {
+          p_job_id: lookup.data.id,
+          p_next_status: next,
+          p_metadata: metadata,
+        });
+        if (error) throw new Error(error.message);
+        setJobStatus(next);
         setJobMessage(`Job moved to ${next.replace(/_/g, ' ')}.`);
       }
     } catch (error) {
       setJobMessage(error instanceof Error ? error.message : 'Job transition failed.');
-    } finally { setJobBusy(false); }
+    } finally {
+      setJobBusy(false);
+    }
   };
 
   const isJobFinished = currentField?.status === 'CLEARED_PENDING_AUDIT' || currentField?.status === 'VERIFIED_NON_BURN';
