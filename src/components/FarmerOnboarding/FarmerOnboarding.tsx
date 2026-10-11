@@ -3,6 +3,7 @@ import CodeSlots from './CodeSlots';
 import Stepper, { Step } from './Stepper';
 import { supabase } from '../../lib/supabase';
 import { describeAuthError } from '../../lib/liveStatus';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 import type { ActiveTab } from '../Header';
 import {
   UserCheck,
@@ -41,7 +42,7 @@ const DEMO_MODE = import.meta.env.VITE_NIRDHOOM_DEMO_MODE === 'true';
 const LIVE_ORDER: KYCStep[] = ['PHONE', 'OTP', 'CONSENT', 'LAND_RECORDS', 'DONE'];
 const LIVE_LABELS: Partial<Record<KYCStep, { label: string; sublabel: string }>> = {
   LAND_RECORDS: { label: 'Register your field', sublabel: 'Where the machine should go' },
-  DONE: { label: 'Account ready', sublabel: 'Book a pickup or open Telegram' },
+  DONE: { label: 'Account ready', sublabel: '{t('Book a pickup')} or open Telegram' },
 };
 const FLOW: KYCStep[] = DEMO_MODE ? STEP_ORDER : LIVE_ORDER;
 const VISIBLE_STEPS = FLOW.map((id) => {
@@ -59,6 +60,7 @@ type Props = {
 };
 
 export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged }) => {
+  const { t } = useAppLanguage();
   const [currentStep, setCurrentStep] = useState<KYCStep>('PHONE');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
@@ -368,12 +370,12 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-extrabold text-lg text-emerald-950 font-['DM_Sans']">
-                Farmer KYC & Onboarding Flow
+                {t('Farmer KYC & Onboarding Flow')}
               </h3>
               <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2.5 py-1 text-[11px] font-black text-amber-800">{DEMO_MODE ? 'SIMULATION' : 'LIVE OTP'}</span>
             </div>
             <p className="text-sm text-emerald-950/65 mt-2 max-w-2xl leading-6">
-              <span className="font-semibold text-emerald-950">Mobile OTP is live.</span> Identity, biometric, bank and cadastral steps remain explicit demo/adapter states until their authorized providers are connected.
+              <span className="font-semibold text-emerald-950">{t('Mobile OTP is live.')}</span> {t('Identity, biometric, bank and cadastral steps remain explicit demo/adapter states until their authorized providers are connected.')}
             </p>
           </div>
         </div>
@@ -387,7 +389,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
           </div>
           <button type="button" onClick={() => void withdrawConsent()} disabled={withdrawBusy}
             className="min-h-10 rounded-xl border border-amber-300 bg-white px-3 text-xs font-bold text-amber-900 transition hover:bg-amber-100 disabled:opacity-50">
-            {withdrawBusy ? 'Withdrawing…' : 'Withdraw consent'}
+            {withdrawBusy ? 'Withdrawing…' : '{t('Withdraw consent')}'}
           </button>
         </div>
       )}
@@ -504,7 +506,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                   className="ui-btn is-primary is-lg is-block mt-auto"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  {DEMO_MODE ? 'Send Demo OTP' : 'Send OTP via SMS'}
+                  {DEMO_MODE ? '{t('Send Demo OTP')}' : '{t('Send OTP via SMS')}'}
                 </button>
               </>
             )}
@@ -782,7 +784,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                   className="ui-btn is-primary is-lg is-block mt-auto"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                  {DEMO_MODE ? 'Continue' : 'Bank verification unavailable'}
+                  {DEMO_MODE ? '{t('Continue')}' : 'Bank verification unavailable'}
                 </button>
               </>
             )}
@@ -810,7 +812,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                     </ul>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button type="button" className="ui-btn is-primary" onClick={() => onNavigate?.('FARMER_ONBOARDING')}>Book a pickup</button>
-                      <button type="button" className="ui-btn" onClick={() => onNavigate?.('FARMER_SURFACE')}>Connect Telegram</button>
+                      <button type="button" className="ui-btn" onClick={() => onNavigate?.('FARMER_SURFACE')}>{t('Connect Telegram')}</button>
                     </div>
                   </div>
                 )}
@@ -851,7 +853,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                     <span className="text-xs font-bold text-slate-300"><MapPin className="mr-1 inline h-3.5 w-3.5 text-emerald-400" />Field location</span>
                     <button type="button" className="ui-btn" onClick={useMyLocation} disabled={locating}>
                       {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-                      {locating ? 'Finding location…' : 'Use my current location'}
+                      {locating ? '{t('Finding location…')}' : '{t('Use my current location')}'}
                     </button>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
