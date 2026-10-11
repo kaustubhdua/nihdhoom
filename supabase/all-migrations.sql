@@ -3463,6 +3463,26 @@ begin
     raise exception 'Field for this job was not found';
   end if;
 
+  -- The job lock serializes retries. Reuse an existing lot rather than creating a duplicate.
+  select * into existing_lot
+  from public.residue_lots
+  where job_id = j.id
+  order by created_at asc
+  limit 1
+  for update;
+
+  -- A completed retry is a read of the prior result, not a new completion.
+  -- Return it before rechecking evidence that may have been archived later.
+  if j.status = 'COMPLETED' and found then
+    return jsonb_build_object(
+      'job_id', j.id,
+      'job_status', j.status,
+      'lot_id', existing_lot.id,
+      'created', false,
+      'replayed', true
+    );
+  end if;
+
   if not exists (
     select 1 from public.evidence_assets e
     where e.field_id = b.field_id
@@ -3472,24 +3492,6 @@ begin
       and length(trim(e.storage_path)) > 0
   ) then
     raise exception 'Field photo, bale photo, or weighment evidence is required before completion';
-  end if;
-
-  -- The job lock serializes retries. Reuse an existing lot rather than creating a duplicate.
-  select * into existing_lot
-  from public.residue_lots
-  where job_id = j.id
-  order by created_at asc
-  limit 1
-  for update;
-
-  if j.status = 'COMPLETED' and found then
-    return jsonb_build_object(
-      'job_id', j.id,
-      'job_status', j.status,
-      'lot_id', existing_lot.id,
-      'created', false,
-      'replayed', true
-    );
   end if;
 
   if j.status not in ('PROOF_PENDING', 'COMPLETED') then
