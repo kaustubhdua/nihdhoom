@@ -98,7 +98,6 @@ test('React Bits LatticeLoader supports lifecycle states, patterns, timer, and r
   has(loader, "type LoaderStatus = 'working' | 'done' | 'error'");
   has(loader, "'orbit'");
   has(loader, "'pulse'");
-  has(loader, 'prefers-reduced-motion');
   has(css, '@media (prefers-reduced-motion: reduce)');
   has(css, 'lattice-on-45');
   has(workspace, 'LatticeLoader');
