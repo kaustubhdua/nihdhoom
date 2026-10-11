@@ -94,6 +94,8 @@ begin
   if first_result->>'created' <> 'true' or first_result->>'replayed' <> 'false' then
     raise exception 'first completion returned unexpected result: %', first_result;
   end if;
+  -- A retry must remain idempotent even if evidence is archived after completion.
+  delete from public.evidence_assets where field_id='10000000-0000-0000-0000-000000000001';
   retry_result := public.complete_job_with_residue_lot('30000000-0000-0000-0000-000000000001', 2.5, 12, 10, '{}'::jsonb);
   if retry_result->>'created' <> 'false' or retry_result->>'replayed' <> 'true' then
     raise exception 'retry returned unexpected result: %', retry_result;
