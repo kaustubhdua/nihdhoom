@@ -27,6 +27,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run syntaxcheck
       - run: npm run audit
+      - name: Verify generated database migration bundle
+        run: npm run db:bundle && git diff --exit-code -- supabase/all-migrations.sql
       - run: npm test
       - run: npm run build
       - name: Install dispatch service dependencies
