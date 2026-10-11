@@ -102,7 +102,7 @@ This document is the consolidated implementation checklist for taking the curren
 - [ ] Test denied GPS permission, poor accuracy, backgrounding, refresh and device restart.
 - [ ] Persist queued actions safely and show pending/syncing/synced/failed states.
 - [ ] Make retries safe and prevent duplicate job completion.
-- [ ] Make job completion and residue-lot creation one database transaction, or provide an idempotent recovery workflow; current UI can complete a job before the lot insert succeeds.
+- [x] Add `complete_job_with_residue_lot` RPC and switch the operator UI to the atomic completion path; it validates the measured quantity and returns the existing lot on safe retries. **Still pending:** apply the new migration to staging, run authenticated role/evidence/retry tests, and verify the workflow before production.
 - [ ] Provide an operator-reported breakdown/delay path.
 - [ ] Test offline evidence capture and later upload with real file sizes.
 
