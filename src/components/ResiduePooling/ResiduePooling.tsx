@@ -31,6 +31,7 @@ export function ResiduePooling({ fields, demoMode }: Props) {
   const [lots, setLots] = useState<SupplyLot[]>([]);
   const [offers, setOffers] = useState<BuyerOffer[]>([]);
   const [notice, setNotice] = useState('');
+  const [poolQuantities, setPoolQuantities] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!demoMode || typeof window === 'undefined') return;
@@ -59,8 +60,8 @@ export function ResiduePooling({ fields, demoMode }: Props) {
         };
       });
     }
+    if (!demoMode) return [];
     return fields
-      .filter((f) => demoMode || f.status === 'VERIFIED_NON_BURN' || f.is_verified_non_burn)
       .map((f) => ({
         lotId: f.residue_lot_id || `planning-${f.id}`,
         fieldId: f.id,
@@ -89,6 +90,8 @@ export function ResiduePooling({ fields, demoMode }: Props) {
     if (!d.error) setDemands(d.data || []);
     if (!l.error) setLots(l.data || []);
     if (!o.error) setOffers(o.data || []);
+    const failed = [p, d, l, o].some((result) => Boolean(result.error));
+    if (failed) setNotice('Some live marketplace records could not be loaded. Refresh or check database permissions before acting on this information.');
   }
 
   useEffect(() => { void load(); }, [demoMode]);
@@ -112,6 +115,12 @@ export function ResiduePooling({ fields, demoMode }: Props) {
   }
 
   async function joinPool(poolId: string, tonnes: number) {
+    const pool = visiblePools.find((candidate) => candidate.id === poolId);
+    const remaining = pool ? Math.max(0, pool.target_tonnes - pool.current_tonnes) : 0;
+    if (!Number.isFinite(tonnes) || tonnes <= 0 || tonnes > remaining) {
+      setNotice('Enter a positive quantity no greater than the pool quantity still needed.');
+      return;
+    }
     if (demoMode || !supabase) {
       setPools(prev => prev.map(p => p.id === poolId ? { ...p, current_tonnes: Math.min(p.target_tonnes, p.current_tonnes + tonnes), status: Math.min(p.target_tonnes, p.current_tonnes + tonnes) >= p.target_tonnes ? 'READY' : 'FILLING' } : p));
       setNotice(`Demo: committed ${tonnes.toFixed(1)} t to the pool. No sale or payment was executed.`);
@@ -177,11 +186,19 @@ export function ResiduePooling({ fields, demoMode }: Props) {
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           {visiblePools.map(p => {
             const pct = Math.min(100, Math.round((p.current_tonnes / Math.max(1, p.target_tonnes)) * 100));
+            const remaining = Math.max(0, p.target_tonnes - p.current_tonnes);
+            const quantity = poolQuantities[p.id] ?? String(Math.min(1, remaining));
             return <div key={p.id} className="market-pool-card">
               <div className="flex justify-between"><span className="market-row-title">{p.name}</span><span className="market-status">{p.status}</span></div>
               <div className="market-progress"><div style={{ width: `${pct}%` }} /></div>
               <div className="market-progress-meta"><span>{p.current_tonnes.toFixed(1)} t pooled</span><span>{p.target_tonnes.toFixed(1)} t target</span></div>
-              <button onClick={() => void joinPool(p.id, Math.min(5, Math.max(1, p.target_tonnes - p.current_tonnes)))} className="market-secondary-action market-full-action"><CheckCircle2 className="h-3.5 w-3.5" /> Join pool</button>
+              <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
+                <label className="block text-sm font-medium" htmlFor={`pool-quantity-${p.id}`}>
+                  Quantity to commit (tonnes)
+                  <input id={`pool-quantity-${p.id}`} className="mt-1 w-full rounded-lg border border-emerald-900/20 bg-white px-3 py-2 text-base text-slate-900" type="number" inputMode="decimal" min="0.1" max={remaining} step="0.1" disabled={remaining <= 0} value={quantity} onChange={(event) => setPoolQuantities((previous) => ({ ...previous, [p.id]: event.target.value }))} />
+                </label>
+                <button disabled={remaining <= 0} onClick={() => void joinPool(p.id, Number(quantity))} className="market-secondary-action market-full-action disabled:cursor-not-allowed disabled:opacity-50"><CheckCircle2 className="h-3.5 w-3.5" /> {remaining <= 0 ? 'Pool full' : 'Join pool'}</button>
+              </div>
             </div>;
           })}
         </div>
