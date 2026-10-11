@@ -43,7 +43,7 @@ begin
   if not found then raise exception 'Offer changed during acceptance'; end if;
   return o;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.cancel_clearance_booking(p_booking_id uuid)
  RETURNS bookings
@@ -62,7 +62,7 @@ begin
   update public.fields set status='CANCELLED',updated_at=now() where id=b.field_id;
   return b;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_residue_pool(p_name text, p_target_tonnes numeric, p_pickup_deadline date, p_buyer_demand_id uuid DEFAULT NULL::uuid)
  RETURNS residue_pools
@@ -101,7 +101,7 @@ begin
 
   return row_out;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.join_residue_pool(p_pool_id uuid, p_quantity_tonnes numeric)
  RETURNS residue_pool_members
@@ -160,7 +160,7 @@ begin
 
   return member_row;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.record_verification_review(p_field_id uuid, p_result text, p_confidence numeric, p_metadata jsonb DEFAULT '{}'::jsonb)
  RETURNS verification_events
@@ -230,7 +230,7 @@ begin
   end if;
   return v;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.reserve_clearance_booking_v2(p_field_id uuid, p_requested_date date)
  RETURNS bookings
@@ -300,7 +300,7 @@ begin
 exception when unique_violation then
   raise exception 'This field already has an active booking for that date';
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.transition_job(p_job_id uuid, p_next_status text, p_metadata jsonb DEFAULT '{}'::jsonb)
  RETURNS jobs
@@ -330,7 +330,7 @@ begin
   update public.fields f set status=case when p_next_status='ARRIVED' then 'ON_THE_WAY' when p_next_status='BALING' then 'BALING_IN_PROGRESS' when p_next_status='COMPLETED' then 'CLEARED_PENDING_AUDIT' when p_next_status='CANCELLED' then 'CANCELLED' else f.status end,updated_at=now() where f.id=(select field_id from public.bookings where id=j.booking_id);
   return j;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.verify_field_geometry(p_field_id uuid, p_source text, p_metadata jsonb DEFAULT '{}'::jsonb)
  RETURNS fields
@@ -375,7 +375,7 @@ begin
     jsonb_build_object('boundary_verified',true,'boundary_source',p_source,'geometry_area_acres',area_acres,'metadata',coalesce(p_metadata,'{}'::jsonb)));
   return f;
 end;
-$function$
+$function$;
 
 revoke all on function public.accept_buyer_offer(uuid) from public, anon;
 grant execute on function public.accept_buyer_offer(uuid) to authenticated;
