@@ -45,8 +45,8 @@ export default async function handler(req: any, res: any) {
   const user = await verifyUser(req);
   if (!user?.id) return res.status(401).json({ error: 'Authentication required' });
 
-  const key = process.env.FIRMS_MAP_KEY;
-  if (!key) return res.status(503).json({ error: 'FIRMS_MAP_KEY is not configured' });
+  const key = process.env.FIRMS_MAP_KEY || process.env.NASA_FIRMS_API;
+  if (!key) return res.status(503).json({ error: 'FIRMS_MAP_KEY (or legacy NASA_FIRMS_API) is not configured' });
 
   res.setHeader?.('Cache-Control', 'no-store');
   const body = req.body || {};
