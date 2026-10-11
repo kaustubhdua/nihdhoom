@@ -96,3 +96,9 @@ test('consent withdrawal always clears its busy state after network exceptions',
   assert.doesNotMatch(withdrawal, /from\('consents'\)\s*\.update/);
   assert.match(withdrawal, /Consent could not be updated because the server was unreachable/);
 });
+
+test('field registration rejects acreage that would round to zero', () => {
+  const onboarding = read('src/components/FarmerOnboarding/FarmerOnboarding.tsx');
+  assert.match(onboarding, /acres < 0\.01 \|\| acres > 500/);
+  assert.match(onboarding, /Math\.round\(acres \* 100\) \/ 100/);
+});
