@@ -308,7 +308,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
           <div className="mb-2 flex items-center gap-3">
             <Sparkles className="h-6 w-6 shrink-0 text-[var(--brand)]" />
             <h3 className="ui-title !mt-0">
-              {t('{t('Field operator workspace')}')}
+              {t('Field operator workspace')}
             </h3>
           </div>
           <p className="ui-lede">
