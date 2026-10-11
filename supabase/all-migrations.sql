@@ -2,7 +2,7 @@
 -- Paste into Supabase > SQL Editor and press Run ONCE on a fresh project.
 -- If it stops with an error, note the "-- >>> file" line above it, fix the cause,
 -- then run only the files from that one onward (see docs/GO-LIVE.md).
--- Generated 2026-10-11 from 34 files.
+-- Generated 2026-10-11 from 35 files.
 
 -- >>> 202609270001_nirdhoom_core.sql
 -- NIRDHOOM core schema. Run in Supabase SQL Editor or as a migration.
@@ -3637,3 +3637,24 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.reserve_clearance_booking_v2(uuid,date) TO authenticated;
+
+-- >>> 202610120002_nirdhoom_fk_indexes.sql
+-- Add covering indexes for operational foreign keys flagged by the Supabase advisor.
+-- These indexes are additive and do not change data or access policies.
+
+CREATE INDEX IF NOT EXISTS residue_exceptions_field_id_idx
+  ON public.residue_exceptions (field_id);
+CREATE INDEX IF NOT EXISTS residue_exceptions_machine_id_idx
+  ON public.residue_exceptions (machine_id);
+CREATE INDEX IF NOT EXISTS residue_exceptions_residue_lot_id_idx
+  ON public.residue_exceptions (residue_lot_id);
+CREATE INDEX IF NOT EXISTS residue_exceptions_yard_id_idx
+  ON public.residue_exceptions (yard_id);
+CREATE INDEX IF NOT EXISTS residue_lot_events_actor_profile_id_idx
+  ON public.residue_lot_events (actor_profile_id);
+CREATE INDEX IF NOT EXISTS residue_lots_machine_id_idx
+  ON public.residue_lots (machine_id);
+CREATE INDEX IF NOT EXISTS residue_transport_jobs_assigned_machine_id_idx
+  ON public.residue_transport_jobs (assigned_machine_id);
+CREATE INDEX IF NOT EXISTS residue_transport_jobs_residue_lot_id_idx
+  ON public.residue_transport_jobs (residue_lot_id);
