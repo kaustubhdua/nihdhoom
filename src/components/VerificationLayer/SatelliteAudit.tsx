@@ -43,20 +43,26 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
     setReviewMessage('');
     try {
       if (demoMode) {
-        onVerified?.(field.id);
-        setReviewMessage(`Demo review recorded for ${field.khasra_no}. No registry or payment claim was issued.`);
+        setReviewMessage(`Simulated review note recorded for ${field.khasra_no}. Field status is unchanged; no certificate or payment claim was issued.`);
         return;
       }
       if (!supabase) throw new Error('Live Supabase is not configured.');
+      // The UI has no validated confidence model and cannot independently prove
+      // non-burning. Persist a review-required event; only a separate authorized
+      // evidence workflow may mark the field VERIFIED_NON_BURN.
       const { error } = await supabase.rpc('record_verification_review', {
         p_field_id: field.dbId || field.id,
-        p_result: 'VERIFIED_NON_BURN',
-        p_confidence: 92,
-        p_metadata: { source: 'nirdhoom-review-console', observation_mode: auditReport.dataAvailability },
+        p_result: 'REVIEW_REQUIRED',
+        p_confidence: 0,
+        p_metadata: {
+          source: 'nirdhoom-review-console',
+          observation_mode: auditReport.dataAvailability,
+          decision_basis: 'manual_review_required_no_validated_confidence_model',
+          client_reported_confidence: null,
+        },
       });
       if (error) throw new Error(error.message);
-      onVerified?.(field.id);
-      setReviewMessage(`Verification review recorded for ${field.khasra_no}.`);
+      setReviewMessage(`Review-required event recorded for ${field.khasra_no}. Field status is unchanged pending an authorized evidence-based decision.`);
     } catch (error) {
       setReviewMessage(error instanceof Error ? error.message : 'Verification review failed.');
     } finally {
