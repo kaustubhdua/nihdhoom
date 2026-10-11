@@ -20,3 +20,11 @@ test('offline replay refuses cross-account and legacy unbound queue records', ()
   assert.ok(pathCreation > guard, 'storage path must not be created before ownership check');
   assert.ok(upload > guard, 'upload must not occur before ownership check');
 });
+
+test('offline evidence replay recovers safely after partial upload or lost response', () => {
+  const queue = read('../src/lib/offlineEvidenceQueue.ts');
+  assert.match(queue, /\.eq\('storage_path', path\)/);
+  assert.match(queue, /if \(existing\.error\) continue;/);
+  assert.match(queue, /if \(existing\.data\) \{\s*await removeQueued\(item\.id\);/);
+  assert.match(queue, /upsert: true/);
+});
