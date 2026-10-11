@@ -1,42 +1,55 @@
 # Contributing to NIRDHOOM
 
-Thanks for helping improve NIRDHOOM. The project is a field-first prototype, so correctness, evidence boundaries and farmer usability matter as much as visual polish.
+Thanks for helping improve NIRDHOOM. Changes should make the field-to-residue workflow more reliable, understandable, and auditable.
 
-## Before opening a change
+## Before opening a pull request
 
-1. Read `README.md` and the relevant files under `docs/`.
-2. Keep live, demo, indicative and research-derived data clearly separated.
-3. Never add service-role keys, provider secrets, OTP secrets or private farmer data to the browser bundle.
-4. Prefer small, reversible changes over broad rewrites.
+1. Create a focused branch from the current `main`.
+2. Explain the user problem and intended behavior in the PR description.
+3. Keep live records, demo fixtures, and historical reference data explicitly separated.
+4. Never commit credentials, service-role keys, personal farmer data, private evidence, or unredacted logs.
+5. For database changes, add a new migration rather than rewriting a migration already applied to a shared environment. Include role/authorization tests for affected RPCs and tables.
+6. For UI changes, check mobile layouts, keyboard focus, accessible names, and loading, empty, success, and error states. Update English/Hindi labels where relevant.
+7. For maps, escape database-sourced popup text, retain tile-provider attribution, label demo GPS, and do not imply remote sensing proves a field-level event.
+8. Update README or the relevant document when a workflow, setup requirement, data caveat, or release boundary changes.
 
-## Local checks
+## Local setup
+
+Requirements: Node.js 24+, npm, and Git.
 
 ```bash
+git clone https://github.com/kaustubhdua/nihdhoom.git
+cd nihdhoom
 npm ci
-npm run syntaxcheck
-npm run audit
-npm test
-npm run build
+cp .env.example .env.local
+npm run dev
 ```
 
-The CI workflow runs these checks plus the Python dispatch-service tests.
+Only add environment values required for the feature under test. Browser-exposed `VITE_*` variables must never contain service-role keys or provider secrets.
 
-## UI changes
+## Validation
 
-- Design for a phone-sized farmer workflow first.
-- Keep body text readable and touch targets at least 44px where practical.
-- Use the NIRDHOOM field palette: cream, green and saffron/wheat accents.
-- Respect `prefers-reduced-motion`.
-- Lazy-load heavy workspaces and images that are below the fold.
-- Do not introduce a second visual language for advanced features.
+Run the full local release check before requesting review:
 
-## Database/API changes
+```bash
+npm run release:check
+```
 
-- Add or update a migration rather than editing production state manually.
-- Review RLS, grants, RPC authorization and `SECURITY DEFINER` search paths.
-- Validate server inputs and keep privileged credentials server-side.
-- Add a regression test for every security or integrity fix.
+This runs the TypeScript project check, repository audit, Node regression tests, and production build. CI also validates the generated migration bundle and dispatch-service Python checks.
 
-## Pull requests
+If a check cannot be run, report it clearly in the PR. Do not describe a feature as production-tested based only on a successful build.
 
-Explain **what changed**, **why**, **how it was tested**, and any **truth/release-boundary implications**. Screenshots or a short screen recording are welcome for UI changes.
+## Pull request checklist
+
+- [ ] The problem and expected behavior are explained.
+- [ ] Relevant tests were added or updated.
+- [ ] `npm run release:check` passes, or skipped checks are explained.
+- [ ] Loading, empty, success, and error states were considered.
+- [ ] Mobile and keyboard accessibility were considered.
+- [ ] No secrets, personal data, or fabricated operational claims were introduced.
+- [ ] Documentation and release notes match the implementation.
+- [ ] Required external setup (Supabase, SMS, Telegram, Vercel, tile provider) is called out.
+
+## Security and operational truth
+
+Do not report a successful OTP, booking, verification, offer, transport, or payment unless the corresponding provider/database operation succeeded. Never use demo records to represent real field-pilot outcomes. For suspected vulnerabilities, avoid public disclosure of exploit details and contact maintainers privately.
