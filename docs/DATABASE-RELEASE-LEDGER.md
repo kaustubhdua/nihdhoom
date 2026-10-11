@@ -34,6 +34,8 @@ Migrations are applied in filename order:
 26. `202610080003_nirdhoom_machine_capability_provenance.sql` — machine capability requirements and external-source metadata.
 27. `202610080004_nirdhoom_residue_control_tower.sql` — machine capacity windows, storage yards, residue demand matches, transport jobs and operational exceptions.
 
+27. `202610120001_nirdhoom_booking_field_status_consistency.sql` — aligns the reservation RPC's field lifecycle update with the `fields_status_check` constraint and rejects booking fields already in an active/completed workflow.
+
 ## Release rules
 - Never reorder or rename an already-applied migration.
 - Never edit an applied migration to change production behavior; add a new migration.
@@ -44,11 +46,12 @@ Migrations are applied in filename order:
 - Before a production release, record the Supabase migration status and run the RLS/integrity test suite.
 
 ## Verification checklist
-- [ ] All 26 migrations are present in the repository.
+- [ ] All migrations are present in the repository.
 - [ ] Supabase migration history matches this order.
 - [ ] RLS is enabled on every tenant/business table.
 - [ ] Role escalation is blocked.
 - [ ] Arbitrary client booking writes are blocked.
+- [ ] `reserve_clearance_booking_v2` writes `bookings.status='BOOKED'` and `fields.status='SCHEDULED'` (both valid values).
 - [ ] Field ownership/tampering is blocked.
 - [ ] Evidence storage and evidence rows enforce operator/job ownership.
 - [ ] Verification is restricted to authorized verifiers.
