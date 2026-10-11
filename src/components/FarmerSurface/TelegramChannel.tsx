@@ -11,6 +11,7 @@ const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || '';
 const MINI_APP_URL = import.meta.env.VITE_TELEGRAM_MINI_APP_URL || '';
 
 export function TelegramChannel() {
+  const { t } = useAppLanguage();
   const [language, setLanguage] = useState<'pa' | 'hi' | 'en'>('pa');
   const [linking, setLinking] = useState(false);
   const [linkError, setLinkError] = useState('');
