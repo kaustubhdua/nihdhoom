@@ -711,6 +711,8 @@ test('live-mode setup: error classification, bundle and farmer flow are wired', 
   assert.match(controller, /getSession\(\)/);
   assert.match(controller, /setLiveSignedOut\(true\)/);
   assert.match(controller, /onAuthStateChange/);
+  assert.match(controller, /Live operational data could not be loaded because the server was unreachable/);
+  assert.match(controller, /finally\s*\{\s*setLoadingLiveData\(false\);/);
 
   // Farmers must be able to register a real field in live mode.
   const onboarding = read('src/components/FarmerOnboarding/FarmerOnboarding.tsx');
