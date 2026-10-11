@@ -10,6 +10,8 @@ test('verification UI does not claim an unsupported confidence or auto-verify fi
   assert.match(audit, /p_result:\s*'REVIEW_REQUIRED'/);
   assert.match(audit, /manual_review_required_no_validated_confidence_model/);
   assert.doesNotMatch(audit, /onVerified\?\.\(field\.id\)/);
+  assert.match(audit, /Certificate unavailable/);
+  assert.match(audit, /View illustrative record/);
 });
 
 test('demo walkthrough is browser-local and discloses simulation-only behavior', () => {
