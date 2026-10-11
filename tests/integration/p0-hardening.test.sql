@@ -15,6 +15,15 @@ BEGIN
   SELECT count(*) INTO reserved_bookings FROM public.bookings WHERE reservation_state='RESERVED';
   SELECT count(*) INTO unconfirmed_bookings FROM public.bookings WHERE reservation_state='UNCONFIRMED';
   IF reserved > capacity THEN RAISE EXCEPTION 'Overbooking: reserved acres exceed capacity'; END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM public.booking_capacity_reservations r1
+    JOIN public.machine_capacity_windows w1 ON w1.id = r1.capacity_window_id
+    JOIN public.booking_capacity_reservations r2 ON r2.id > r1.id AND r2.status = 'ACTIVE'
+    JOIN public.machine_capacity_windows w2 ON w2.id = r2.capacity_window_id
+    WHERE r1.status = 'ACTIVE' AND w1.machine_id = w2.machine_id
+      AND w1.id <> w2.id AND w1.window_start < w2.window_end AND w1.window_end > w2.window_start
+  ) THEN RAISE EXCEPTION 'Same machine has active reservations in overlapping windows'; END IF;
   IF reserved <> 1 OR active_reservations <> 1 OR reserved_bookings <> 1 OR unconfirmed_bookings <> 1 THEN
     RAISE EXCEPTION 'Concurrent capacity test failed: reserved %, active %, confirmed %, unconfirmed %', reserved, active_reservations, reserved_bookings, unconfirmed_bookings;
   END IF;
@@ -53,6 +62,13 @@ BEGIN
   END IF;
   IF event_row.metadata->>'firms_absence_interpretation' IS NULL THEN
     RAISE EXCEPTION 'Verification must explicitly state absence is not proof of no burning';
+  END IF;
+  event_row := public.record_verification_review(
+    '00000000-0000-0000-0000-000000000202','REVIEW_REQUIRED',20,'{}'::jsonb
+  );
+  IF event_row.method <> 'reviewer_assessment_only'
+     OR jsonb_array_length(event_row.metadata->'evidence_sources') <> 0 THEN
+    RAISE EXCEPTION 'No evidence must not be recorded as field evidence';
   END IF;
 
   event_row := public.record_verification_review(
