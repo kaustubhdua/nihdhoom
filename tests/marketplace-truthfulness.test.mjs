@@ -22,3 +22,18 @@ test('forecast UI clearly labels static planning scenario and avoids claiming li
   assert.match(forecast, /static scenario—not a live NDVI signal/i);
   assert.doesNotMatch(forecast, /NDVI curves indicate/i);
 });
+
+test('live booking records explicit consent before the server booking RPC', () => {
+  const booking = fs.readFileSync(new URL('../src/components/ClearanceBooking/ClearanceBooking.tsx', import.meta.url), 'utf8');
+  assert.match(booking, /from\('consents'\)/);
+  assert.match(booking, /WEB_CLEARANCE_BOOKING/);
+  assert.match(booking, /Could not record your consent/);
+  assert.ok(booking.indexOf('WEB_CLEARANCE_BOOKING') < booking.indexOf("rpc('reserve_clearance_booking_v2'"));
+});
+
+test('booking date validation uses local calendar dates rather than UTC date slices', () => {
+  const booking = fs.readFileSync(new URL('../src/components/ClearanceBooking/ClearanceBooking.tsx', import.meta.url), 'utf8');
+  assert.match(booking, /function localDateString\(date: Date\)/);
+  assert.match(booking, /date < localDateString\(new Date\(\)\)/);
+  assert.doesNotMatch(booking, /toISOString\(\)\.slice\(0, 10\)/);
+});
