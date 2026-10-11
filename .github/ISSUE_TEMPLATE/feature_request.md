@@ -1,21 +1,29 @@
 ---
 name: Feature request
-about: Propose a focused improvement to NIRDHOOM
-title: "[Feature] "
+about: Propose an improvement to a NIRDHOOM workflow
+title: "[Feature]: "
 labels: enhancement
 assignees: ""
 ---
 
 ## Problem
 
-What user or operational problem does this solve?
+Who is affected, and what task is difficult today?
 
-## Proposed solution
+## Proposed behavior
 
-## Why it belongs in NIRDHOOM
+Describe the smallest useful improvement.
 
-## Field / farmer impact
+## Workflow and acceptance criteria
 
-## Release boundary
+- [ ]
+- [ ]
+- [ ]
 
-Explain whether this is live-ready, demo-only, research-only or dependent on a future integration.
+## Data, roles, and integrations
+
+Does this involve farmer data, Supabase roles/RLS, SMS, Telegram, maps, evidence, buyers, or dispatch?
+
+## Alternatives and trade-offs
+
+What other approaches were considered?
