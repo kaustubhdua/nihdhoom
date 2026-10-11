@@ -25,6 +25,12 @@ test('final release gate explicitly separates CI from live environment proof', (
   ]) assert.ok(doc.includes(phrase), `missing release gate: ${phrase}`);
 });
 
+test('live assistant requests require authentication unless demo mode is explicitly enabled', () => {
+  const assistant = read('api/assistant.ts');
+  assert.match(assistant, /const demoMode=process\.env\.VITE_NIRDHOOM_DEMO_MODE==='true'/);
+  assert.match(assistant, /const authRequired=!demoMode\|\|process\.env\.REQUIRE_AUTH_FOR_AI==='true'\|\|aiConfigured\|\|Boolean\(field\?\.dbId\)/);
+});
+
 test('production auth still requires actual Supabase phone OTP and never fakes live OTP', () => {
   const onboarding = read('src/components/FarmerOnboarding/FarmerOnboarding.tsx');
   assert.match(onboarding, /signInWithOtp/);
