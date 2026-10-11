@@ -29,12 +29,14 @@ BEGIN
   END IF;
 
   -- Verify provenance when no FIRMS IDs were supplied: method must be field-only.
-  SELECT * INTO b FROM public.bookings WHERE field_id='00000000-0000-0000-0000-000000000201';
+  INSERT INTO public.bookings(id,field_id,requested_date,rate_per_acre,quoted_amount,status,guaranteed_by_date,penalty_amount,quote_metadata,reservation_state)
+    VALUES ('00000000-0000-0000-0000-000000000402','00000000-0000-0000-0000-000000000203',CURRENT_DATE+2,1500,1500,'REQUESTED',NULL,0,'{}'::jsonb,'UNCONFIRMED');
+  SELECT * INTO b FROM public.bookings WHERE id='00000000-0000-0000-0000-000000000402';
   INSERT INTO public.jobs(id,booking_id,status,actual_completed_at)
-    VALUES ('00000000-0000-0000-0000-000000000401',b.id,'COMPLETED',now());
+    VALUES ('00000000-0000-0000-0000-000000000403',b.id,'COMPLETED',now());
   INSERT INTO public.evidence_assets(field_id,booking_id) VALUES (b.field_id,b.id);
   INSERT INTO public.residue_lots(field_id,job_id,booking_id)
-    VALUES (b.field_id,'00000000-0000-0000-0000-000000000401',b.id);
+    VALUES (b.field_id,'00000000-0000-0000-0000-000000000403',b.id);
   INSERT INTO public.firms_observations(id,source,sensor,acquired_at,matched_field_id,confidence,frp)
     VALUES ('00000000-0000-0000-0000-000000000501','NASA FIRMS','VIIRS',now()-interval '120 days',b.field_id,'nominal',1.2);
 
