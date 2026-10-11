@@ -158,6 +158,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
       setAnimatedPositions(Object.fromEntries(machines.map((machine) => [machine.id, machine.current_location])));
       setLocationTimestamps({});
       setLocationLoadError('');
+      setLastRefresh(new Date());
       return;
     }
     let active = true;
@@ -195,7 +196,7 @@ export const OpsMap: React.FC<OpsMapProps> = ({
         }
         setAnimatedPositions(positions);
         setLocationTimestamps(timestamps);
-        setLocationLoadError('');
+        setLocationLoadError(Object.keys(positions).length ? '' : 'No recent device GPS records (last 30 minutes).');
         setLastRefresh(new Date());
       } catch (error) {
         if (!active) return;
