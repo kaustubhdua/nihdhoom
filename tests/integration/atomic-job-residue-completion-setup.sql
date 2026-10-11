@@ -16,6 +16,7 @@ create table public.consents (
   source text
 );
 ALTER TABLE public.consents ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "ci select own consent" ON public.consents FOR SELECT TO authenticated USING (profile_id = (SELECT auth.uid()));
 GRANT SELECT ON TABLE public.consents TO authenticated;
 GRANT UPDATE ON TABLE public.consents TO authenticated;
 create table public.fields (
