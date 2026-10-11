@@ -45,6 +45,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: npm ci --no-audit --no-fund
+      - name: Audit production dependency vulnerabilities
+        run: npm audit --omit=dev --audit-level=high
       - run: npm run syntaxcheck
       - run: npm run audit
       - name: Verify generated database migration bundle
