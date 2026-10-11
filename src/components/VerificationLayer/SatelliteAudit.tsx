@@ -37,7 +37,24 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
   const [reviewMessage, setReviewMessage] = useState('');
   const [reviewFocus, setReviewFocus] = useState<{ id: string; nonce: number } | null>(null);
   const [firmsBusyFieldId, setFirmsBusyFieldId] = useState<string | null>(null);
-  const [firmsScreenings, setFirmsScreenings] = useState<Record<string, { count: number; matchedCount: number; queriedAt: string; error?: string }>>({});
+  type PersistedFirmsObservation = {
+    id: string;
+    acquired_at: string | null;
+    confidence: string | null;
+    frp: number | null;
+    latitude: number;
+    longitude: number;
+    source: string;
+    sensor: string;
+  };
+  const [firmsScreenings, setFirmsScreenings] = useState<Record<string, {
+    count: number;
+    matchedCount: number;
+    queriedAt: string;
+    observations: PersistedFirmsObservation[];
+    selectedObservationIds: string[];
+    error?: string;
+  }>>({});
 
   const screenFieldWithFirms = async (field: Field) => {
     if (demoMode || firmsBusyFieldId) return;
@@ -73,6 +90,11 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
           count: Number(payload.count || 0),
           matchedCount: Number(payload.matched_count || 0),
           queriedAt: String(payload.queried_at || new Date().toISOString()),
+          observations: Array.isArray(payload.matched_observations)
+            ? payload.matched_observations.filter((item: unknown): item is PersistedFirmsObservation =>
+                Boolean(item && typeof item === 'object' && 'id' in item && typeof (item as { id?: unknown }).id === 'string'))
+            : [],
+          selectedObservationIds: [],
         },
       }));
     } catch (error) {
@@ -111,6 +133,8 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
           observation_mode: auditReport.dataAvailability,
           decision_basis: 'manual_review_required_no_validated_confidence_model',
           client_reported_confidence: null,
+          firms_observation_ids: firmsScreenings[field.id]?.selectedObservationIds ?? [],
+          firms_selection_note: 'Only explicitly selected, persisted observations matched to this field are included; no detection is not proof of no burning.',
         },
       });
       if (error) throw new Error(error.message);
@@ -358,10 +382,48 @@ export const SatelliteAudit: React.FC<SatelliteAuditProps> = ({
                               <span className="text-red-700">{firmsScreenings[field.id].error}</span>
                             ) : (
                               <span className="text-[var(--muted)]">
-                                NASA FIRMS queried {new Date(firmsScreenings[field.id].queriedAt).toLocaleString()} · {firmsScreenings[field.id].count} nearby observations · {firmsScreenings[field.id].matchedCount} matched to this boundary. Screening only—not verification; results are not persisted.
+                                NASA FIRMS queried {new Date(firmsScreenings[field.id].queriedAt).toLocaleString()} · {firmsScreenings[field.id].count} observations saved · {firmsScreenings[field.id].matchedCount} matched to this boundary. Screening only—not verification; no detection is not proof of no burning.
                               </span>
                             )}
                           </div>
+                        )}
+                        {!demoMode && firmsScreenings[field.id] && !firmsScreenings[field.id].error && firmsScreenings[field.id].observations.length > 0 && (
+                          <details className="mt-2 max-w-xs rounded-lg border border-[var(--line)] p-2 text-left">
+                            <summary className="cursor-pointer text-xs font-semibold">
+                              Select FIRMS observations for review ({firmsScreenings[field.id].selectedObservationIds.length} selected)
+                            </summary>
+                            <div className="mt-2 max-h-48 space-y-2 overflow-y-auto">
+                              {firmsScreenings[field.id].observations.map((observation) => {
+                                const selected = firmsScreenings[field.id].selectedObservationIds.includes(observation.id);
+                                return (
+                                  <label key={observation.id} className="flex cursor-pointer items-start gap-2 border-t border-[var(--line)] pt-2 text-xs">
+                                    <input
+                                      type="checkbox"
+                                      checked={selected}
+                                      onChange={(event) => setFirmsScreenings((current) => ({
+                                        ...current,
+                                        [field.id]: {
+                                          ...current[field.id],
+                                          selectedObservationIds: event.target.checked
+                                            ? [...new Set([...current[field.id].selectedObservationIds, observation.id])]
+                                            : current[field.id].selectedObservationIds.filter((id) => id !== observation.id),
+                                        },
+                                      }))}
+                                      className="mt-0.5"
+                                    />
+                                    <span>
+                                      <span className="block font-semibold">{observation.acquired_at ? new Date(observation.acquired_at).toLocaleString() : 'Acquisition time unavailable'}</span>
+                                      <span className="block text-[var(--muted)]">
+                                        {observation.sensor} · confidence {observation.confidence ?? 'unknown'} · FRP {observation.frp ?? 'unknown'}
+                                      </span>
+                                      <span className="block text-[var(--muted)]">ID {observation.id.slice(0, 8)}…</span>
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            <p className="mt-2 text-[var(--muted)]">Selected IDs will be validated by the database during review. Satellite detections are supporting evidence only.</p>
+                          </details>
                         )}
                       </div>
                     </td>
