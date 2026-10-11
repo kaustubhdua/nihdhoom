@@ -166,7 +166,7 @@ export function ResiduePooling({ fields, demoMode }: Props) {
     }
     if (!demandDraft.residueType.trim() || !Number.isFinite(targetTonnes) || targetTonnes <= 0 ||
         !demandDraft.pickupDeadline || demandDraft.pickupDeadline < new Date().toISOString().slice(0, 10) ||
-        !Number.isFinite(radiusKm) || radiusKm <= 0 || !Number.isFinite(maxMoisturePct) || maxMoisturePct < 0 || maxMoisturePct > 100 || !Number.isFinite(Number(demandDraft.facilityLat)) || Number(demandDraft.facilityLat) < -90 || Number(demandDraft.facilityLat) > 90 || !Number.isFinite(Number(demandDraft.facilityLng)) || Number(demandDraft.facilityLng) < -180 || Number(demandDraft.facilityLng) > 180) {
+        !Number.isFinite(radiusKm) || radiusKm <= 0 || !Number.isFinite(maxMoisturePct) || maxMoisturePct < 0 || maxMoisturePct > 100 || !demandDraft.facilityLat.trim() || !demandDraft.facilityLng.trim() || !Number.isFinite(Number(demandDraft.facilityLat)) || Number(demandDraft.facilityLat) < -90 || Number(demandDraft.facilityLat) > 90 || !Number.isFinite(Number(demandDraft.facilityLng)) || Number(demandDraft.facilityLng) < -180 || Number(demandDraft.facilityLng) > 180) {
       setNotice('Check residue type, positive target quantity, future pickup deadline, radius and moisture limit.');
       return;
     }
