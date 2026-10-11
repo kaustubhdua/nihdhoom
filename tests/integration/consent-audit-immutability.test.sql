@@ -2,6 +2,7 @@
 -- Check effective privileges after the migration, without dollar-quoted PL/pgSQL.
 SELECT
   has_table_privilege('authenticated', 'public.consents', 'INSERT') AS has_insert,
+  has_function_privilege('authenticated', 'public.record_farmer_network_consent()', 'EXECUTE') AS can_record_consent,
   has_table_privilege('authenticated', 'public.consents', 'UPDATE') AS has_table_update,
   has_column_privilege('authenticated', 'public.consents', 'revoked_at', 'UPDATE') AS can_revoke,
   (
@@ -13,6 +14,11 @@ SELECT
   ) AS can_update_metadata
 \gset
 
+\if :can_record_consent
+\else
+  \echo 'ERROR: authenticated cannot record consent through the guarded RPC'
+  \quit 1
+\endif
 \if :has_insert
   \echo 'ERROR: authenticated still has direct INSERT on consents'
   \quit 1
@@ -51,5 +57,25 @@ SELECT EXISTS (
   \echo 'consent audit integration tests passed'
 \else
   \echo 'ERROR: authorized farmer could not revoke their own consent'
+  \quit 1
+\endif
+
+-- Direct INSERT is revoked, but the SECURITY DEFINER consent RPC still works.
+SET ROLE authenticated;
+SELECT public.record_farmer_network_consent();
+RESET ROLE;
+
+SELECT EXISTS (
+  SELECT 1 FROM public.consents
+  WHERE profile_id = '00000000-0000-0000-0000-000000000002'
+    AND consent_type = 'farmer_network'
+    AND source = 'ci'
+    AND revoked_at IS NULL
+) AS rpc_recorded
+\gset
+\if :rpc_recorded
+  \echo 'guarded consent RPC remains functional'
+\else
+  \echo 'ERROR: guarded consent RPC could not write consent'
   \quit 1
 \endif
