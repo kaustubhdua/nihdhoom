@@ -33,6 +33,12 @@ These are observations, not release sign-off:
 
 **Release decision as of this observation:** not approved for a production field pilot until the production deployment is reconciled with `main`, Vercel can build the intended commit, the database migration history/schema diff is reviewed and staged, and the real provider/auth/operator smoke tests pass.
 
+## Release-branch changes pending validation (2026-10-12)
+
+The `fix/p0-booking-verification-privileges` branch contains proposed capacity-backed booking semantics, least-privilege grants, truthful verification provenance, persisted/idempotent FIRMS ingestion and field matches, explicit observation selection in the review UI, and safer operator evidence retry behavior. Its migration has not been applied to production. It requires a staging schema comparison and role-matrix tests before merge or production deployment.
+
+The FIRMS API now fails closed when `SUPABASE_SERVICE_ROLE_KEY` is absent. Production configuration was previously observed to have this value empty; therefore persistent FIRMS screening is not live until the secret is configured server-side and an authenticated end-to-end test proves provider fetch, observation upsert, field-match upsert, and verification-review provenance. No satellite non-detection can be represented as proof of no burning.
+
 ## Gate A — Release identity and rollback (P0)
 
 - [ ] Record the intended `main` commit SHA.
