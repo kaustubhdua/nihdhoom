@@ -312,10 +312,10 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
             </h3>
           </div>
           <p className="ui-lede">
-            Capture the job state, device location, measured residue and field evidence. 
+            {t('Capture the job state, device location, measured residue and field evidence.')} 
           </p>
           <div className="ui-note mt-4 !bg-[var(--surface)] !text-[var(--ink-2)]">
-            <strong>The field workflow should capture GPS, job state, quantity and evidence. Payment remains intentionally disabled in this release.</strong>
+            <strong>{t('The field workflow should capture GPS, job state, quantity and evidence. Payment remains intentionally disabled in this release.')}</strong>
           </div>
         </div>
 
@@ -336,14 +336,14 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
 
           <div className="ui-kv-grid grid-cols-2">
             <div className="ui-kv">
-              <span className="ui-kv-label">Operator</span>
+              <span className="ui-kv-label">{t('Operator')}</span>
               <strong className="ui-kv-value">{activeMachine.operator_name}</strong>
               <span className="text-[12px] text-[var(--muted)]">{activeMachine.operator_phone}</span>
             </div>
             <div className="ui-kv">
-              <span className="ui-kv-label">Daily Capacity</span>
+              <span className="ui-kv-label">{t('Daily Capacity')}</span>
               <strong className="ui-kv-value !text-[var(--brand-ink)]">{activeMachine.capacity_acres_day} Acres / day</strong>
-              <span className="text-[12px] text-[var(--muted)]">CRM programme reference</span>
+              <span className="text-[12px] text-[var(--muted)]">{t('CRM programme reference')}</span>
             </div>
           </div>
         </div>
@@ -354,11 +354,11 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
         <div className="device-frame">
           {/* Status Bar */}
           <div className="device-header">
-            <span>Operator session</span>
+            <span>{t('Operator session')}</span>
             <div className="device-notch"></div>
             <div className="flex items-center gap-1.5 text-xs">
               <Wifi className="w-3 h-3 text-emerald-400" />
-              <span>{demoMode ? 'PWA Simulation' : 'PWA / device sync'}</span>
+              <span>{demoMode ? t('PWA Simulation') : t('PWA / device sync')}</span>
             </div>
           </div>
 
@@ -371,7 +371,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
               <div>
                 <h4 className="font-bold text-sm text-white">{t('Nirdhoom Field Dispatch')}</h4>
                 <span className="text-[10px] text-emerald-400 font-mono">
-                  GPS status: {gpsState ? 'Location available' : 'Waiting for device location'}
+                  {t('GPS status')}: {gpsState ? t('Location available') : t('Waiting for device location')}
                 </span>
               </div>
             </div>
@@ -385,7 +385,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
           {/* Field Job Selection Queue */}
           <div className="p-3 bg-slate-950 flex flex-col gap-3 min-h-[460px]">
             <div className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">
-              Assigned Field Queue for Today
+              {t('Assigned Field Queue for Today')}
             </div>
 
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -424,7 +424,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] text-slate-400 block">{demoMode ? 'Demo quote' : 'Server quote'}</span>
+                  <span className="text-[10px] text-slate-400 block">{demoMode ? t('Demo quote') : t('Server quote')}</span>
                   <span className="text-base font-extrabold text-emerald-400 font-mono">
                     {demoMode ? `₹${Number(currentField.payout_amount || 0).toLocaleString()}` : (currentField.payout_amount ? `₹${Number(currentField.payout_amount).toLocaleString()}` : 'Server quote pending')}
                   </span>
@@ -451,7 +451,7 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
                     </span>
                   </div>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/80 text-slate-950 font-extrabold">
-                    {demoMode ? 'Demo assignment' : 'Live assignment'}
+                    {demoMode ? t('Demo assignment') : t('Live assignment')}
                   </span>
                 </div>
               </div>
@@ -463,14 +463,14 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
                   className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700"
                 >
                   <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Call Farmer</span>
+                  <span>{t('Call Farmer')}</span>
                 </a>
                 <button
                   onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${currentField.center.lat},${currentField.center.lng}`, '_blank', 'noopener,noreferrer')}
                   className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow"
                 >
                   <Navigation className="w-3.5 h-3.5" />
-                  <span>GPS Navigate</span>
+                  <span>{t('GPS Navigate')}</span>
                 </button>
               </div>
 
@@ -479,10 +479,10 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400 flex items-center gap-1">
                     <Droplet className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>{demoMode ? 'Demo moisture control:' : 'Moisture sensor:'}</span>
+                    <span>{demoMode ? t('Demo moisture control:') : t('Moisture sensor:')}</span>
                   </span>
                   <strong className={`font-mono ${moistureValue > 20 ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {moistureValue}% {moistureValue <= 20 ? '(Optimal)' : '(High Moisture Alert!)'}
+                    {moistureValue}% {moistureValue <= 20 ? t('Optimal') : t('High Moisture Alert!')}
                   </strong>
                 </div>
                 <input
@@ -497,12 +497,12 @@ export const BalerPWA: React.FC<BalerPWAProps> = ({
                 />
 
                 <div className="flex justify-between items-center pt-1 border-t border-slate-800 text-[11px]">
-                  <span className="text-slate-400">{demoMode ? 'Estimated straw yield:' : 'Straw quantity:'}</span>
-                  <strong className="text-white font-mono">{balesCount} Bales (~{Math.round(currentField.acreage * 2.2 * 10) / 10} Tonnes)</strong>
+                  <span className="text-slate-400">{demoMode ? t('Estimated straw yield:') : t('Straw quantity:')}</span>
+                  <strong className="text-white font-mono">{balesCount} {t('Bales')} (~{Math.round(currentField.acreage * 2.2 * 10) / 10} Tonnes)</strong>
                 </div>
 
                 <div className="flex items-center justify-between gap-2 text-[11px]">
-                  <label className="text-slate-400" htmlFor="residue-tonnes">Measured residue</label>
+                  <label className="text-slate-400" htmlFor="residue-tonnes">{t('Measured residue')}</label>
                   <div className="flex items-center gap-1">
                     <input
                       id="residue-tonnes"
