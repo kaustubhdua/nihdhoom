@@ -52,7 +52,9 @@ test('live FIRMS screening is authenticated, explicit and not presented as verif
   assert.match(audit, /fetch\('\/api\/firms'/);
   assert.match(audit, /Authorization: `Bearer \$\{token\}`/);
   assert.match(audit, /Query NASA FIRMS/);
-  assert.match(audit, /Screening only—not verification; results are not persisted/);
+  assert.match(audit, /Screening only—not verification; no detection is not proof of no burning/);
+  assert.match(audit, /observations saved/);
+  assert.match(audit, /selectedObservationIds/);
   assert.match(audit, /A saved field UUID, valid centre and field boundary are required/);
   assert.match(audit, /field_id: field\.dbId/);
   assert.doesNotMatch(audit, /body: JSON\.stringify\(\{\s*field:\s*\{/);
