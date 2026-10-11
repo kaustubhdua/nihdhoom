@@ -2,7 +2,7 @@
 -- Paste into Supabase > SQL Editor and press Run ONCE on a fresh project.
 -- If it stops with an error, note the "-- >>> file" line above it, fix the cause,
 -- then run only the files from that one onward (see docs/GO-LIVE.md).
--- Generated 2026-10-11 from 35 files.
+-- Generated 2026-10-11 from 36 files.
 
 -- >>> 202609270001_nirdhoom_core.sql
 -- NIRDHOOM core schema. Run in Supabase SQL Editor or as a migration.
@@ -3658,3 +3658,24 @@ CREATE INDEX IF NOT EXISTS residue_transport_jobs_assigned_machine_id_idx
   ON public.residue_transport_jobs (assigned_machine_id);
 CREATE INDEX IF NOT EXISTS residue_transport_jobs_residue_lot_id_idx
   ON public.residue_transport_jobs (residue_lot_id);
+
+-- >>> 202610120003_nirdhoom_storage_yard_policy_consolidation.sql
+-- Consolidate equivalent storage-yard SELECT policies without changing effective access.
+-- Authenticated users may read active yards; operations roles may also read inactive yards.
+
+DROP POLICY IF EXISTS "operations read storage yards" ON public.storage_yards;
+DROP POLICY IF EXISTS "authenticated reads yards" ON public.storage_yards;
+
+CREATE POLICY "authenticated read yards by active status or operations role"
+ON public.storage_yards
+FOR SELECT
+TO authenticated
+USING (
+  active = true
+  OR EXISTS (
+    SELECT 1
+    FROM public.profiles p
+    WHERE p.id = (SELECT auth.uid())
+      AND p.role = ANY (ARRAY['operator', 'dispatcher', 'verifier', 'admin'])
+  )
+);
