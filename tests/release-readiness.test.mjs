@@ -82,3 +82,15 @@ test('field registration always clears its busy state after network exceptions',
   assert.match(registration, /finally\s*\{\s*setFieldBusy\(false\);/);
   assert.match(registration, /Field registration could not reach the server/);
 });
+
+test('consent withdrawal always clears its busy state after network exceptions', () => {
+  const onboarding = read('src/components/FarmerOnboarding/FarmerOnboarding.tsx');
+  const start = onboarding.indexOf('const withdrawConsent = async () =>');
+  const end = onboarding.indexOf('useEffect(() => {\n    if (resendSeconds', start);
+  assert.ok(start >= 0 && end > start, 'consent withdrawal function should be present');
+  const withdrawal = onboarding.slice(start, end);
+  assert.match(withdrawal, /try\s*\{/);
+  assert.match(withdrawal, /catch\s*\{/);
+  assert.match(withdrawal, /finally\s*\{\s*setWithdrawBusy\(false\);/);
+  assert.match(withdrawal, /Consent could not be updated because the server was unreachable/);
+});
