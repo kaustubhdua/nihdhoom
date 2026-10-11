@@ -7,7 +7,7 @@ const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 test('live harvest readiness only summarizes connected field records', () => {
   const forecast = read('../src/components/OfftakeAndForecast/HarvestForecast.tsx');
   const app = read('../src/App.tsx');
-  assert.match(forecast, /HarvestForecastProps = \{ fields: Field\[\]; demoMode: boolean; \}/);
+  assert.match(forecast, /interface HarvestForecastProps \{ fields: Field\[\]; demoMode: boolean; \}/);
   assert.match(forecast, /if \(!demoMode\) \{/);
   assert.match(forecast, /Declared harvest dates/);
   assert.match(forecast, /No sample block statistics or projected baler counts are shown in live mode/);
