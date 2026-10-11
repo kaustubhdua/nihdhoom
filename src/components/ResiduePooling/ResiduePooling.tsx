@@ -305,7 +305,7 @@ export function ResiduePooling({ fields, demoMode }: Props) {
         </section>
       )}
 
-      {['buyer', 'dispatcher', 'admin'].includes(currentRole) && (
+      {currentRole === 'buyer' && (
         <section className="market-card">
           <div className="market-card-heading"><div><span className="market-card-kicker">{t('MATCH')}</span><h2>{t('Verified residue lots to match')}</h2></div><span className="market-count">{matchableLots.length}</span></div>
           {matchableLots.length === 0 ? <div className="market-empty">{t('No verified, available lots currently match this workspace.')}</div> : (
