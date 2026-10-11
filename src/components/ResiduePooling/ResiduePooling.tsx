@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, CheckCircle2, Clock3, Layers3, Plus, Users, Leaf as LeafIcon } from 'lucide-react';
 import { Field } from '../../types';
 import { supabase } from '../../lib/supabase';
+import { useAppLanguage } from '../../i18n/LanguageContext';
 
 type Pool = { id: string; name: string; target_tonnes: number; current_tonnes: number; status: string; buyer_demand_id?: string | null };
 type Demand = { id: string; buyer_name: string; target_tonnes: number; pickup_deadline: string; radius_km: number; status: string };
@@ -31,6 +32,7 @@ export function ResiduePooling({ fields, demoMode }: Props) {
   const [lots, setLots] = useState<SupplyLot[]>([]);
   const [offers, setOffers] = useState<BuyerOffer[]>([]);
   const [notice, setNotice] = useState('');
+  const { t } = useAppLanguage();
   const [poolQuantities, setPoolQuantities] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -146,16 +148,16 @@ export function ResiduePooling({ fields, demoMode }: Props) {
     <div className="farmer-surface farmer-market residue-pooling-surface space-y-5">
       <section className="market-hero-card">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div><div className="market-eyebrow"><Layers3 className="h-4 w-4" /> Residue-first marketplace</div><h1>Pool verified residue for offtake</h1><p>Pool fragmented, verified residue against buyer requirements before discussing impact or carbon value.</p></div>
-          {demoMode && <button onClick={createDemoPool} className="market-primary-action"><Plus className="h-3.5 w-3.5" /> Create demo pool</button>}
+          <div><div className="market-eyebrow"><Layers3 className="h-4 w-4" /> {t('Residue-first marketplace')}</div><h1>{t('Pool verified residue for offtake')}</h1><p>{t('Pool fragmented, verified residue against buyer requirements before discussing impact or carbon value.')}</p></div>
+          {demoMode && <button onClick={createDemoPool} className="market-primary-action"><Plus className="h-3.5 w-3.5" /> {t('Create demo pool')}</button>}
         </div>
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <section className="market-card">
-          <div className="market-card-heading"><div><span className="market-card-kicker">FIELD</span><h2>Field-derived supply</h2></div><span className="market-count">{localSupply.length} lots</span></div>
+          <div className="market-card-heading"><div><span className="market-card-kicker">FIELD</span><h2>{t('Field-derived supply')}</h2></div><span className="market-count">{localSupply.length} lots</span></div>
           <div className="mt-3 space-y-2">
-            {localSupply.length === 0 ? <div className="market-empty"><LeafIcon className="market-empty-icon" /><strong>No verified field supply yet</strong><p>Verified residue lots will appear here when they are ready for pooling.</p></div> : localSupply.map(s => (
+            {localSupply.length === 0 ? <div className="market-empty"><LeafIcon className="market-empty-icon" /><strong>{t('No verified field supply yet')}</strong><p>{t('Verified residue lots will appear here when they are ready for pooling.')}</p></div> : localSupply.map(s => (
               <div key={s.lotId} className="market-list-row market-supply-card">
                 <div className="min-w-0">
                   <div className="market-row-title">{s.tonnes.toFixed(2)} t {s.quality ? `· ${s.quality}` : ''}</div>
@@ -175,13 +177,13 @@ export function ResiduePooling({ fields, demoMode }: Props) {
         </section>
 
         <section className="market-card market-card-demand">
-          <div className="market-card-heading"><div><span className="market-card-kicker">BUYER</span><h2>Buyer demand</h2></div><span className="market-count">{demands.length} open</span></div>
+          <div className="market-card-heading"><div><span className="market-card-kicker">BUYER</span><h2>{t('Buyer demand')}</h2></div><span className="market-count">{demands.length} open</span></div>
           <div className="mt-3 space-y-2">
-            {demands.length === 0 ? <div className="market-empty"><Users className="market-empty-icon" /><strong>No buyer demand published yet</strong><p>Open buyer requirements will appear here with quantity, pickup window and radius.</p></div> : demands.map(d => (
+            {demands.length === 0 ? <div className="market-empty"><Users className="market-empty-icon" /><strong>{t('No buyer demand published yet')}</strong><p>{t('Open buyer requirements will appear here with quantity, pickup window and radius.')}</p></div> : demands.map(d => (
               <div key={d.id} className="market-demand-row">
                 <div className="flex justify-between"><span className="market-row-title">{d.buyer_name}</span><span className="market-tonnage">{d.target_tonnes} t</span></div>
                 <div className="market-row-meta">Pickup by {d.pickup_deadline} · radius {d.radius_km} km</div>
-                <button onClick={() => void createPoolFromDemand(d)} className="market-secondary-action"><ArrowRight className="h-3 w-3" /> Create pool</button>
+                <button onClick={() => void createPoolFromDemand(d)} className="market-secondary-action"><ArrowRight className="h-3 w-3" /> {t('Create pool')}</button>
               </div>
             ))}
           </div>
@@ -189,7 +191,7 @@ export function ResiduePooling({ fields, demoMode }: Props) {
       </div>
 
       <section className="market-card market-card-pools">
-        <div className="market-card-heading"><div><span className="market-card-kicker">POOL</span><h2>Residue Supply & Deal Pools</h2></div><span className="market-count">{visiblePools.length} pools</span></div>
+        <div className="market-card-heading"><div><span className="market-card-kicker">POOL</span><h2>{t('Residue Supply & Deal Pools')}</h2></div><span className="market-count">{visiblePools.length} pools</span></div>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           {visiblePools.map(p => {
             const pct = Math.min(100, Math.round((p.current_tonnes / Math.max(1, p.target_tonnes)) * 100));
@@ -201,10 +203,10 @@ export function ResiduePooling({ fields, demoMode }: Props) {
               <div className="market-progress-meta"><span>{p.current_tonnes.toFixed(1)} t pooled</span><span>{p.target_tonnes.toFixed(1)} t target</span></div>
               <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
                 <label className="block text-sm font-medium" htmlFor={`pool-quantity-${p.id}`}>
-                  Quantity to commit (tonnes)
+                  {t('Quantity to commit (tonnes)')}
                   <input id={`pool-quantity-${p.id}`} className="mt-1 w-full rounded-lg border border-emerald-900/20 bg-white px-3 py-2 text-base text-slate-900" type="number" inputMode="decimal" min="0.1" max={remaining} step="0.1" disabled={remaining <= 0} value={quantity} onChange={(event) => setPoolQuantities((previous) => ({ ...previous, [p.id]: event.target.value }))} />
                 </label>
-                <button disabled={remaining <= 0} onClick={() => void joinPool(p.id, Number(quantity))} className="market-secondary-action market-full-action disabled:cursor-not-allowed disabled:opacity-50"><CheckCircle2 className="h-3.5 w-3.5" /> {remaining <= 0 ? 'Pool full' : 'Join pool'}</button>
+                <button disabled={remaining <= 0} onClick={() => void joinPool(p.id, Number(quantity))} className="market-secondary-action market-full-action disabled:cursor-not-allowed disabled:opacity-50"><CheckCircle2 className="h-3.5 w-3.5" /> {remaining <= 0 ? '{t('Pool full')}' : '{t('Join pool')}'}</button>
               </div>
             </div>;
           })}
@@ -212,7 +214,7 @@ export function ResiduePooling({ fields, demoMode }: Props) {
       </section>
 
       {notice && <div className="market-notice">{notice}</div>}
-      <div className="market-footnote"><Clock3 className="h-3.5 w-3.5" /> Pooling locks only after quantity, quality, pickup window and buyer match are validated.</div>
+      <div className="market-footnote"><Clock3 className="h-3.5 w-3.5" /> {t('Pooling locks only after quantity, quality, pickup window and buyer match are validated.')}</div>
     </div>
   );
 }
