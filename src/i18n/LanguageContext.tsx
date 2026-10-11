@@ -4,6 +4,15 @@ export type AppLanguage = 'en' | 'hi';
 type LanguageContextValue = { language: AppLanguage; setLanguage: (language: AppLanguage) => void; t: (english: string) => string };
 
 const translations: Record<string, string> = {
+  'Choose your field and the day you want the machine to come. In Live mode, the final quote is decided by the server.': 'अपना खेत और मशीन आने की तारीख चुनें। लाइव मोड में अंतिम कीमत सर्वर तय करता है।',
+  'Booking steps': 'बुकिंग के चरण',
+  'Confirm': 'पुष्टि करें',
+  'Field': 'खेत',
+  'No bookable fields': 'बुकिंग के लिए कोई खेत उपलब्ध नहीं',
+  'Current status': 'वर्तमान स्थिति',
+  'Area': 'क्षेत्रफल',
+  'Location': 'स्थान',
+  'When should the machine come?': 'मशीन कब आनी चाहिए?',
   'Book Clearance': 'पराली उठाने की बुकिंग',
   'Track Clearance': 'उठान की स्थिति देखें',
   'Verify': 'सत्यापन करें',
