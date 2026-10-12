@@ -109,8 +109,12 @@ export default async function handler(req: any, res: any) {
       return Object.fromEntries(headers.map((header, index) => [header, columns[index]]));
     });
     const parseAcquiredAt = (item: Record<string, any>): string | null => {
-      const date = String(item.acq_date || '');
-      const time = String(item.acq_time || '').replace(/\D/g, '').padStart(4, '0');
+      const date = String(item.acq_date || '').trim();
+      const rawTime = String(item.acq_time ?? '').trim();
+      // An absent acquisition time is unknown, not midnight. Do not silently
+      // manufacture a timestamp from an empty or malformed provider field.
+      if (!/^\d{1,4}$/.test(rawTime)) return null;
+      const time = rawTime.padStart(4, '0');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{4}$/.test(time)) return null;
       const hours = Number(time.slice(0, 2));
       const minutes = Number(time.slice(2, 4));
