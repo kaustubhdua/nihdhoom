@@ -9,6 +9,7 @@ import type { ActiveTab } from '../Header';
 import {
   UserCheck,
   Mail,
+  Phone,
   MapPin,
   Shield,
   CreditCard,
@@ -17,6 +18,7 @@ import {
   Fingerprint,
   Landmark,
   MailCheck,
+  Smartphone,
   Camera,
   Wheat,
   Loader2,
@@ -38,7 +40,7 @@ const STEPS: { id: KYCStep; label: string; sublabel: string; icon: React.FC<{ cl
 const STEP_ORDER: KYCStep[] = ['PHONE', 'OTP', 'CONSENT', 'AADHAAR', 'FACE_SCAN', 'BANK', 'LAND_RECORDS', 'DONE'];
 const DEMO_MODE = import.meta.env.VITE_NIRDHOOM_DEMO_MODE === 'true';
 
-// Live accounts only use steps that talk to real services: phone, OTP, consent,
+// Live accounts only use steps that talk to real services: email, OTP, consent,
 // then a real field. The identity, selfie and bank adapters stay demo-only.
 const LIVE_ORDER: KYCStep[] = ['PHONE', 'OTP', 'CONSENT', 'LAND_RECORDS', 'DONE'];
 const LIVE_LABELS: Partial<Record<KYCStep, { label: string; sublabel: string }>> = {
@@ -180,7 +182,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
     try {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
-        setFieldError('Your session expired. Please verify your phone again.');
+        setFieldError('Your session expired. Please verify your email again.');
         return;
       }
       const { data, error } = await supabase
@@ -391,7 +393,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
               <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2.5 py-1 text-[11px] font-black text-amber-800">{DEMO_MODE ? 'SIMULATION' : 'LIVE OTP'}</span>
             </div>
             <p className="text-sm text-emerald-950/70 mt-2 max-w-2xl leading-6">
-              Verify your mobile number first. We’ll ask for consent and field details only when you need those services. SMS delivery depends on the configured Supabase phone provider.
+              Verify your email address first. We’ll ask for consent and field details only when you need those services. Email delivery depends on the configured Supabase SMTP provider.
             </p>
           </div>
         </div>
@@ -460,7 +462,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
           <div className="ui-card flex min-h-[400px] flex-col gap-4 !p-6">
             {(loading || fieldBusy) && (
               <div className="flex justify-center rounded-xl bg-amber-50 px-4 py-3 text-amber-900" role="status" aria-live="polite">
-                <LatticeLoader label={fieldBusy ? 'Saving field' : currentStep === 'OTP' ? 'Verifying phone' : 'Sending secure code'} color="#92400e" doneColor="#16a34a" cellSize={7} gap={2} fontSize={13} step={80} />
+                <LatticeLoader label={fieldBusy ? 'Saving field' : currentStep === 'OTP' ? 'Verifying email' : 'Sending secure code'} color="#92400e" doneColor="#16a34a" cellSize={7} gap={2} fontSize={13} step={80} />
               </div>
             )}
             {currentStep === 'PHONE' && (
@@ -519,7 +521,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                   className="ui-btn is-primary is-lg is-block mt-auto"
                 >
                   {loading ? <LatticeLoader label="Sending OTP" color="#ffffff" cellSize={4} gap={1} fontSize={12} showTimer={false} /> : <Sparkles className="w-4 h-4" />}
-                  {DEMO_MODE ? t('Send Demo OTP') : t('Send OTP via SMS')}
+                  {DEMO_MODE ? t('Send Demo OTP') : t('Send OTP via Email')}
                 </button>
               </>
             )}
@@ -578,7 +580,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                     />
                   </div>
                   <p className="mt-3 text-xs text-slate-500 text-center">
-                    Enter the code from the SMS. It verifies only this phone number; never share it with anyone.
+                    Enter the code sent to your email address. It verifies your email; never share the code with anyone.
                   </p>
                 </div>
 
@@ -901,7 +903,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                 <div>
                   <div className="text-2xl font-black text-emerald-400 font-['Outfit']">Your NIRDHOOM account is ready</div>
                   <p className="mx-auto mt-2 max-w-sm text-xs leading-relaxed text-slate-400">
-                    {name || 'Your'} account is linked to +91 {phone}.{savedField ? ` Field ${savedField.khasra_no} (${Number(savedField.acreage).toFixed(2)} acres, ${savedField.village}) is registered and waiting for a verifier to check its boundary.` : ''}
+                    {name || 'Your'} account is verified with {email || 'your email address'}.{savedField ? ` Field ${savedField.khasra_no} (${Number(savedField.acreage).toFixed(2)} acres, ${savedField.village}) is registered and waiting for a verifier to check its boundary.` : ''}
                   </p>
                 </div>
                 <div className="flex w-full max-w-sm flex-col gap-2">
@@ -983,7 +985,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                 <div className="grid grid-cols-2 gap-2 w-full max-w-sm text-xs">
                   {[
                     { label: 'Farmer ID', value: `NRD-FMR-${Date.now().toString().slice(-6)}` },
-                    { label: 'Phone verified', value: `+91 ${phone || '••••••••••'}` },
+                    { label: 'Email verified', value: email || 'Not provided' },
                     { label: 'Khasra', value: khasra || '412/1-2' },
                     { label: 'Acreage', value: `${acreage || '3.5'} acres` },
                   ].map((item) => (
@@ -1005,7 +1007,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
           </div>
           {!DEMO_MODE && userId && (
             <p className="mt-3 text-center text-xs text-slate-500">
-              Signed in{phone ? ` as +91 ${phone}` : ''}.{' '}
+              Signed in{email ? ` as ${email}` : ''}.{' '}
               <button type="button" className="font-bold underline" onClick={() => void signOut()}>Sign out</button>
             </p>
           )}
