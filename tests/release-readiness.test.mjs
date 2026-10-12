@@ -31,11 +31,14 @@ test('live assistant requests require authentication unless demo mode is explici
   assert.match(assistant, /const authRequired=!demoMode\|\|process\.env\.REQUIRE_AUTH_FOR_AI==='true'\|\|aiConfigured\|\|Boolean\(field\?\.dbId\)/);
 });
 
-test('production auth still requires actual Supabase phone OTP and never fakes live OTP', () => {
+test('production farmer auth uses actual Supabase email OTP and never fakes live OTP', () => {
   const onboarding = read('src/components/FarmerOnboarding/FarmerOnboarding.tsx');
   assert.match(onboarding, /signInWithOtp/);
   assert.match(onboarding, /verifyOtp/);
-  assert.match(onboarding, /type: 'sms'/);
+  assert.match(onboarding, /email: normalizedEmail/);
+  assert.match(onboarding, /type: 'email'/);
+  assert.match(onboarding, /Email OTP delivery requires email auth and SMTP configured in Supabase/);
+  assert.doesNotMatch(onboarding, /type: 'sms'/);
   assert.match(onboarding, /if \(DEMO_MODE\)/);
   assert.match(onboarding, /Live authentication is not configured/);
 });
