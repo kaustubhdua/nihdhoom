@@ -180,6 +180,14 @@ Run in staging with dedicated farmer, operator, dispatcher, verifier, buyer, and
 
 **Status rule:** until the gates above have evidence, describe NIRDHOOM as a prototype/integration foundation under release validation—not as production-complete.
 
+## Verification checkpoint — FIRMS hardening and runtime-log review (2026-10-12)
+
+- Latest FIRMS implementation/test candidate: `7787705725e490c14381ad6c9d8c5d980475a55b`. The workflow has passed dependency installation, production dependency audit, TypeScript syntax check, repository audit, migration-bundle consistency, unit/source-contract tests, isolated PostgreSQL atomic-completion/consent/P0-hardening tests, and production build. At the last check, dispatch dependency installation was still running; do not record the full workflow as green until the remaining dispatch checks and job completion pass.
+- Vercel runtime logs for the current Production project show `ERR_MODULE_NOT_FOUND` for `api/_lib/rateLimit` from the deployed `/api/dispatch` and `/api/firms` routes on an older `main` deployment. The current hardening branch uses explicit `.js` import suffixes for these route imports and passes TypeScript/build checks, but that is not a fix to Production until a verified deployment containing the commit is built and smoke-tested. Do not promote it before all required database and end-to-end release gates are resolved.
+- The grouped Vercel runtime-error query returned no grouped errors for its selected window, while individual runtime logs contained the import-resolution failures above. Prefer the specific log records over the absence of grouped clusters when assessing these routes.
+- A scan of the current branch's TypeScript API files found no remaining extensionless imports of `./_lib/rateLimit`. This is a source scan, not a deployed-route test.
+- No production deployment or production database migration was performed as part of this checkpoint.
+
 ## Verification checkpoint — 2026-10-12 (release branch)
 
 - Latest verified source commit at this checkpoint: `ee96bcdd4c432f928a912e2f82ba68e5be7ebb8b`.
