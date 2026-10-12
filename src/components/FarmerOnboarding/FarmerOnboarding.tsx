@@ -642,7 +642,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                     try {
                       const { data: userData } = await supabase.auth.getUser();
                       if (!userData.user) {
-                        setOtpError('Your session expired. Please verify your phone again.');
+                        setOtpError('Your session expired. Please verify your email again.');
                         return;
                       }
                       const { error: consentError } = await supabase.rpc('record_farmer_network_consent');
