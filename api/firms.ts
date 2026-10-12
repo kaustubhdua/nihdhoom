@@ -150,7 +150,7 @@ export default async function handler(req: any, res: any) {
         raw: item,
       };
     });
-    const uniqueRows = [...new Map(providerRows.map(row => [row.provider_observation_key, row])).values()];
+    const uniqueRows = [...new Map<string, typeof providerRows[number]>(providerRows.map(row => [row.provider_observation_key, row])).values()];
     const baseHeaders = {
       apikey: serviceRoleKey,
       Authorization: `Bearer ${serviceRoleKey}`,

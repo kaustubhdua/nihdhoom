@@ -19,7 +19,7 @@ test('FIRMS ingestion requires an authenticated field and server-only persistenc
 test('FIRMS persistence is idempotent and links observations to fields separately', () => {
   const api = read('api/firms.ts');
   assert.match(api, /provider_observation_key/);
-  assert.match(api, /new Map<string, typeof parsed\[number\]>/);
+  assert.match(api, /new Map<string, typeof providerRows\[number\]>\(providerRows\.map\(row => \[row\.provider_observation_key, row\]\)\)/);
   assert.match(api, /on_conflict=provider_observation_key/);
   assert.match(api, /on_conflict=observation_id,field_id/);
   assert.match(api, /firms_observation_field_matches/);
