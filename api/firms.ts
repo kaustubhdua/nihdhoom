@@ -108,11 +108,46 @@ export default async function handler(req: any, res: any) {
       const columns = line.split(',');
       return Object.fromEntries(headers.map((header, index) => [header, columns[index]]));
     });
-    const parsed = observations.map(item => ({
-      ...item,
-      latitude: Number(item.latitude),
-      longitude: Number(item.longitude),
-    })).filter(item => Number.isFinite(item.latitude) && Number.isFinite(item.longitude));
+    const parseAcquiredAt = (item: Record<string, any>): string | null => {
+      const date = String(item.acq_date || '');
+      const time = String(item.acq_time || '').replace(/\\D/g, '').padStart(4, '0');
+      if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || !/^\\d{4}$/.test(time)) return null;
+      const hours = Number(time.slice(0, 2));
+      const minutes = Number(time.slice(2, 4));
+      if (hours > 23 || minutes > 59) return null;
+      const parsedDate = new Date(`${date}T${time.slice(0, 2)}:${time.slice(2, 4)}:00Z`);
+      return Number.isNaN(parsedDate.getTime()) ? null : parsedDate.toISOString().replace(/\\.\\d{3}Z$/, 'Z');
+    };
+    const source = 'NASA FIRMS';
+    const sensor = 'VIIRS_NOAA21_NRT';
+    const parsed = observations.map(item => {
+      const latitude = Number(item.latitude);
+      const longitude = Number(item.longitude);
+      const acquiredAt = parseAcquiredAt(item);
+      const confidence = item.confidence == null ? null : String(item.confidence);
+      const frp = item.frp == null || item.frp === '' ? null : Number(item.frp);
+      const satellite = String(item.satellite || '');
+      const providerKey = acquiredAt
+        ? [source, sensor, String(latitude), String(longitude), acquiredAt].join('|')
+        : [source, sensor, String(latitude), String(longitude), 'undated', satellite, frp == null || !Number.isFinite(frp) ? '' : frp.toFixed(3), confidence || ''].join('|');
+      return {
+        provider_observation_key: providerKey,
+        source,
+        sensor,
+        latitude,
+        longitude,
+        acquired_at: acquiredAt,
+        confidence,
+        frp: frp != null && Number.isFinite(frp) ? frp : null,
+        raw: item,
+      };
+    }).filter(item => Number.isFinite(item.latitude) && item.latitude >= -90 && item.latitude <= 90
+      && Number.isFinite(item.longitude) && item.longitude >= -180 && item.longitude <= 180);
+    // De-duplicate provider keys before a PostgREST upsert; PostgreSQL rejects
+    // one ON CONFLICT statement if the same target row appears twice.
+    const uniqueRows = [...new Map<string, typeof parsed[number]>(
+      parsed.map(row => [row.provider_observation_key, row]),
+    ).values()];
     const matched = polygon.length >= 3
       ? parsed.filter(item => inside({ lat: item.latitude, lng: item.longitude }, polygon))
       : [];
@@ -156,36 +191,35 @@ export default async function handler(req: any, res: any) {
       Authorization: `Bearer ${serviceRoleKey}`,
       'Content-Type': 'application/json',
     };
-    const persistedResponse = await fetch(
-      `${supabaseUrl}/rest/v1/firms_observations?on_conflict=provider_observation_key`,
-      {
-        method: 'POST',
-        headers: { ...baseHeaders, Prefer: 'resolution=merge-duplicates,return=representation' },
-        body: JSON.stringify(uniqueRows),
-        signal: AbortSignal.timeout(8000),
-      },
-    );
-    if (!persistedResponse.ok) {
-      return res.status(502).json({ error: 'FIRMS observations could not be persisted' });
-    }
-    const persistedRows = await persistedResponse.json();
-    if (!Array.isArray(persistedRows) || persistedRows.length !== uniqueRows.length) {
-      return res.status(502).json({ error: 'FIRMS persistence returned an incomplete observation set' });
+    let persistedRows: any[] = [];
+    if (uniqueRows.length) {
+      const persistedResponse = await fetch(
+        `${supabaseUrl}/rest/v1/firms_observations?on_conflict=provider_observation_key&select=id,provider_observation_key,source,sensor,latitude,longitude,acquired_at,confidence,frp`,
+        {
+          method: 'POST',
+          headers: { ...baseHeaders, Prefer: 'resolution=merge-duplicates,return=representation' },
+          body: JSON.stringify(uniqueRows),
+          signal: AbortSignal.timeout(8000),
+        },
+      );
+      if (!persistedResponse.ok) {
+        return res.status(502).json({ error: 'FIRMS observations could not be persisted' });
+      }
+      persistedRows = await persistedResponse.json().catch(() => []);
+      if (!Array.isArray(persistedRows) || persistedRows.length !== uniqueRows.length || persistedRows.some(row => !row.id || !row.provider_observation_key)) {
+        return res.status(502).json({ error: 'FIRMS persistence returned an incomplete observation set' });
+      }
     }
     const rowByKey = new Map(persistedRows.map((row: any) => [row.provider_observation_key, row]));
-    const matchedKeys = new Set(matched.map(item => {
-      const acquiredAtRaw = item.acq_date && item.acq_time !== undefined
-        ? `${String(item.acq_date).slice(0, 10)}T${String(item.acq_time).padStart(4, '0').slice(0, 2)}:${String(item.acq_time).padStart(4, '0').slice(2, 4)}:00Z`
-        : null;
-      const acquiredAt = acquiredAtRaw && !Number.isNaN(Date.parse(acquiredAtRaw))
-        ? new Date(acquiredAtRaw).toISOString()
-        : null;
-      return [
-        'NASA FIRMS', 'VIIRS_NOAA21_NRT', item.latitude.toFixed(5), item.longitude.toFixed(5),
-        acquiredAt || 'undated', String(item.satellite || ''), String(item.frp || ''),
-        String(item.confidence || ''),
-      ].join('|');
-    }));
+    const matchedKeys = new Set(
+      uniqueRows.filter(item => matched.some(hit =>
+        hit.latitude === item.latitude && hit.longitude === item.longitude &&
+        parseAcquiredAt(hit) === item.acquired_at &&
+        String(hit.satellite || '') === String(item.raw.satellite || '') &&
+        String(hit.frp || '') === String(item.raw.frp || '') &&
+        String(hit.confidence || '') === String(item.raw.confidence || '')
+      )).map(item => item.provider_observation_key),
+    );
     const matches = [...matchedKeys].map(key => {
       const observation = rowByKey.get(key) as any;
       return observation?.id ? {
@@ -222,14 +256,15 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({
       source: 'NASA FIRMS',
       sensor: 'VIIRS_NOAA21_NRT',
-      count: parsed.length,
+      count: persistedRows.length,
       matched_count: persistedMatched.length,
       radius_km: radius,
       polygon_checked: polygon.length >= 3,
       verification_status: 'DETECTION_SCREENING_NOT_PROOF_OF_NO_BURNING',
-      observations: parsed,
+      observations: persistedRows,
       matched_observations: persistedMatched,
       persistence_status: 'SAVED_WITH_IDEMPOTENT_PROVIDER_KEYS',
+      interpretation: 'No detection or missing observation is not proof that burning did not occur.',
       queried_at: new Date().toISOString(),
     });
   } catch {
