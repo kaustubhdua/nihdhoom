@@ -116,7 +116,8 @@ export default async function handler(req: any, res: any) {
       const minutes = Number(time.slice(2, 4));
       if (hours > 23 || minutes > 59) return null;
       const parsedDate = new Date(`${date}T${time.slice(0, 2)}:${time.slice(2, 4)}:00Z`);
-      return Number.isNaN(parsedDate.getTime()) ? null : parsedDate.toISOString().replace(/\\.\\d{3}Z$/, 'Z');
+      if (Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date) return null;
+      return parsedDate.toISOString().replace(/\\.\\d{3}Z$/, 'Z');
     };
     const source = 'NASA FIRMS';
     const sensor = 'VIIRS_NOAA21_NRT';
