@@ -29,6 +29,9 @@ test('FIRMS persistence is idempotent and links observations to fields separatel
 test('FIRMS observations validate timestamps and retain distinguishing provider attributes', () => {
   const api = read('api/firms.ts');
   assert.match(api, /replace\(\/\\D\/g/);
+  assert.match(api, /const rawTime = String\(item\.acq_time \?\? ''\)\.trim\(\)/);
+  assert.match(api, /!\/\^\\d\{1,4\}\$\/\.test\(rawTime\)/);
+  assert.match(api, /const time = rawTime\.padStart\(4, '0'\)/);
   assert.match(api, /\^\\d\{4\}-\\d\{2\}-\\d\{2\}\$/);
   assert.match(api, /parsedDate\.toISOString\(\)\.slice\(0, 10\) !== date/);
   assert.match(api, /latitude >= -90 && item\.latitude <= 90/);
