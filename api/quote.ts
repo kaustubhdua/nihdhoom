@@ -1,5 +1,5 @@
 declare const process: { env: Record<string, string | undefined> };
-import { rateLimit } from './_lib/rateLimit';
+import { rateLimit } from './_lib/rateLimit.js';
 
 async function requireConfiguredAuth(req: any) {
   const auth = String(req.headers?.authorization || '');

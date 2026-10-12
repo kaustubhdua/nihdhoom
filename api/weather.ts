@@ -1,5 +1,5 @@
 declare const process: { env: Record<string, string | undefined> };
-import { rateLimit } from './_lib/rateLimit';
+import { rateLimit } from './_lib/rateLimit.js';
 
 function json(res: any, status: number, body: unknown) {
   res.setHeader?.('Cache-Control', 'no-store');

@@ -1,4 +1,4 @@
-import { rateLimit } from './_lib/rateLimit';
+import { rateLimit } from './_lib/rateLimit.js';
 declare const process: { env: Record<string, string | undefined> };
 
 type Point = { id: string; lat: number; lng: number; acres?: number; deadline?: string };

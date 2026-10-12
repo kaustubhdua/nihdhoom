@@ -1,5 +1,5 @@
 declare const process: { env: Record<string, string | undefined> };
-import { rateLimit } from './_lib/rateLimit';
+import { rateLimit } from './_lib/rateLimit.js';
 
 type Coordinate = { lat: number; lng: number };
 const validPoint = (p: any): p is Coordinate =>
@@ -47,8 +47,6 @@ export default async function handler(req: any, res: any) {
 
   const key = process.env.FIRMS_MAP_KEY || process.env.NASA_FIRMS_API;
   if (!key) return res.status(503).json({ error: 'FIRMS_MAP_KEY (or legacy NASA_FIRMS_API) is not configured' });
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) return res.status(503).json({ error: 'Server-side Supabase persistence is not configured; FIRMS results were not saved.' });
 
   res.setHeader?.('Cache-Control', 'no-store');
   const body = req.body || {};
@@ -106,128 +104,30 @@ export default async function handler(req: any, res: any) {
     const csv = await response.text();
     const lines = csv.trim().split(/\r?\n/);
     const headers = (lines.shift() || '').split(',');
-    const rawObservations = lines.slice(0, 500).map(line => {
+    const observations = lines.slice(0, 500).map(line => {
       const columns = line.split(',');
       return Object.fromEntries(headers.map((header, index) => [header, columns[index]]));
     });
-
-    const parseAcquiredAt = (item: Record<string, any>): string | null => {
-      const date = String(item.acq_date || '');
-      const time = String(item.acq_time || '').replace(/\D/g, '').padStart(4, '0');
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{4}$/.test(time)) return null;
-      const hours = Number(time.slice(0, 2));
-      const minutes = Number(time.slice(2, 4));
-      if (hours > 23 || minutes > 59) return null;
-      const parsedDate = new Date(`${date}T${time.slice(0, 2)}:${time.slice(2, 4)}:00Z`);
-      return Number.isNaN(parsedDate.getTime()) ? null : parsedDate.toISOString().replace(/\.\d{3}Z$/, 'Z');
-    };
-
-    const source = 'NASA FIRMS';
-    const sensor = 'VIIRS_NOAA21_NRT';
-    const parsed = rawObservations.map(item => {
-      const latitude = Number(item.latitude);
-      const longitude = Number(item.longitude);
-      const acquiredAt = parseAcquiredAt(item);
-      const confidence = item.confidence == null ? null : String(item.confidence);
-      const frp = item.frp == null || item.frp === '' ? null : Number(item.frp);
-      const satellite = String(item.satellite || '');
-      const providerKey = acquiredAt
-        ? [source, sensor, String(latitude), String(longitude), acquiredAt].join('|')
-        : [source, sensor, String(latitude), String(longitude), 'undated', satellite, frp == null || !Number.isFinite(frp) ? '' : frp.toFixed(3), confidence || ''].join('|');
-      return {
-        provider_observation_key: providerKey,
-        source,
-        sensor,
-        latitude,
-        longitude,
-        acquired_at: acquiredAt,
-        confidence,
-        frp: frp != null && Number.isFinite(frp) ? frp : null,
-        matched_field_id: null,
-        raw: item,
-      };
-    }).filter(item => Number.isFinite(item.latitude) && Number.isFinite(item.longitude)
-      && item.latitude >= -90 && item.latitude <= 90 && item.longitude >= -180 && item.longitude <= 180);
-
-    // De-duplicate input keys before PostgREST upsert; PostgreSQL rejects a single
-    // ON CONFLICT statement that attempts to update the same row twice.
-    const uniqueByKey = new Map<string, typeof parsed[number]>();
-    for (const item of parsed) uniqueByKey.set(item.provider_observation_key, item);
-    const uniqueParsed = [...uniqueByKey.values()];
-    const matchedKeys = new Set(
-      polygon.length >= 3
-        ? uniqueParsed.filter(item => inside({ lat: item.latitude, lng: item.longitude }, polygon))
-          .map(item => item.provider_observation_key)
-        : [],
-    );
-
-    const queriedAt = new Date().toISOString();
-    let persisted: Array<{
-      id: string; provider_observation_key: string; source: string; sensor: string;
-      latitude: number; longitude: number; acquired_at: string | null;
-      confidence: string | null; frp: number | null;
-    }> = [];
-
-    if (uniqueParsed.length) {
-      const persistResponse = await fetch(
-        `${supabaseUrl}/rest/v1/firms_observations?on_conflict=provider_observation_key&select=id,provider_observation_key,source,sensor,latitude,longitude,acquired_at,confidence,frp`,
-        {
-          method: 'POST',
-          headers: {
-            apikey: serviceRoleKey,
-            Authorization: `Bearer ${serviceRoleKey}`,
-            'Content-Type': 'application/json',
-            Prefer: 'resolution=merge-duplicates,return=representation',
-          },
-          body: JSON.stringify(uniqueParsed),
-          signal: AbortSignal.timeout(10000),
-        },
-      );
-      if (!persistResponse.ok) return res.status(502).json({ error: 'FIRMS observations were fetched but could not be persisted safely; retry later.' });
-      persisted = await persistResponse.json().catch(() => []);
-      if (!Array.isArray(persisted) || persisted.length !== uniqueParsed.length || persisted.some(row => !row.id || !row.provider_observation_key)) {
-        return res.status(502).json({ error: 'FIRMS persistence returned an incomplete record set; retry later.' });
-      }
-    }
-
-    const matchedRows = persisted.filter(item => matchedKeys.has(item.provider_observation_key));
-    if (matchedRows.length) {
-      const matchResponse = await fetch(
-        `${supabaseUrl}/rest/v1/firms_observation_field_matches?on_conflict=observation_id,field_id`,
-        {
-          method: 'POST',
-          headers: {
-            apikey: serviceRoleKey,
-            Authorization: `Bearer ${serviceRoleKey}`,
-            'Content-Type': 'application/json',
-            Prefer: 'resolution=merge-duplicates,return=minimal',
-          },
-          body: JSON.stringify(matchedRows.map(item => ({
-            observation_id: item.id,
-            field_id: fieldId,
-            match_type: 'point_in_polygon',
-            source,
-            matched_at: queriedAt,
-          }))),
-          signal: AbortSignal.timeout(10000),
-        },
-      );
-      if (!matchResponse.ok) return res.status(502).json({ error: 'FIRMS observations were saved but field matching could not be confirmed; retry screening.' });
-    }
+    const parsed = observations.map(item => ({
+      ...item,
+      latitude: Number(item.latitude),
+      longitude: Number(item.longitude),
+    })).filter(item => Number.isFinite(item.latitude) && Number.isFinite(item.longitude));
+    const matched = polygon.length >= 3
+      ? parsed.filter(item => inside({ lat: item.latitude, lng: item.longitude }, polygon))
+      : [];
 
     return res.status(200).json({
-      source,
-      sensor,
-      count: persisted.length,
-      matched_count: matchedRows.length,
+      source: 'NASA FIRMS',
+      sensor: 'VIIRS_NOAA21_NRT',
+      count: parsed.length,
+      matched_count: matched.length,
       radius_km: radius,
       polygon_checked: polygon.length >= 3,
       verification_status: 'DETECTION_SCREENING_NOT_PROOF_OF_NO_BURNING',
-      observations: persisted,
-      matched_observations: matchedRows,
-      queried_at: queriedAt,
-      persistence: 'SAVED_WITH_IDEMPOTENT_PROVIDER_KEYS',
-      interpretation: 'No detection or missing observation is not proof that burning did not occur.',
+      observations: parsed,
+      matched_observations: matched,
+      queried_at: new Date().toISOString(),
     });
   } catch {
     return res.status(502).json({ error: 'FIRMS is unavailable; retry later' });

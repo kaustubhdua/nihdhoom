@@ -1,4 +1,4 @@
-import { rateLimit } from '../_lib/rateLimit';
+import { rateLimit } from '../_lib/rateLimit.js';
 declare const process: { env: Record<string, string | undefined> };
 
 async function verifyDispatcher(req: any) {
