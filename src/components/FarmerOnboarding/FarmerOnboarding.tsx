@@ -515,7 +515,7 @@ export const FarmerOnboarding: React.FC<Props> = ({ onNavigate, onFieldsChanged 
                 <button
                   type="button"
                   onClick={sendLiveOtp}
-                  disabled={phoneDigits.length !== 10 || !name.trim() || loading || (!DEMO_MODE && !supabase)}
+                  disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) || !name.trim() || loading || (!DEMO_MODE && !supabase)}
                   className="ui-btn is-primary is-lg is-block mt-auto"
                 >
                   {loading ? <LatticeLoader label="Sending OTP" color="#ffffff" cellSize={4} gap={1} fontSize={12} showTimer={false} /> : <Sparkles className="w-4 h-4" />}
