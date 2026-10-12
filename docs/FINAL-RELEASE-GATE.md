@@ -179,3 +179,15 @@ Run in staging with dedicated farmer, operator, dispatcher, verifier, buyer, and
 - [ ] A named release owner signs off on the exact commit, database migration set, environment, smoke-test evidence, and rollback target.
 
 **Status rule:** until the gates above have evidence, describe NIRDHOOM as a prototype/integration foundation under release validation—not as production-complete.
+
+## Verification checkpoint — 2026-10-12 (release branch)
+
+- Latest verified source commit at this checkpoint: `ee96bcdd4c432f928a912e2f82ba68e5be7ebb8b`.
+- Full GitHub Actions run [#1292](https://github.com/kaustubhdua/nihdhoom/actions/runs/38182478257) completed successfully on that exact SHA. Verified steps include dependency install, production dependency audit, TypeScript syntax check, repository audit, generated migration-bundle consistency, unit/source-contract tests, isolated PostgreSQL atomic-completion and consent-audit tests, P0 booking-capacity concurrency/provenance/privilege tests, production build, and dispatch-service syntax/unit tests.
+- Vercel preview deployment `dpl_BrxJFkR8prEKSCmzo9LfhycyToqY` is READY for the same branch and SHA. Its successful status is preview evidence only; it is not production promotion or live integration acceptance.
+- The automated test run did not exercise authenticated SMS OTP delivery, real Telegram send/webhook delivery, live NASA FIRMS requests, a real OR-Tools service, Android offline capture, or the complete signed-in farmer/operator/verifier browser journey.
+- A direct live HTTP request to the preview could not be completed from the current execution environment because outbound DNS resolution was unavailable. Do not count the preview URL as runtime-smoke-tested on that basis.
+- A read-only production migration recheck still shows the P0 hardening and atomic job-completion migrations are not in the production ledger. Production migration reconciliation, isolated staging validation, exact production-alias verification, provider smoke tests, browser/device acceptance, and backup/restore testing remain open.
+- No production database DDL/migration was applied and no preview was promoted by this checkpoint.
+
+**Interpretation:** automated CI is green for this commit. The overall release gate remains **NOT PASSED** until the remaining environment-dependent checks above have evidence. Never equate a green build with proof that every live integration works.
