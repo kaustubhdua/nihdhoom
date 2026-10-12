@@ -117,16 +117,119 @@ export default async function handler(req: any, res: any) {
       ? parsed.filter(item => inside({ lat: item.latitude, lng: item.longitude }, polygon))
       : [];
 
+    // Persist observations through the server-only service role. Provider keys
+    // make retries idempotent; field matches are stored separately because one
+    // satellite observation may intersect more than one field.
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceRoleKey) {
+      return res.status(503).json({ error: 'Server-side Supabase persistence is not configured' });
+    }
+    const providerRows = parsed.map(item => {
+      const acquiredAtRaw = item.acq_date && item.acq_time !== undefined
+        ? `${String(item.acq_date).slice(0, 10)}T${String(item.acq_time).padStart(4, '0').slice(0, 2)}:${String(item.acq_time).padStart(4, '0').slice(2, 4)}:00Z`
+        : null;
+      const acquiredAt = acquiredAtRaw && !Number.isNaN(Date.parse(acquiredAtRaw))
+        ? new Date(acquiredAtRaw).toISOString()
+        : null;
+      const source = 'NASA FIRMS';
+      const sensor = 'VIIRS_NOAA21_NRT';
+      const keyParts = [
+        source, sensor, item.latitude.toFixed(5), item.longitude.toFixed(5),
+        acquiredAt || 'undated', String(item.satellite || ''), String(item.frp || ''),
+        String(item.confidence || ''),
+      ];
+      return {
+        provider_observation_key: keyParts.join('|'),
+        source,
+        sensor,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        acquired_at: acquiredAt,
+        frp: Number.isFinite(Number(item.frp)) ? Number(item.frp) : null,
+        confidence: item.confidence == null ? null : String(item.confidence),
+        raw: item,
+      };
+    });
+    const uniqueRows = [...new Map(providerRows.map(row => [row.provider_observation_key, row])).values()];
+    const baseHeaders = {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      'Content-Type': 'application/json',
+    };
+    const persistedResponse = await fetch(
+      `${supabaseUrl}/rest/v1/firms_observations?on_conflict=provider_observation_key`,
+      {
+        method: 'POST',
+        headers: { ...baseHeaders, Prefer: 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify(uniqueRows),
+        signal: AbortSignal.timeout(8000),
+      },
+    );
+    if (!persistedResponse.ok) {
+      return res.status(502).json({ error: 'FIRMS observations could not be persisted' });
+    }
+    const persistedRows = await persistedResponse.json();
+    if (!Array.isArray(persistedRows) || persistedRows.length !== uniqueRows.length) {
+      return res.status(502).json({ error: 'FIRMS persistence returned an incomplete observation set' });
+    }
+    const rowByKey = new Map(persistedRows.map((row: any) => [row.provider_observation_key, row]));
+    const matchedKeys = new Set(matched.map(item => {
+      const acquiredAtRaw = item.acq_date && item.acq_time !== undefined
+        ? `${String(item.acq_date).slice(0, 10)}T${String(item.acq_time).padStart(4, '0').slice(0, 2)}:${String(item.acq_time).padStart(4, '0').slice(2, 4)}:00Z`
+        : null;
+      const acquiredAt = acquiredAtRaw && !Number.isNaN(Date.parse(acquiredAtRaw))
+        ? new Date(acquiredAtRaw).toISOString()
+        : null;
+      return [
+        'NASA FIRMS', 'VIIRS_NOAA21_NRT', item.latitude.toFixed(5), item.longitude.toFixed(5),
+        acquiredAt || 'undated', String(item.satellite || ''), String(item.frp || ''),
+        String(item.confidence || ''),
+      ].join('|');
+    }));
+    const matches = [...matchedKeys].map(key => {
+      const observation = rowByKey.get(key) as any;
+      return observation?.id ? {
+        observation_id: observation.id,
+        field_id: fieldId,
+        match_type: 'point_in_polygon',
+        source: 'NASA FIRMS',
+      } : null;
+    }).filter(Boolean);
+    if (matches.length) {
+      const matchResponse = await fetch(
+        `${supabaseUrl}/rest/v1/firms_observation_field_matches?on_conflict=observation_id,field_id`,
+        {
+          method: 'POST',
+          headers: { ...baseHeaders, Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify(matches),
+          signal: AbortSignal.timeout(8000),
+        },
+      );
+      if (!matchResponse.ok) {
+        return res.status(502).json({ error: 'FIRMS field matches could not be persisted' });
+      }
+    }
+    const persistedMatched = [...matchedKeys].map(key => {
+      const observation = rowByKey.get(key) as any;
+      return observation ? {
+        ...observation,
+        id: observation.id,
+        latitude: Number(observation.latitude),
+        longitude: Number(observation.longitude),
+      } : null;
+    }).filter(Boolean);
+
     return res.status(200).json({
       source: 'NASA FIRMS',
       sensor: 'VIIRS_NOAA21_NRT',
       count: parsed.length,
-      matched_count: matched.length,
+      matched_count: persistedMatched.length,
       radius_km: radius,
       polygon_checked: polygon.length >= 3,
       verification_status: 'DETECTION_SCREENING_NOT_PROOF_OF_NO_BURNING',
       observations: parsed,
-      matched_observations: matched,
+      matched_observations: persistedMatched,
+      persistence_status: 'SAVED_WITH_IDEMPOTENT_PROVIDER_KEYS',
       queried_at: new Date().toISOString(),
     });
   } catch {
