@@ -154,32 +154,17 @@ export default async function handler(req: any, res: any) {
     if (!serviceRoleKey) {
       return res.status(503).json({ error: 'Server-side Supabase persistence is not configured' });
     }
-    const providerRows = parsed.map(item => {
-      const acquiredAtRaw = item.acq_date && item.acq_time !== undefined
-        ? `${String(item.acq_date).slice(0, 10)}T${String(item.acq_time).padStart(4, '0').slice(0, 2)}:${String(item.acq_time).padStart(4, '0').slice(2, 4)}:00Z`
-        : null;
-      const acquiredAt = acquiredAtRaw && !Number.isNaN(Date.parse(acquiredAtRaw))
-        ? new Date(acquiredAtRaw).toISOString()
-        : null;
-      const source = 'NASA FIRMS';
-      const sensor = 'VIIRS_NOAA21_NRT';
-      const keyParts = [
-        source, sensor, item.latitude.toFixed(5), item.longitude.toFixed(5),
-        acquiredAt || 'undated', String(item.satellite || ''), String(item.frp || ''),
-        String(item.confidence || ''),
-      ];
-      return {
-        provider_observation_key: keyParts.join('|'),
-        source,
-        sensor,
-        latitude: item.latitude,
-        longitude: item.longitude,
-        acquired_at: acquiredAt,
-        frp: Number.isFinite(Number(item.frp)) ? Number(item.frp) : null,
-        confidence: item.confidence == null ? null : String(item.confidence),
-        raw: item,
-      };
-    });
+    const providerRows = parsed.map(item => ({
+      provider_observation_key: item.provider_observation_key,
+      source: item.source,
+      sensor: item.sensor,
+      latitude: item.latitude,
+      longitude: item.longitude,
+      acquired_at: item.acquired_at,
+      frp: item.frp,
+      confidence: item.confidence,
+      raw: item.raw,
+    }));
     const uniqueRows = [...new Map<string, typeof providerRows[number]>(providerRows.map(row => [row.provider_observation_key, row])).values()];
     const baseHeaders = {
       apikey: serviceRoleKey,
@@ -207,13 +192,7 @@ export default async function handler(req: any, res: any) {
     }
     const rowByKey = new Map(persistedRows.map((row: any) => [row.provider_observation_key, row]));
     const matchedKeys = new Set(
-      uniqueRows.filter(item => matched.some(hit =>
-        hit.latitude === item.latitude && hit.longitude === item.longitude &&
-        parseAcquiredAt(hit) === item.acquired_at &&
-        String(hit.satellite || '') === String(item.raw.satellite || '') &&
-        String(hit.frp || '') === String(item.raw.frp || '') &&
-        String(hit.confidence || '') === String(item.raw.confidence || '')
-      )).map(item => item.provider_observation_key),
+      [...new Map(matched.map(item => [item.provider_observation_key, item])).keys()],
     );
     const matches = [...matchedKeys].map(key => {
       const observation = rowByKey.get(key) as any;
