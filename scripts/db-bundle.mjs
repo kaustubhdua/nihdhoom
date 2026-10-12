@@ -45,7 +45,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     '-- This bundle is for a NEW project only. Do not paste into an existing production database.',
     '-- Production history uses legacy server-assigned migration versions; see docs/DATABASE-RELEASE-LEDGER.md.',
     '-- The buyer-offer/transport workflow proposal is intentionally excluded until its staging authorization matrix passes.',
-    `-- Generated ${new Date().toISOString().slice(0, 10)} from ${names.length} approved migrations.`,
+    `-- Generated from ${names.length} approved migrations; deterministic output from migration-order.txt.`,
     '',
   ];
   for (const name of names) {
