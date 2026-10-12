@@ -143,11 +143,6 @@ export default async function handler(req: any, res: any) {
       };
     }).filter(item => Number.isFinite(item.latitude) && item.latitude >= -90 && item.latitude <= 90
       && Number.isFinite(item.longitude) && item.longitude >= -180 && item.longitude <= 180);
-    // De-duplicate provider keys before a PostgREST upsert; PostgreSQL rejects
-    // one ON CONFLICT statement if the same target row appears twice.
-    const uniqueRows = [...new Map<string, typeof parsed[number]>(
-      parsed.map(row => [row.provider_observation_key, row]),
-    ).values()];
     const matched = polygon.length >= 3
       ? parsed.filter(item => inside({ lat: item.latitude, lng: item.longitude }, polygon))
       : [];
