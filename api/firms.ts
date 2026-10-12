@@ -128,9 +128,18 @@ export default async function handler(req: any, res: any) {
       const confidence = item.confidence == null ? null : String(item.confidence);
       const frp = item.frp == null || item.frp === '' ? null : Number(item.frp);
       const satellite = String(item.satellite || '');
-      const providerKey = acquiredAt
-        ? [source, sensor, String(latitude), String(longitude), acquiredAt].join('|')
-        : [source, sensor, String(latitude), String(longitude), 'undated', satellite, frp == null || !Number.isFinite(frp) ? '' : frp.toFixed(3), confidence || ''].join('|');
+      // Include provider attributes as well as time/coordinates so distinct
+      // detections at the same rounded location/time are not collapsed.
+      const providerKey = [
+        source,
+        sensor,
+        latitude.toFixed(6),
+        longitude.toFixed(6),
+        acquiredAt || 'undated',
+        satellite,
+        frp == null || !Number.isFinite(frp) ? '' : frp.toFixed(3),
+        confidence || '',
+      ].join('|');
       return {
         provider_observation_key: providerKey,
         source,
