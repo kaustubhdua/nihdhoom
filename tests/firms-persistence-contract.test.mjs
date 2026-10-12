@@ -26,6 +26,18 @@ test('FIRMS persistence is idempotent and links observations to fields separatel
   assert.match(api, /SAVED_WITH_IDEMPOTENT_PROVIDER_KEYS/);
 });
 
+test('FIRMS observations validate timestamps and retain distinguishing provider attributes', () => {
+  const api = read('api/firms.ts');
+  assert.match(api, /replace\(\/\\D\/g/);
+  assert.match(api, /\^\\d\{4\}-\\d\{2\}-\\d\{2\}\$/);
+  assert.match(api, /parsedDate\.toISOString\(\)\.slice\(0, 10\) !== date/);
+  assert.match(api, /latitude >= -90 && item\.latitude <= 90/);
+  assert.match(api, /longitude >= -180 && item\.longitude <= 180/);
+  assert.match(api, /latitude\.toFixed\(6\)/);
+  assert.match(api, /longitude\.toFixed\(6\)/);
+  assert.match(api, /satellite,[\s\S]*frp == null[\s\S]*confidence/);
+});
+
 test('verification accepts only persisted field matches and never treats no detections as proof', () => {
   const sql = read('supabase/migrations/202610120005_nirdhoom_p0_booking_verification_privileges.sql');
   const ui = read('src/components/VerificationLayer/SatelliteAudit.tsx');
