@@ -2,12 +2,24 @@
 
 This runbook separates implementation from validation:
 
-- Implementation repository: NIRDHOOM (`kaustubhdua/nihdhoom`).
-- Isolated integration-test repository/environment: Saathi (`kaustubhdua/Saathi`).
-- Saathi Supabase test project: `ibvgxgvcqcfnoyrlwywa`.
-- NIRDHOOM Supabase project: `igqgtlmnwssjaoxkkzbm`.
+- **Implementation repository:** NIRDHOOM, `kaustubhdua/nihdhoom`.
+- **Production/live Supabase project:** NIRDHOOM, ref `igqgtlmnwssjaoxkkzbm`.
+- **Testing repository:** Saathi, `kaustubhdua/Saathi`.
+- **Isolated test Supabase project:** Saathi, ref `ibvgxgvcqcfnoyrlwywa`.
 
-Do not treat a healthy project status or a migration ledger as proof that the schema matches the checked-in migration chain. Do not reset either project or apply a migration to NIRDHOOM as part of routine validation.
+The owner confirmed this mapping on 2026-10-22. Never link the Saathi test project to the NIRDHOOM live app. Do not reset either project or apply a migration to NIRDHOOM as part of routine validation.
+
+## Current read-only findings — release blocked
+
+Read-only inspection of the live Supabase migration ledgers found:
+
+- NIRDHOOM project: 81 ledger entries.
+- Saathi test project: 35 ledger entries.
+- NIRDHOOM's ledger includes migrations named `saathi_*` as well as `satark_*`. The live NIRDHOOM public schema also contains `saathi_*` and `satark_*` tables. This may be intentional shared hosting, but it is a scope/isolation risk that must be explicitly explained and verified before changing anything.
+- The Saathi test schema contains the SATARK tables, while the queried public schema did not return `saathi_*` tables. This is not proof of full schema equivalence; it is a reason to verify which app/schema is expected in the test project.
+- The checked-in migration directories are materially smaller than their live ledgers, and several ledger names/versions do not directly match filenames. A filename/ledger reconciliation must normalize version prefixes and compare the full migration set before classifying a row as missing.
+
+These findings are **not** a reason to delete tables, repair ledger entries, or push migrations automatically. Do not run destructive reset, blind migration repair, or production push. First capture and review the complete normalized ledger/file diff, compare actual DDL and policies, and document whether cross-project migration entries were deliberate.
 
 ## GitHub Actions secrets
 
@@ -29,20 +41,18 @@ Create two separate tenant memberships and a least-privilege viewer account. Run
 
 ## Required checks on main
 
-Configure a GitHub ruleset or branch-protection rule for `main` in each implementation repository. Require pull requests and the actual status checks emitted by CI, Web CI, CodeQL, isolated migration validation, and authenticated tenant-isolation tests where those workflows exist. Require branches to be current before merge where practical. Disallow force pushes and deletion; do not add routine bypass actors.
+Configure a GitHub ruleset or branch-protection rule for `main` in NIRDHOOM and Saathi. Require pull requests and the actual status checks emitted by CI, Web CI, CodeQL, isolated migration validation, and authenticated tenant-isolation tests where those workflows exist. Require branches to be current before merge where practical. Disallow force pushes and deletion; do not add routine bypass actors.
 
 After saving the rule, verify its API/UI representation and perform a disposable negative test: an unqualified direct update or a PR with a deliberately failing required check must be rejected. Do not test by pushing a risky commit to production main.
 
 ## Supabase migration reconciliation
 
-1. Confirm the project name and project ref from the authorized Supabase dashboard before any action.
-2. Capture the complete migration ledger and compare it to every checked-in migration filename/version.
+1. Confirm project identity using the refs above and verify the live app's Supabase URL is the NIRDHOOM project ref.
+2. Capture the complete migration ledger for each project and compare it to every checked-in migration filename/version using normalized version prefixes.
 3. Run `supabase migration list --linked` and `supabase db push --dry-run` from a trusted, authenticated CLI environment; capture output with credentials redacted.
-4. Inspect every pending migration and compare its DDL, policies, grants, functions, triggers, and storage rules with the live schema. Resolve missing, duplicate, and out-of-order ledger entries explicitly; do not use `db reset`, blind repair, or a production push to discover drift.
+4. Inspect every pending migration and compare its DDL, policies, grants, functions, triggers, and storage rules with the live schema. Resolve missing, duplicate, cross-project, and out-of-order ledger entries explicitly.
 5. Apply candidate migrations only to the isolated Saathi test project, run authenticated acceptance tests, and record the exact tested commit and migration versions.
 6. Production changes require a separately reviewed migration plan, backup/recovery plan, and explicit release approval.
-
-The currently observed project refs are Saathi test `ibvgxgvcqcfnoyrlwywa` and NIRDHOOM `igqgtlmnwssjaoxkkzbm`. Confirm this mapping with the owner before running linked CLI commands.
 
 ## Response executor acceptance
 
@@ -64,4 +74,4 @@ Confirm account/team access to the correct project and production domain. Do not
 
 ## Release decision
 
-Any missing secret, skipped authenticated test, migration drift, failed required check, unverified alias SHA, or failed smoke test means NO-GO. Record evidence links and exact commit SHAs; never infer completion from a workflow file existing.
+Any missing secret, skipped authenticated test, migration drift, unexplained cross-project migration, failed required check, unverified alias SHA, or failed smoke test means NO-GO. Record evidence links and exact commit SHAs; never infer completion from a workflow file existing.
